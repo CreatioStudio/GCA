@@ -1,0 +1,60 @@
+package vip.creatio.gca.attr;
+
+import vip.creatio.gca.ClassFile;
+import vip.creatio.gca.ClassFileParser;
+import vip.creatio.gca.util.ByteVector;
+
+public class Annotations extends TableAttribute<Annotation> {
+
+    private boolean runtimeVisible;
+
+    public Annotations(ClassFile classFile) {
+        super(classFile);
+    }
+
+    public static Annotations parse(ClassFile file, ClassFileParser pool, ByteVector buffer, boolean visible) {
+        Annotations inst = new Annotations(file);
+        inst.runtimeVisible = visible;
+        int len = buffer.getUShort();
+        for (int i = 0; i < len; i++) {
+            inst.items.add(Annotation.parse(file, pool, buffer));
+        }
+        return inst;
+    }
+
+    public void add(Annotation anno) {
+        remove(anno.getClassName());
+        items.add(anno);
+    }
+
+    public Annotation add(String className) {
+        Annotation anno = new Annotation(classFile, className);
+        add(anno);
+        return anno;
+    }
+
+    public boolean remove(String className) {
+        return items.removeIf(annotation -> annotation.getClassName().equals(className));
+    }
+
+    @Override
+    public String name() {
+        return runtimeVisible ? "RuntimeVisibleAnnotations" : "RuntimeInvisibleAnnotations";
+    }
+
+    @Override
+    protected void collect() {
+        super.collect();
+        for (Annotation item : items) {
+            item.collect();
+        }
+    }
+
+    @Override
+    protected void writeData(ByteVector buffer) {
+        buffer.putShort(items.size());
+        for (Annotation item : items) {
+            item.write(buffer);
+        }
+    }
+}
