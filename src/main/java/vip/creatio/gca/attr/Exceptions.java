@@ -1,7 +1,9 @@
 package vip.creatio.gca.attr;
 
+import vip.creatio.gca.AttributeContainer;
 import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.ClassFileParser;
+import vip.creatio.gca.DeclaredMethod;
 import vip.creatio.gca.constant.ClassConst;
 
 import vip.creatio.gca.util.ByteVector;
@@ -15,9 +17,11 @@ public class Exceptions extends TableAttribute<ClassConst> {
         super(classFile);
     }
 
-    public static Exceptions parse(ClassFile file, ClassFileParser pool, ByteVector buffer)
+    public static Exceptions parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer)
     throws ClassFormatError {
-        Exceptions inst = new Exceptions(file);
+        Exceptions inst = new Exceptions(container.classFile());
+        inst.checkContainerType(container);
+
         int len = buffer.getUShort();
         for (int i = 0; i < len; i++) {
             inst.items.add((ClassConst) pool.get(buffer.getShort()));
@@ -29,6 +33,11 @@ public class Exceptions extends TableAttribute<ClassConst> {
     protected void collect() {
         super.collect();
         constPool().acquire(items);
+    }
+
+    @Override
+    protected void checkContainerType(AttributeContainer container) {
+        checkContainerType(container, DeclaredMethod.class);
     }
 
     @Override

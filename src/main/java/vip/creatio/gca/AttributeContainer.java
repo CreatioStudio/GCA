@@ -1,8 +1,10 @@
 package vip.creatio.gca;
 
+import javassist.bytecode.Bytecode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import vip.creatio.gca.code.BytecodeException;
 import vip.creatio.gca.util.ByteVector;
 import java.util.List;
 import java.util.function.Supplier;
@@ -11,9 +13,12 @@ import java.util.stream.Collectors;
 @SuppressWarnings("unchecked")
 public interface AttributeContainer {
 
+    ClassFile classFile();      // should be packed into a larger interface
+
     List<Attribute> attributes();
 
     default void addAttribute(Attribute att) {
+        att.checkContainerType(this);
         attributes().add(att);
     }
 

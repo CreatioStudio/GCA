@@ -1,10 +1,7 @@
 package vip.creatio.gca.attr;
 
 import org.jetbrains.annotations.Nullable;
-import vip.creatio.gca.Attribute;
-import vip.creatio.gca.ClassFile;
-import vip.creatio.gca.ClassFileParser;
-import vip.creatio.gca.DeclaredSignature;
+import vip.creatio.gca.*;
 import vip.creatio.gca.constant.ClassConst;
 import vip.creatio.gca.constant.NameAndTypeConst;
 
@@ -36,9 +33,11 @@ public class EnclosingMethod extends Attribute implements DeclaredSignature {
         this.method = method;
     }
 
-    public static EnclosingMethod parse(ClassFile file, ClassFileParser pool, ByteVector buffer)
+    public static EnclosingMethod parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer)
     throws ClassFormatError {
-        EnclosingMethod inst = new EnclosingMethod(file);
+        EnclosingMethod inst = new EnclosingMethod(container.classFile());
+        inst.checkContainerType(container);
+
         inst.clazz = (ClassConst) pool.get(buffer.getShort());
         inst.method = (NameAndTypeConst) pool.get(buffer.getShort());
         return inst;
@@ -76,6 +75,11 @@ public class EnclosingMethod extends Attribute implements DeclaredSignature {
 
     public void setMethod(@Nullable String name, String... signatures) {
         setMethod(name, ClassUtil.getSignature(signatures));
+    }
+
+    @Override
+    protected void checkContainerType(AttributeContainer container) {
+        checkContainerType(container, ClassFile.class);
     }
 
     @Override

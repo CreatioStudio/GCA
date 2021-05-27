@@ -55,6 +55,10 @@ public class ClassFileParser implements Iterable<Const> {
     }
 
     public Attribute resolveAttribute(ByteVector buffer) {
+        return resolveAttribute(file, buffer);
+    }
+
+    public Attribute resolveAttribute(AttributeContainer contaner, ByteVector buffer) {
         String name = getString(buffer.getShort());
         AttributeResolver resolver = getResolver(name);
         int length = buffer.getInt();
@@ -65,7 +69,7 @@ public class ClassFileParser implements Iterable<Const> {
             return new Attribute.Undefined(file, name, data);
         }
 
-        return resolver.provide(file, this, buffer);
+        return resolver.provide(contaner, this, buffer);
     }
 
     void parse(ByteVector buffer) {

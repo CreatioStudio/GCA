@@ -35,7 +35,7 @@ public abstract class OpCode implements Serializer {
         return codes.constPool();
     }
 
-    final int getOffset() {
+    public final int getOffset() {
         return codes.offsetOf(this);
     }
 

@@ -3,6 +3,7 @@ package vip.creatio.gca.attr;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.*;
+import vip.creatio.gca.code.BytecodeException;
 import vip.creatio.gca.code.CodeContainer;
 import vip.creatio.gca.code.OpCode;
 import vip.creatio.gca.constant.ClassConst;
@@ -33,8 +34,9 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
         super(file);
     }
 
-    public static Code parse(ClassFile file, ClassFileParser pool, ByteVector buffer) {
-        Code c = new Code(file);
+    public static Code parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer) {
+        Code c = new Code(container.classFile());
+        c.checkContainerType(container);
 
         c.maxStack = buffer.getShort() & 0xFFFF;
         c.maxLocals = buffer.getShort() & 0xFFFF;
@@ -44,14 +46,14 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
         {
             int tableSize = buffer.getShort();
             for (int i = 0; i < tableSize; i++) {
-                c.tables.add(new ExceptionTable(pool, buffer));
+                c.tables.add(c.new ExceptionTable(pool, buffer));
             }
         }
 
         {
             int attrSize = buffer.getShort();
             for (int i = 0; i < attrSize; i++) {
-                c.attributes.add(pool.resolveAttribute(buffer));
+                c.attributes.add(pool.resolveAttribute(c, buffer));
             }
         }
 
@@ -133,6 +135,11 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
     }
 
     @Override
+    protected void checkContainerType(AttributeContainer container) {
+        checkContainerType(container, DeclaredMethod.class);
+    }
+
+    @Override
     public String name() {
         return "Code";
     }
@@ -143,7 +150,7 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
                 ",exception_table=" + tables + ",attributes=" + attributes + '}';
     }
 
-    public static final class ExceptionTable {
+    public final class ExceptionTable {
 
         private int startPc;
         private int endPc;
@@ -195,6 +202,10 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
 
         public void setCatchType(ClassConst catchType) {
             this.catchType = catchType;
+        }
+
+        public int getIndex() {
+            return tables.indexOf(this);
         }
 
         private void write(ByteVector buffer) {

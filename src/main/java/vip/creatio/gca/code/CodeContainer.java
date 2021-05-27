@@ -2,9 +2,9 @@ package vip.creatio.gca.code;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.ClassFileParser;
 import vip.creatio.gca.ConstPool;
-import vip.creatio.gca.Serializer;
 import vip.creatio.gca.attr.Code;
 import vip.creatio.gca.util.BiHashMap;
 
@@ -100,6 +100,10 @@ public class CodeContainer implements Iterable<OpCode> {
         return pool;
     }
 
+    ClassFile classFile() {
+        return code.classFile();
+    }
+
     public void write(ByteVector buffer) {
         // make new cache offset map
         int sum = 0;
@@ -110,7 +114,13 @@ public class CodeContainer implements Iterable<OpCode> {
         }
 
         for (OpCode op : list) {
-            op.serialize(buffer);
+            try {
+                op.serialize(buffer);
+            } catch (BytecodeException e) {
+                throw e.detailedOpCode().setLocation("Failed to parse opcode " + op.type());
+            } catch (Exception e) {
+                throw new BytecodeException(this, offsetMap.reverse().get(op), e, "Failed to parse opcode " + op.type());
+            }
         }
     }
 

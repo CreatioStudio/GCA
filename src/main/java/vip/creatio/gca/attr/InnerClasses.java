@@ -20,9 +20,11 @@ public class InnerClasses extends TableAttribute<InnerClasses.Class> {
         super(classFile);
     }
 
-    public static InnerClasses parse(ClassFile file, ClassFileParser pool, ByteVector buffer)
+    public static InnerClasses parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer)
     throws ClassFormatError {
-        InnerClasses inst = new InnerClasses(file);
+        InnerClasses inst = new InnerClasses(container.classFile());
+        inst.checkContainerType(container);
+
         int num = buffer.getUShort();
         for (int i = 0; i < num; i++) {
             inst.items.add(inst.new Class(pool, buffer) /* an ridiculous way to construct object... */ );
@@ -61,6 +63,11 @@ public class InnerClasses extends TableAttribute<InnerClasses.Class> {
 
     public void remove(String innerName) {
         items.removeIf(i -> i.innerName.equals(innerName));
+    }
+
+    @Override
+    protected void checkContainerType(AttributeContainer container) {
+        checkContainerType(container, ClassFile.class);
     }
 
     @Override

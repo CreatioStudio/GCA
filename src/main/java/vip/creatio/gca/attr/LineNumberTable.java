@@ -1,5 +1,6 @@
 package vip.creatio.gca.attr;
 
+import vip.creatio.gca.AttributeContainer;
 import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.ClassFileParser;
 
@@ -19,8 +20,10 @@ public class LineNumberTable extends TableAttribute<Pair<Integer, Integer>> {
         super(classFile);
     }
 
-    public static LineNumberTable parse(ClassFile file, ClassFileParser pool, ByteVector buffer) {
-        LineNumberTable inst = new LineNumberTable(file);
+    public static LineNumberTable parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer) {
+        LineNumberTable inst = new LineNumberTable(container.classFile());
+        inst.checkContainerType(container);
+
         int len = buffer.getUShort();
         for (int i = 0; i < len; i++) {
             inst.items.add(new Pair<>(buffer.getUShort(), buffer.getUShort()));
@@ -36,6 +39,11 @@ public class LineNumberTable extends TableAttribute<Pair<Integer, Integer>> {
             }
         }
         items.add(new Pair<>(start, lineNumber));
+    }
+
+    @Override
+    protected void checkContainerType(AttributeContainer container) {
+        checkContainerType(container, Code.class);
     }
 
     @Override

@@ -1,6 +1,7 @@
 package vip.creatio.gca.test;
 
 import org.junit.Test;
+import vip.creatio.gca.Attribute;
 import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.DeclaredMethod;
 import vip.creatio.gca.attr.Code;
@@ -9,22 +10,28 @@ import vip.creatio.gca.util.ByteVector;
 
 import java.io.*;
 import java.math.BigInteger;
+import java.util.Iterator;
 import java.util.Random;
 
 public class Main {
 
+    public static final String name = "Example.class";
+//    public static final String name = "ClassFile.class";
+
     public static void main(String[] args) throws Exception {
 
-        InputStream stream = new FileInputStream("ClassFile.class");
-        //InputStream stream = new FileInputStream("Example.class");
+        InputStream stream = new FileInputStream(name);
         byte[] bytes = stream.readAllBytes();
         System.out.println("SourceSize: " + bytes.length);
 
         ClassFile classFile = ClassFile.parse(bytes);
         System.out.println("ConstSize: " + classFile.constPool().size());
+        classFile.setMajorVer(55);
 
         for (DeclaredMethod method : classFile.getMethods()) {
             Code c = method.code();
+            c.attributes().clear();
+            method.attributes().removeIf(a -> !a.name().equals("Code"));
 
             //c.removeAttribute("LineNumberTable");
             //c.removeAttribute("LocalVariableTable");
@@ -46,7 +53,7 @@ public class Main {
 
         new File("test").mkdir();
         //FileChannel channel = new FileOutputStream("obfuscated/Example.class").getChannel();
-        FileOutputStream channel = new FileOutputStream("test/ClassFile.class");
+        FileOutputStream channel = new FileOutputStream("test/" + name);
         classFile.toByteArray();
         ByteVector buffer = new ByteVector();
         classFile.write(buffer);

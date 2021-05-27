@@ -17,8 +17,8 @@ public class ClassFile implements AttributeContainer, AccessFlagContainer {
 
     public static final int MAGIC = 0xCAFE_BABE;
 
-    short minorVer;
-    short majorVer;
+    int minorVer;
+    int majorVer;
 
     ConstPool constPool;
     EnumSet<AccessFlag> accessFlags;
@@ -118,19 +118,23 @@ public class ClassFile implements AttributeContainer, AccessFlagContainer {
         pool.parse(buffer);
     }
 
-    public short getMinorVer() {
+    public ClassFile classFile() {
+        return this;
+    }
+
+    public int getMinorVer() {
         return minorVer;
     }
 
-    public void setMinorVer(short minorVer) {
+    public void setMinorVer(int minorVer) {
         this.minorVer = minorVer;
     }
 
-    public short getMajorVer() {
+    public int getMajorVer() {
         return majorVer;
     }
 
-    public void setMajorVer(short majorVer) {
+    public void setMajorVer(int majorVer) {
         if (majorVer < 52 /* java 8 */ ) throw new RuntimeException("Invalid version: " + majorVer);
         this.majorVer = majorVer;
     }
@@ -171,6 +175,10 @@ public class ClassFile implements AttributeContainer, AccessFlagContainer {
 
     public List<DeclaredMethod> getMethods() {
         return methods;
+    }
+
+    public List<ClassConst> getInterfaces() {
+        return interfaces;
     }
 
     public @Nullable DeclaredField getField(String name) {
@@ -283,6 +291,10 @@ public class ClassFile implements AttributeContainer, AccessFlagContainer {
     public @NotNull BootstrapMethods bootstrapMethods() {
         return getOrAddAttribute("BootstrapMethods",
                 () -> new BootstrapMethods(this));
+    }
+
+    public String getClassName() {
+        return thisClass.getName();
     }
 
     public void write(ByteVector buffer) {

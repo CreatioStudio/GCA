@@ -4,34 +4,27 @@ import vip.creatio.gca.AttributeContainer;
 import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.ClassFileParser;
 import vip.creatio.gca.ConstPool;
-
 import vip.creatio.gca.util.ByteVector;
 
-/**
- * If LocalVariableTable attributes are present in the attributes table of
- * a given Code attribute, then they may appear in any order. There may be
- * no more than one LocalVariableTable attribute per local variable in the
- * Code attribute.
- */
-public class LocalVariableTable extends TableAttribute<LocalVariableTable.Variable> {
+public class StackMapTable extends TableAttribute<StackMapTable.Frame> {
 
-    public LocalVariableTable(ClassFile classFile) {
+    public StackMapTable(ClassFile classFile) {
         super(classFile);
     }
 
-    public static LocalVariableTable parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer) {
-        LocalVariableTable inst = new LocalVariableTable(container.classFile());
+    public static StackMapTable parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer) {
+        StackMapTable inst = new StackMapTable(container.classFile());
         inst.checkContainerType(container);
 
         int len = buffer.getUShort();
         for (int i = 0; i < len; i++) {
-            inst.items.add(inst.new Variable(pool, buffer));
+            inst.items.add(inst.new Frame(pool, buffer));
         }
         return inst;
     }
 
     public void add(int startPc, int length, String name, String descriptor, int index) {
-        items.add(new Variable(startPc, length, name, descriptor, index));
+        items.add(new Frame(startPc, length, name, descriptor, index));
     }
 
     @Override
@@ -48,7 +41,7 @@ public class LocalVariableTable extends TableAttribute<LocalVariableTable.Variab
     protected void collect() {
         super.collect();
         ConstPool pool = constPool();
-        for (Variable item : items) {
+        for (Frame item : items) {
             pool.acquireUtf(item.getName());
             pool.acquireUtf(item.getDescriptor());
         }
@@ -57,12 +50,12 @@ public class LocalVariableTable extends TableAttribute<LocalVariableTable.Variab
     @Override
     protected void writeData(ByteVector buffer) {
         buffer.putShort((short) items.size());
-        for (Variable i : items) {
+        for (Frame i : items) {
             i.write(buffer);
         }
     }
 
-    public final class Variable {
+    public final class Frame {
 
         private int startPc;
         private int length;
@@ -70,7 +63,7 @@ public class LocalVariableTable extends TableAttribute<LocalVariableTable.Variab
         private String descriptor;
         private int index;
 
-        Variable(int startPc, int length, String name, String descriptor, int index) {
+        Frame(int startPc, int length, String name, String descriptor, int index) {
             this.startPc = startPc;
             this.length = length;
             this.name = name;
@@ -78,7 +71,7 @@ public class LocalVariableTable extends TableAttribute<LocalVariableTable.Variab
             this.index = index;
         }
 
-        Variable(ClassFileParser pool, ByteVector buffer) {
+        Frame(ClassFileParser pool, ByteVector buffer) {
             startPc = buffer.getUShort();
             length = buffer.getUShort();
             name = pool.getString(buffer.getUShort());

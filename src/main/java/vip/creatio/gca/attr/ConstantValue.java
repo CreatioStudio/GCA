@@ -1,8 +1,6 @@
 package vip.creatio.gca.attr;
 
-import vip.creatio.gca.Attribute;
-import vip.creatio.gca.ClassFile;
-import vip.creatio.gca.ClassFileParser;
+import vip.creatio.gca.*;
 import vip.creatio.gca.constant.Const;
 
 import vip.creatio.gca.util.ByteVector;
@@ -32,10 +30,17 @@ public class ConstantValue extends Attribute {
         this.constantValue = constantValue;
     }
 
-    public static ConstantValue parse(ClassFile file, ClassFileParser pool, ByteVector buffer) {
-        ConstantValue inst = new ConstantValue(file);
+    public static ConstantValue parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer) {
+        ConstantValue inst = new ConstantValue(container.classFile());
+        inst.checkContainerType(container);
+
         inst.constantValue = ((Const.Value) pool.get(buffer.getShort())).value();
         return inst;
+    }
+
+    @Override
+    protected void checkContainerType(AttributeContainer container) {
+        checkContainerType(container, DeclaredField.class);
     }
 
     @Override

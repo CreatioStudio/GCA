@@ -1,10 +1,11 @@
 package vip.creatio.gca.attr;
 
+import vip.creatio.gca.AttributeContainer;
 import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.ClassFileParser;
 import vip.creatio.gca.util.ByteVector;
 
-public class TypeAnnotations extends TableAttribute<Annotation> {
+public class TypeAnnotations extends TableAttribute<TypeAnnotation> {
 
     private boolean runtimeVisible;
 
@@ -12,23 +13,23 @@ public class TypeAnnotations extends TableAttribute<Annotation> {
         super(classFile);
     }
 
-    public static TypeAnnotations parse(ClassFile file, ClassFileParser pool, ByteVector buffer, boolean visible) {
-        TypeAnnotations inst = new TypeAnnotations(file);
+    public static TypeAnnotations parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer, boolean visible) {
+        TypeAnnotations inst = new TypeAnnotations(container.classFile());
         inst.runtimeVisible = visible;
         int len = buffer.getUShort();
         for (int i = 0; i < len; i++) {
-            inst.items.add(Annotation.parse(file, pool, buffer));
+            inst.items.add(TypeAnnotation.parse(container, pool, buffer));
         }
         return inst;
     }
 
-    public void add(Annotation anno) {
+    public void add(TypeAnnotation anno) {
         remove(anno.getClassName());
         items.add(anno);
     }
 
-    public Annotation add(String className) {
-        Annotation anno = new Annotation(classFile, className);
+    public TypeAnnotation add(String className) {
+        TypeAnnotation anno = new TypeAnnotation(classFile, className);
         add(anno);
         return anno;
     }
@@ -39,13 +40,13 @@ public class TypeAnnotations extends TableAttribute<Annotation> {
 
     @Override
     public String name() {
-        return runtimeVisible ? "RuntimeVisibleAnnotations" : "RuntimeInvisibleAnnotations";
+        return runtimeVisible ? "RuntimeVisibleTypeAnnotations" : "RuntimeInvisibleTypeAnnotations";
     }
 
     @Override
     protected void collect() {
         super.collect();
-        for (Annotation item : items) {
+        for (TypeAnnotation item : items) {
             item.collect();
         }
     }
@@ -53,7 +54,7 @@ public class TypeAnnotations extends TableAttribute<Annotation> {
     @Override
     protected void writeData(ByteVector buffer) {
         buffer.putShort(items.size());
-        for (Annotation item : items) {
+        for (TypeAnnotation item : items) {
             item.write(buffer);
         }
     }

@@ -25,6 +25,8 @@ public abstract class Attribute {
         DEFAULT_RESOLVERS.put("RuntimeInvisibleAnnotations", (a, b, c) -> Annotations.parse(a, b, c, false));
         DEFAULT_RESOLVERS.put("RuntimeVisibleParameterAnnotations", (a, b, c) -> ParameterAnnotations.parse(a, b, c, true));
         DEFAULT_RESOLVERS.put("RuntimeInvisibleParameterAnnotations", (a, b, c) -> ParameterAnnotations.parse(a, b, c, false));
+        DEFAULT_RESOLVERS.put("RuntimeVisibleTypeAnnotations", (a, b, c) -> TypeAnnotations.parse(a, b, c, true));
+        DEFAULT_RESOLVERS.put("RuntimeInvisibleTypeAnnotations", (a, b, c) -> TypeAnnotations.parse(a, b, c, false));
     }
 
     public static Map<String, AttributeResolver> getResolvers() {
@@ -61,6 +63,13 @@ public abstract class Attribute {
     // collect constants that required by this attribute
     protected void collect() {
         constPool().acquireUtf(name());
+    }
+
+    protected void checkContainerType(AttributeContainer container) {}
+
+    protected void checkContainerType(AttributeContainer container, Class<? extends AttributeContainer> cls) {
+        if (!cls.isAssignableFrom(container.getClass()))
+            throw new IllegalArgumentException("Attribute " + name() + " is only expected in " + cls.getSimpleName());
     }
 
     // whether this attribute is empty, usually used for table attribute

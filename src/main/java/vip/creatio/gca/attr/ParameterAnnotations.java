@@ -1,5 +1,6 @@
 package vip.creatio.gca.attr;
 
+import vip.creatio.gca.AttributeContainer;
 import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.ClassFileParser;
 import vip.creatio.gca.util.ByteVector;
@@ -17,19 +18,18 @@ public class ParameterAnnotations extends TableAttribute<List<Annotation>> {
         super(classFile);
     }
 
-    public static ParameterAnnotations parse(ClassFile file, ClassFileParser pool, ByteVector buffer, boolean visible) {
-        ParameterAnnotations inst = new ParameterAnnotations(file);
+    public static ParameterAnnotations parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer, boolean visible) {
+        ParameterAnnotations inst = new ParameterAnnotations(container.classFile());
         inst.runtimeVisible = visible;
         int len = buffer.getUByte();
         for (int i = 0; i < len; i++) {
             int num = buffer.getUShort();
             List<Annotation> anno = new ArrayList<>();
             for (int j = 0; j < num; j++) {
-                anno.add(Annotation.parse(file, pool, buffer));
+                anno.add(Annotation.parse(container.classFile(), pool, buffer));
             }
             inst.items.add(anno);
         }
-        System.out.println("ParameterAnnotations parsed offset: " + Util.toHex(buffer.position()));
         return inst;
     }
 

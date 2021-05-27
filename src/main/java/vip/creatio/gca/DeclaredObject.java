@@ -9,7 +9,6 @@ import vip.creatio.gca.constant.UTFConst;
 import vip.creatio.gca.util.ClassUtil;
 
 import vip.creatio.gca.util.ByteVector;
-import vip.creatio.gca.util.Util;
 
 import java.util.*;
 
@@ -30,16 +29,14 @@ implements AttributeContainer, AccessFlagContainer, DeclaredSignature {
         this.classFile = bc;
         this.accessFlags = resolveFlags(buffer.getShort());
         int s = buffer.getUShort();
-        System.out.println("INDEX_OFFSET: " + Util.toHex(buffer.position()));
         this.name = pool.getString(s);
         this.descriptor = pool.getString(buffer.getShort());
-        System.out.println("Parsed: " + name);
         int attrCount = buffer.getShort() & 0xFFFF;
         for (int i = 0; i < attrCount; i++) {
             try {
-                attributes.add(pool.resolveAttribute(buffer));
+                attributes.add(pool.resolveAttribute(this, buffer));
             } catch (BytecodeException e) {
-                e.setMethodName(name);
+                e.setLocation(name + descriptor);
                 throw e;
             } catch (Exception e) {
                 System.err.println("Exception while parsing attributes in "
@@ -154,7 +151,12 @@ implements AttributeContainer, AccessFlagContainer, DeclaredSignature {
         buffer.putShort(name.index());
         buffer.putShort(desc.index());
 
-        AttributeContainer.super.writeAttributes(buffer);
+        try {
+            AttributeContainer.super.writeAttributes(buffer);
+        } catch (BytecodeException e) {
+            e.setLocation(name + descriptor);
+            throw e;
+        }
     }
 
     @Override

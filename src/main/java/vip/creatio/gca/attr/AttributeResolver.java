@@ -1,6 +1,7 @@
 package vip.creatio.gca.attr;
 
 import vip.creatio.gca.Attribute;
+import vip.creatio.gca.AttributeContainer;
 import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.ClassFileParser;
 
@@ -12,6 +13,6 @@ import vip.creatio.gca.util.ByteVector;
 @FunctionalInterface
 public interface AttributeResolver {
 
-    Attribute provide(ClassFile bc, ClassFileParser pool, ByteVector buffer);
+    Attribute provide(AttributeContainer container, ClassFileParser pool, ByteVector buffer);
 
 }

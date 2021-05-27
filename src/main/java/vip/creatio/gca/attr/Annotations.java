@@ -1,5 +1,6 @@
 package vip.creatio.gca.attr;
 
+import vip.creatio.gca.AttributeContainer;
 import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.ClassFileParser;
 import vip.creatio.gca.util.ByteVector;
@@ -12,12 +13,12 @@ public class Annotations extends TableAttribute<Annotation> {
         super(classFile);
     }
 
-    public static Annotations parse(ClassFile file, ClassFileParser pool, ByteVector buffer, boolean visible) {
-        Annotations inst = new Annotations(file);
+    public static Annotations parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer, boolean visible) {
+        Annotations inst = new Annotations(container.classFile());
         inst.runtimeVisible = visible;
         int len = buffer.getUShort();
         for (int i = 0; i < len; i++) {
-            inst.items.add(Annotation.parse(file, pool, buffer));
+            inst.items.add(Annotation.parse(container.classFile(), pool, buffer));
         }
         return inst;
     }

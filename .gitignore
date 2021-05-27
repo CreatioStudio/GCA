@@ -1,9 +1,10 @@
 /test/
 /obfuscated/
 /arthas-output/
-/*.jar/
+/*.jar
 /*.class
 /*.java
 /target/
 /out/
 /.idea/
+/src/main/java/vip/creatio/gca/type/

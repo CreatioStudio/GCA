@@ -1,6 +1,7 @@
 package vip.creatio.gca.attr;
 
 import vip.creatio.gca.Attribute;
+import vip.creatio.gca.AttributeContainer;
 import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.ClassFileParser;
 
@@ -25,8 +26,8 @@ public class Signature extends Attribute {
         this.signature = signature;
     }
 
-    public static Signature parse(ClassFile file, ClassFileParser pool, ByteVector buffer) {
-        Signature inst = new Signature(file);
+    public static Signature parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer) {
+        Signature inst = new Signature(container.classFile());
         inst.signature = pool.getString(buffer.getUShort());
         return inst;
     }

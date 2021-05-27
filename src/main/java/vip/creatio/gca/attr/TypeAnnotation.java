@@ -1,34 +1,78 @@
 package vip.creatio.gca.attr;
 
-import vip.creatio.gca.ClassFile;
-import vip.creatio.gca.ClassFileParser;
-import vip.creatio.gca.ConstPool;
-import vip.creatio.gca.ValueType;
+import vip.creatio.gca.*;
+import vip.creatio.gca.code.CodeContainer;
+import vip.creatio.gca.code.OpCode;
+import vip.creatio.gca.constant.ClassConst;
 import vip.creatio.gca.constant.Const;
 import vip.creatio.gca.util.ByteVector;
 import vip.creatio.gca.util.Pair;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
-public class TypeAnnotation {
-
-    private final ClassFile file;
-    private final ConstPool pool;
+public class TypeAnnotation extends AbstractAnnotation {
 
     private TargetType target;
 
-    private int index; // type_parameter,
+    /*
+     *
+     * union {
+     *     int                  index;              // type_parameter, formal_parameter
+     *     struct {                                 // type_parameter_bound
+     *         int                  index;
+     *         int                  boundIndex;
+     *     };
+     *     ClassConst           superType;          // supertype(ClassFile::interfaces.index)
+     *     void                 empty_target;
+     *     Exceptions           exceptions;         // throws
+     *     List<VarTable>       localVar;           // localvar
+     *     Code.ExceptionTable  catchTarget;        // catch
+     *     OpCode               offset;             // offset
+     *     struct {                                 // type_argument
+     *         OpCode               offset;
+     *         int                  typeArgumentIndex;
+     *     };
+     * } target_info;
+     *
+     */
+
+    // type_parameter(index), type_parameter_bound(index), formal_parameter(index)
+    private int index;
+
+    // type_parameter_bound(index?)
+    private int boundIndex;
+
+    // supertype(ClassFile::interfaces.index)
+    private ClassConst superType;
+
+    // throws(Exceptions)
+    private Exceptions exceptions;
+    private ClassConst throwsType;
+
+    // catch(Code::ExceptionTable)
+    private Code.ExceptionTable catchTarget;
+
+    // offset, type_argument
+    private OpCode offset;
+
+    // type_argument
+    private int typeArgumentIndex;
+
+    // localvar
+    private List<VarTable> localVar;
+
+    private final List<Pair<PathKind, Integer>> path = new ArrayList<>();
 
     private String type;
 
     private final List<Pair<String, ElementValue>> nameValuePairs = new ArrayList<>();
 
     TypeAnnotation(ClassFile file) {
-        this.file = file;
-        this.pool = file.constPool();
+        super(file);
     }
 
     public TypeAnnotation(ClassFile file, String type) {
@@ -36,13 +80,74 @@ public class TypeAnnotation {
         this.type = type;
     }
 
-    static TypeAnnotation parse(ClassFile file, ClassFileParser pool, ByteVector buffer) {
-        TypeAnnotation anno = new TypeAnnotation(file);
+    static TypeAnnotation parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer) {
+        //assert container instanceof Code;
+        TypeAnnotation anno = new TypeAnnotation(container.classFile());
+        anno.target = TargetType.fromTag(buffer.getByte());
+
+        // read union "target_info"
+        switch (anno.target.getType()) {
+            case TargetType.TARGET_TYPE_PARAMETER:
+                anno.index = buffer.getUByte();
+                break;
+            case TargetType.TARGET_SUPERTYPE:
+                assert container instanceof ClassFile;
+                anno.superType = ((ClassFile) container).getInterfaces().get(buffer.getUShort());
+                break;
+            case TargetType.TARGET_TYPE_PARAMETER_BOUND:
+                anno.index = buffer.getUByte();
+                anno.boundIndex = buffer.getUByte();
+                break;
+            case TargetType.TARGET_EMPTY:
+                // no contents
+                break;
+            case TargetType.TARGET_FORMAL_PARAMETER:
+                anno.index = buffer.getUByte();
+                break;
+            case TargetType.TARGET_THROWS:
+                assert container instanceof DeclaredMethod;
+                anno.throwsType = ((DeclaredMethod) container).exceptions().get(buffer.getUShort());
+                break;
+            case TargetType.TARGET_LOCALVAR:
+                assert container instanceof Code;
+                int len = buffer.getUShort();
+                anno.localVar = new ArrayList<>();
+                for (int i = 0; i < len; i++) {
+                    anno.localVar.add(new VarTable((Code) container, buffer));
+                }
+                break;
+            case TargetType.TARGET_CATCH:
+                assert container instanceof Code;
+                anno.catchTarget = ((Code) container).exceptionTables().get(buffer.getUShort());
+                break;
+            case TargetType.TARGET_OFFSET:
+                assert container instanceof Code;
+                anno.offset = ((Code) container).fromOffset(buffer.getUShort());
+                break;
+            case TargetType.TARGET_TYPE_ARGUMENT:
+                assert container instanceof Code;
+                anno.offset = ((Code) container).fromOffset(buffer.getUShort());
+                anno.typeArgumentIndex = buffer.getUByte();
+                break;
+            default:
+                throw new ClassFormatError("Unknown target type: " + anno.target.getType());
+        }
+
+        {       // parse target_path
+            int len = buffer.getUByte();
+            for (int i = 0; i < len; i++) {
+                anno.path.add(new Pair<>(PathKind.fromTag(buffer.getUByte()), buffer.getUByte()));
+            }
+        }
+
         anno.type = pool.getString(buffer.getUShort());
-        int num = buffer.getUShort();
-        for (int i = 0; i < num; i++) {
-            String name = pool.getString(buffer.getUShort());
-            anno.nameValuePairs.add(new Pair<>(name, anno.new ElementValue(pool, buffer)));
+
+        {
+            int num = buffer.getUShort();
+            for (int i = 0; i < num; i++) {
+                String name = pool.getString(buffer.getUShort());
+                anno.nameValuePairs.add(new Pair<>(name, new ElementValue(anno, pool, buffer)));
+            }
         }
         return anno;
     }
@@ -52,7 +157,7 @@ public class TypeAnnotation {
     }
 
     public ElementValue addValue(String name, ValueType type) {
-        ElementValue value = new ElementValue(type);
+        ElementValue value = new ElementValue(this, type);
         nameValuePairs.add(new Pair<>(name, value));
         return value;
     }
@@ -69,37 +174,37 @@ public class TypeAnnotation {
     }
 
     public ElementValue addConstValue(String name, Const.Value value) {
-        ElementValue v = new ElementValue(value.valueType());
-        v.constant = value;
+        ElementValue v = new ElementValue(this,value.valueType());
+        v.union = value;
         nameValuePairs.add(new Pair<>(name, v));
         return v;
     }
 
     public ElementValue addClassValue(String name, String clsName) {
-        ElementValue v = new ElementValue(ValueType.CLASS);
-        v.typeName = clsName;
+        ElementValue v = new ElementValue(this,ValueType.CLASS);
+        v.union = clsName;
         nameValuePairs.add(new Pair<>(name, v));
         return v;
     }
 
     public ElementValue addEnumValue(String name, String enumClass, String enumName) {
-        ElementValue v = new ElementValue(ValueType.ENUM);
-        v.typeName = enumClass;
+        ElementValue v = new ElementValue(this, ValueType.ENUM);
+        v.union = enumClass;
         v.enumName = enumName;
         nameValuePairs.add(new Pair<>(name, v));
         return v;
     }
 
     public ElementValue addAnnotationValue(String name, TypeAnnotation anno) {
-        ElementValue v = new ElementValue(ValueType.ANNOTATION);
-        v.nested = anno;
+        ElementValue v = new ElementValue(this,ValueType.ANNOTATION);
+        v.union = anno;
         nameValuePairs.add(new Pair<>(name, v));
         return v;
     }
 
     public ElementValue addArrayValue(String name, Collection<ElementValue> values) {
-        ElementValue v = new ElementValue(ValueType.ARRAY);
-        v.values = new ArrayList<>(values);
+        ElementValue v = new ElementValue(this,ValueType.ARRAY);
+        v.union = new ArrayList<>(values);
         nameValuePairs.add(new Pair<>(name, v));
         return v;
     }
@@ -108,7 +213,154 @@ public class TypeAnnotation {
         return addArrayValue(name, Arrays.asList(values));
     }
 
+
+    public int getTypeParameterIndex() {
+        checkType(TargetType.TARGET_TYPE_PARAMETER, TargetType.TARGET_TYPE_PARAMETER_BOUND);
+        return index;
+    }
+
+    public void setTypeParameterIndex(int index) {
+        checkType(TargetType.TARGET_TYPE_PARAMETER, TargetType.TARGET_TYPE_PARAMETER_BOUND);
+        this.index = index;
+    }
+
+    public ClassConst getSuperType() {
+        checkType(TargetType.TARGET_SUPERTYPE);
+        return superType;
+    }
+
+    public void setSuperType(ClassConst type) {
+        checkType(TargetType.TARGET_SUPERTYPE);
+        this.superType = type;
+    }
+
+    public int getBoundIndex() {
+        checkType(TargetType.TARGET_TYPE_PARAMETER_BOUND);
+        return boundIndex;
+    }
+
+    public void setBoundIndex(int index) {
+        checkType(TargetType.TARGET_TYPE_PARAMETER_BOUND);
+        this.boundIndex = index;
+    }
+
+    public int getFormatParameterIndex() {
+        checkType(TargetType.TARGET_FORMAL_PARAMETER);
+        return index;
+    }
+
+    public void setFormatParameterIndex(int index) {
+        checkType(TargetType.TARGET_FORMAL_PARAMETER);
+        this.index = index;
+    }
+
+    public ClassConst getThrowsType() {
+        checkType(TargetType.TARGET_THROWS);
+        return throwsType;
+    }
+
+    public void setThrowsType(ClassConst type) {
+        checkType(TargetType.TARGET_THROWS);
+        this.throwsType = type;
+    }
+
+    //TODO: requires enhancements
+    public List<VarTable> getLocalVar() {
+        checkType(TargetType.TARGET_LOCALVAR);
+        return localVar;
+    }
+
+    public Code.ExceptionTable getExceptionTable() {
+        checkType(TargetType.TARGET_CATCH);
+        return catchTarget;
+    }
+
+    public void setExceptionTable(Code.ExceptionTable table) {
+        checkType(TargetType.TARGET_CATCH);
+        this.catchTarget = table;
+    }
+
+    public OpCode getOffsetCode() {
+        checkType(TargetType.TARGET_OFFSET, TargetType.TARGET_TYPE_ARGUMENT);
+        return offset;
+    }
+
+    public void setOffsetCode(OpCode code) {
+        checkType(TargetType.TARGET_OFFSET, TargetType.TARGET_TYPE_ARGUMENT);
+        this.offset = code;
+    }
+
+    public int getTypeArgumentIndex() {
+        checkType(TargetType.TARGET_TYPE_ARGUMENT);
+        return typeArgumentIndex;
+    }
+
+    public void setTypeArgumentIndex(int index) {
+        checkType(TargetType.TARGET_TYPE_ARGUMENT);
+        this.typeArgumentIndex = index;
+    }
+
+    private void checkType(int type) {
+        if (this.target.getType() != type) {
+            throw new IllegalArgumentException("Only type annotation with target type " + type + " can do this action");
+        }
+    }
+
+    private void checkType(int type, int type2) {
+        if (this.target.getType() != type && this.target.getType() != type2) {
+            throw new IllegalArgumentException("Only type annotation with target type " + type + " can do this action");
+        }
+    }
+
     void write(ByteVector buffer) {
+        buffer.putByte(target.getTag());
+        switch (target.getType()) {
+            case TargetType.TARGET_TYPE_PARAMETER:
+                buffer.putByte(index);
+                break;
+            case TargetType.TARGET_SUPERTYPE:
+                buffer.putShort(superType.index());
+                break;
+            case TargetType.TARGET_TYPE_PARAMETER_BOUND:
+                buffer.putByte(index);
+                buffer.putByte(boundIndex);
+                break;
+            case TargetType.TARGET_EMPTY:
+                // no contents
+                break;
+            case TargetType.TARGET_FORMAL_PARAMETER:
+                buffer.putByte(index);
+                break;
+            case TargetType.TARGET_THROWS:
+                buffer.putShort(throwsType.index());
+                break;
+            case TargetType.TARGET_LOCALVAR:
+                buffer.putShort(localVar.size());
+                for (VarTable v : localVar) {
+                    v.write(buffer);
+                }
+                break;
+            case TargetType.TARGET_CATCH:
+                buffer.putShort(catchTarget.getIndex());
+                break;
+            case TargetType.TARGET_OFFSET:
+                buffer.putShort(offset.getOffset());
+                break;
+            case TargetType.TARGET_TYPE_ARGUMENT:
+                buffer.putShort(offset.getOffset());
+                buffer.putByte(typeArgumentIndex);
+                break;
+            default:
+                throw new ClassFormatError("Unknown target type: " + target.getType());
+        }
+
+        buffer.putByte(path.size());
+
+        for (Pair<PathKind, Integer> pair : path) {
+            buffer.putByte(pair.getKey().getTag());
+            buffer.putByte(pair.getValue());
+        }
+
         buffer.putShort(constPool().acquireUtf(type).index());
         buffer.putShort(nameValuePairs.size());
         for (Pair<String, ElementValue> p : nameValuePairs) {
@@ -118,161 +370,91 @@ public class TypeAnnotation {
     }
 
     void collect() {
+        switch (target.getType()) {
+            case TargetType.TARGET_SUPERTYPE:
+            case TargetType.TARGET_TYPE_PARAMETER_BOUND:
+                constPool().acquire(superType);
+                break;
+            case TargetType.TARGET_THROWS:
+                constPool().acquire(throwsType);
+                break;
+        }
+        constPool().acquireUtf(type);
         for (Pair<String, ElementValue> p : nameValuePairs) {
             constPool().acquireUtf(p.getKey());
             p.getValue().collect();
         }
     }
 
-    private ConstPool constPool() {
-        return pool;
-    }
+    public static class VarTable {
+        private OpCode startPc;
+        private int length;
+        private int index;      // Local var table
 
-    public class ElementValue {
-
-        private final ValueType type;
-        private Const.Value constant;
-        private String typeName;    // class name and enum name
-        private String enumName;
-        private TypeAnnotation nested;
-        private List<ElementValue> values;
-
-        ElementValue(ValueType type) {
-            this.type = type;
+        VarTable(OpCode startPc, int length, int index) {
+            this.startPc = startPc;
+            this.length = length;
+            this.index = index;
         }
 
-        ElementValue(ClassFileParser pool, ByteVector buffer) {
-            type = ValueType.fromTag(buffer.getByte());
-            if (type.isValue()) {
-                constant = (Const.Value) pool.get(buffer.getShort());
-            } else {
-                if (type == ValueType.CLASS) {
-                    typeName = pool.getString(buffer.getShort());
-                } else if (type == ValueType.ENUM) {
-                    typeName = pool.getString(buffer.getShort());
-                    enumName = pool.getString(buffer.getShort());
-                } else if (type == ValueType.ANNOTATION) {
-                    nested = parse(file, pool, buffer);
-                } else {
-                    int num = buffer.getUShort();
-                    for (int i = 0; i < num; i++) {
-                        values.add(new ElementValue(pool, buffer));
-                    }
-                }
-            }
+        VarTable(Code container, ByteVector vec) {
+            this.startPc = container.fromOffset(vec.getUShort());
+            this.length = vec.getUShort();
+            this.index = vec.getUShort();
         }
 
-        public ValueType getType() {
-            return type;
+        public OpCode getStartPc() {
+            return startPc;
         }
 
-        public String getClassValue() {
-            checkType(ValueType.CLASS);
-            return typeName;
+        public void setStartPc(OpCode startPc) {
+            this.startPc = startPc;
         }
 
-        public void setClassValue(String signature) {
-            checkType(ValueType.CLASS);
-            this.typeName = signature;
+        public int getLength() {
+            return length;
         }
 
-        public Const.Value getConstValue() {
-            if (!type.isValue())
-                throw new IllegalArgumentException("Only element value with \"value type\" can do this action");
-            return constant;
+        public void setLength(int length) {
+            this.length = length;
         }
 
-        public void setConstValue(Const.Value c) {
-            if (!type.isValue())
-                throw new IllegalArgumentException("Only element value with \"value type\" can do this action");
-            this.constant = c;
+        public int getIndex() {
+            return index;
         }
 
-        public String getEnumType() {
-            checkType(ValueType.ENUM);
-            return typeName;
-        }
-
-        public void setEnumType(String signature) {
-            checkType(ValueType.ENUM);
-            typeName = signature;
-        }
-
-        public String getEnumName() {
-            checkType(ValueType.ENUM);
-            return enumName;
-        }
-
-        public void setEnumName(String enumName) {
-            checkType(ValueType.ENUM);
-            this.enumName = enumName;
-        }
-
-        public TypeAnnotation getAnnotation() {
-            checkType(ValueType.ANNOTATION);
-            return nested;
-        }
-
-        public void setAnnotation(TypeAnnotation anno) {
-            checkType(ValueType.ANNOTATION);
-            this.nested = anno;
-        }
-
-        public List<ElementValue> getValues() {
-            checkType(ValueType.ARRAY);
-            return values;
-        }
-
-        public void setValues(Collection<ElementValue> values) {
-            checkType(ValueType.ARRAY);
-            this.values = new ArrayList<>(values);
-        }
-
-        private void collect() {
-            if (type.isValue()) {
-                constPool().acquire(constant);
-            } else {
-                if (type == ValueType.CLASS) {
-                    constPool().acquireUtf(typeName);
-                } else if (type == ValueType.ENUM) {
-                    constPool().acquireUtf(typeName);
-                    constPool().acquireUtf(enumName);
-                } else if (type == ValueType.ANNOTATION) {
-                    nested.collect();
-                } else {
-                    for (ElementValue v : values) {
-                        v.collect();
-                    }
-                }
-            }
+        public void setIndex(int index) {
+            this.index = index;
         }
 
         private void write(ByteVector buffer) {
-            buffer.putByte(type.getTag());
-            if (type.isValue()) {
-                buffer.putShort(constant.index());
-            } else {
-                if (type == ValueType.CLASS) {
-                    buffer.putShort(constPool().acquireUtf(typeName).index());
-                } else if (type == ValueType.ENUM) {
-                    buffer.putShort(constPool().acquireUtf(typeName).index());
-                    buffer.putShort(constPool().acquireUtf(enumName).index());
-                } else if (type == ValueType.ANNOTATION) {
-                    nested.write(buffer);
-                } else {
-                    buffer.putShort(values.size());
-                    for (ElementValue v : values) {
-                        v.write(buffer);
-                    }
-                }
-            }
+            buffer.putShort(startPc.getOffset());
+            buffer.putShort(length);
+            buffer.putShort(index);
+        }
+    }
+
+    public enum PathKind {
+        ARRAY(0),          // Annotation is deeper in an array type
+        NESTED(1),         // Annotation is deeper in a nested type
+        WILDCARD(2),       // Annotation is on the bound of a wildcard type argument of a parameterized type
+        TYPE_ARG(3);       // Annotation is on a type argument of a parameterized type
+
+        private final int tag;
+
+        PathKind(int tag) {
+            this.tag = tag;
         }
 
-        private void checkType(ValueType type) {
-            if (this.type != type) {
-                throw new IllegalArgumentException("Only element value with type " + type + " can do this action");
-            }
+        public int getTag() {
+            return tag;
         }
 
+        public static PathKind fromTag(int tag) {
+            for (PathKind v : values()) {
+                if (v.tag == tag) return v;
+            }
+            throw new RuntimeException("No such kind with tag " + tag);
+        }
     }
 }

@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
+
+import vip.creatio.gca.AttributeContainer;
 import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.ClassFileParser;
 import vip.creatio.gca.constant.Const;
@@ -17,12 +19,15 @@ public class BootstrapMethods extends TableAttribute<BootstrapMethods.Method> {
         super(classFile);
     }
 
-    public static BootstrapMethods parse(ClassFile file, ClassFileParser pool, ByteVector buffer) throws ClassFormatError {
-        BootstrapMethods inst = new BootstrapMethods(file);
+    public static BootstrapMethods parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer)
+    throws ClassFormatError {
+        BootstrapMethods inst = new BootstrapMethods(container.classFile());
+        inst.checkContainerType(container);
+
         int num = buffer.getUShort();
 
         for(int i = 0; i < num; ++i) {
-            inst.items.add(new BootstrapMethods.Method(pool, buffer));
+            inst.items.add(inst.new Method(pool, buffer));
         }
 
         return inst;
@@ -48,11 +53,16 @@ public class BootstrapMethods extends TableAttribute<BootstrapMethods.Method> {
         }
     }
 
+    @Override
+    protected void checkContainerType(AttributeContainer container) {
+        checkContainerType(container, ClassFile.class);
+    }
+
     public String name() {
         return "BootstrapMethods";
     }
 
-    public static class Method {
+    public class Method {
         private MethodHandleConst ref;
         private final List<Const> arguments = new ArrayList<>();
 
@@ -81,6 +91,10 @@ public class BootstrapMethods extends TableAttribute<BootstrapMethods.Method> {
 
         public void addArgument(Const arg) {
             this.arguments.add(arg);
+        }
+
+        public int getIndex() {
+            return items.indexOf(this);
         }
 
         private void write(ByteVector buffer) {

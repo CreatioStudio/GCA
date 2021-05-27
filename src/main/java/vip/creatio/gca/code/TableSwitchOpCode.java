@@ -19,20 +19,19 @@ public class TableSwitchOpCode extends OpCode {
     TableSwitchOpCode(CodeContainer codes, int startingOffset, ByteVector buffer) {
         super(codes);
         int pc = buffer.position() - startingOffset;
-        int padding = Util.align(pc + 1) - pc; // 0 - 3 bytes padding
-        buffer.position(buffer.position() + padding);
-        int defaultIndex = pc + buffer.getInt();
+        int padding = Util.align(pc) - pc; // 0 - 3 bytes padding
+        buffer.skip(padding);
+        int defaultIndex = pc + buffer.getInt() - 1 /* original size */;
 
         startValue = buffer.getInt();
 
         int to = buffer.getInt();
         int count = to - startValue + 1;
-        System.out.println("TO: " + to + ", start: " + startValue + ", count: " + count + ", padding: " + padding);
 
         data = new int[count + 1];
         data[0] = defaultIndex;
         for (int i = 0; i < count; i++) {
-            data[i + 1] = pc + buffer.getInt();
+            data[i + 1] = pc + buffer.getInt() - 1 /* original size */;
         }
     }
 
@@ -74,8 +73,9 @@ public class TableSwitchOpCode extends OpCode {
 
     @Override
     public int byteSize() {
-        if (data != null) return ((getOffset() + 1) % 4) + (2 + data.length << 2);
-        return ((getOffset() + 1) % 4) + ((2 + branches.size()) << 2);
+        int offset = getOffset() + 1;
+        if (data != null) return Util.align(offset) - offset + (2 + data.length << 2) + 1 /* original size */;
+        return Util.align(offset) - offset + ((3 + branches.size()) << 2) + 1 /* original size */;
     }
 
     @Override
@@ -91,13 +91,20 @@ public class TableSwitchOpCode extends OpCode {
     @Override
     public void serialize(ByteVector buffer) {
         super.serialize(buffer);
-        int padding = (getOffset() + 1) % 4;
-        buffer.position(buffer.position() + padding);
-        buffer.putInt(defaultBranch.getOffset());
-        buffer.putInt(startValue);
-        buffer.putInt(startValue + branches.size() - 1);
-        for (Label branch : branches) {
-            buffer.putInt(branch.getOffset() - getOffset());
+        int offset = getOffset();
+        int padding = Util.align(offset + 1) - offset - 1;
+        buffer.skip(padding);
+        try {
+            buffer.putInt(defaultBranch.getOffset() - offset);
+            buffer.putInt(startValue);
+            buffer.putInt(startValue + branches.size() - 1);
+            for (Label branch : branches) {
+                buffer.putInt(branch.getOffset() - offset);
+            }
+        } catch (Exception e) {
+            throw new BytecodeException(codes, offset, e, "")
+                    .setDetailInfo("default_branch=" + defaultBranch.getAnchor()
+                    + ", start_value=" + startValue + ", branches=" + branches);
         }
     }
 

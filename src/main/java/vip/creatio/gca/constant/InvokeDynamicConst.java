@@ -12,8 +12,6 @@ public class InvokeDynamicConst extends Const implements DeclaredSignature {
     private BootstrapMethods.Method method;
     private NameAndTypeConst pair;
 
-    private String[] methodSignatures;
-
     public InvokeDynamicConst(ConstPool pool, BootstrapMethods.Method bootstrap, String mthName, String mthDescriptor) {
         super(pool, ConstType.INVOKE_DYNAMIC);
         this.method = bootstrap;
@@ -43,8 +41,7 @@ public class InvokeDynamicConst extends Const implements DeclaredSignature {
     @Override
     public void write(ByteVector buffer) {
         buffer.putByte(tag());
-        BootstrapMethods mths = classFile().bootstrapMethods();
-        buffer.putShort((short) mths.indexOf(method));
+        buffer.putShort(method.getIndex());
         buffer.putShort(pool.acquire(pair).index());
     }
 

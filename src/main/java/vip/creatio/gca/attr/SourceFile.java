@@ -1,6 +1,7 @@
 package vip.creatio.gca.attr;
 
 import vip.creatio.gca.Attribute;
+import vip.creatio.gca.AttributeContainer;
 import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.ClassFileParser;
 
@@ -25,8 +26,10 @@ public class SourceFile extends Attribute {
         this.sourceName = sourceName;
     }
 
-    public static SourceFile parse(ClassFile file, ClassFileParser pool, ByteVector buffer) {
-        SourceFile inst = new SourceFile(file);
+    public static SourceFile parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer) {
+        SourceFile inst = new SourceFile(container.classFile());
+        inst.checkContainerType(container);
+
         inst.sourceName = pool.getString(buffer.getShort());
         return inst;
     }
@@ -37,6 +40,11 @@ public class SourceFile extends Attribute {
 
     public void setSource(String sourceName) {
         this.sourceName = sourceName;
+    }
+
+    @Override
+    protected void checkContainerType(AttributeContainer container) {
+        checkContainerType(container, ClassFile.class);
     }
 
     @Override

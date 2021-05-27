@@ -16,10 +16,10 @@ public class LookupSwitchOpCode extends OpCode {
 
     LookupSwitchOpCode(CodeContainer codes, int startingOffset, ByteVector buffer) {
         super(codes);
-        int pc = buffer.position() - startingOffset - 1;
-        int padding = Util.align(pc + 1) - pc; // 0 - 3 bytes padding
-        buffer.position(buffer.position() + padding);
-        int defaultIndex = pc + buffer.getInt();
+        int pc = buffer.position() - startingOffset;
+        int padding = Util.align(pc) - pc; // 0 - 3 bytes padding
+        buffer.skip(padding);
+        int defaultIndex = pc + buffer.getInt() - 1 /* original size */;
 
         int numPairs = buffer.getInt() * 2;
 
@@ -27,7 +27,7 @@ public class LookupSwitchOpCode extends OpCode {
         data[0] = defaultIndex;
         for (int i = 0; i < numPairs; i += 2) {
             data[i + 1] = pc + buffer.getInt();
-            data[i + 2] = pc + buffer.getInt();
+            data[i + 2] = pc + buffer.getInt() - 1 /* original size */;
         }
     }
 
@@ -53,8 +53,12 @@ public class LookupSwitchOpCode extends OpCode {
 
     @Override
     public int byteSize() {
-        if (data != null) return ((getOffset() + 1) % 4) + (1 + data.length << 2);
-        return ((getOffset() + 1) % 4) + ((1 + branches.size()) << 2);
+        int offset = getOffset() + 1;
+
+        if (data != null)
+            return Util.align(offset) - offset + ((1 + data.length) << 2) + 1 /* original size */;
+
+        return Util.align(offset) - offset + 8 + (branches.size() << 3) + 1 /* original size */;
     }
 
     @Override
@@ -70,13 +74,21 @@ public class LookupSwitchOpCode extends OpCode {
     @Override
     public void serialize(ByteVector buffer) {
         super.serialize(buffer);
-        int padding = (getOffset() + 1) % 4;
-        buffer.position(buffer.position() + padding);
-        buffer.putInt(defaultBranch.getOffset());
-        buffer.putInt(branches.size());
-        for (Map.Entry<Integer, Label> entry : branches.entrySet()) {
-            buffer.putInt(entry.getKey());
-            buffer.putInt(entry.getValue().getOffset() - getOffset());
+        int offset = getOffset();
+        int padding = Util.align(offset + 1) - offset - 1;
+        System.out.println("Padding: " + padding);
+        buffer.skip(padding);
+        try {
+            buffer.putInt(defaultBranch.getOffset());
+            buffer.putInt(branches.size());
+            for (Map.Entry<Integer, Label> entry : branches.entrySet()) {
+                buffer.putInt(entry.getKey());
+                buffer.putInt(entry.getValue().getOffset() - offset);
+            }
+        } catch (Exception e) {
+            throw new BytecodeException(codes, offset, e, "")
+                    .setDetailInfo("default_branch=" + defaultBranch.getAnchor()
+                            + ", branches=" + branches);
         }
     }
 

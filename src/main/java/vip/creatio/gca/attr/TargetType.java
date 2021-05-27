@@ -1,6 +1,6 @@
 package vip.creatio.gca.attr;
 
-import vip.creatio.gca.util.Pair;
+import java.util.NoSuchElementException;
 
 public enum TargetType {
 
@@ -314,5 +314,13 @@ public enum TargetType {
 
     public int getSize() {
         return size;
+    }
+
+    public static TargetType fromTag(int tag) {
+        byte b = (byte) tag;
+        for (TargetType v : values()) {
+            if (v.tag == b) return v;
+        }
+        throw new NoSuchElementException("No element found with tag " + tag);
     }
 }

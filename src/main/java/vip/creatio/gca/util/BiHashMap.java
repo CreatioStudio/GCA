@@ -2,9 +2,7 @@
 package vip.creatio.gca.util;
 
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.Map.Entry;
 
 public class BiHashMap<K, V> extends HashMap<K, V> {
     private final BiHashMap<V, K> rev;
