@@ -13,6 +13,12 @@ import static vip.creatio.gca.code.OpCodeType.*;
 
 public abstract class OpCode implements Serializer {
 
+    public static final int FLAG_JUMP =             0b0000_0000_0000_0001;
+    public static final int FLAG_INVOKE =           0b0000_0000_0000_0010;
+    public static final int FLAG_LOAD =             0b0000_0000_0000_0100;
+    public static final int FLAG_STORE =            0b0000_0000_0000_1000;
+    public static final int FLAG_MATH =             0b0000_0000_0001_0000;
+
     final CodeContainer codes;
 
     OpCode(CodeContainer codes) {

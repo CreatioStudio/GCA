@@ -1,0 +1,34 @@
+Operation
+Extend local variable index by additional bytes
+
+Format 1
+
+wide
+<opcode>
+indexbyte1
+indexbyte2
+where <opcode> is one of iload, fload, aload, lload, dload, istore, fstore, astore, lstore, dstore, or ret
+
+Format 2
+
+wide
+iinc
+indexbyte1
+indexbyte2
+constbyte1
+constbyte2
+Forms
+wide = 196 (0xc4)
+
+Operand Stack
+Same as modified instruction
+
+Description
+The wide instruction modifies the behavior of another instruction. It takes one of two formats, depending on the instruction being modified. The first form of the wide instruction modifies one of the instructions iload, fload, aload, lload, dload, istore, fstore, astore, lstore, dstore, or ret (§iload, §fload, §aload, §lload, §dload, §istore, §fstore, §astore, §lstore, §dstore, §ret). The second form applies only to the iinc instruction (§iinc).
+
+In either case, the wide opcode itself is followed in the compiled code by the opcode of the instruction wide modifies. In either form, two unsigned bytes indexbyte1 and indexbyte2 follow the modified opcode and are assembled into a 16-bit unsigned index to a local variable in the current frame (§2.6), where the value of the index is (indexbyte1 << 8) | indexbyte2. The calculated index must be an index into the local variable array of the current frame. Where the wide instruction modifies an lload, dload, lstore, or dstore instruction, the index following the calculated index (index + 1) must also be an index into the local variable array. In the second form, two immediate unsigned bytes constbyte1 and constbyte2 follow indexbyte1 and indexbyte2 in the code stream. Those bytes are also assembled into a signed 16-bit constant, where the constant is (constbyte1 << 8) | constbyte2.
+
+The widened bytecode operates as normal, except for the use of the wider index and, in the case of the second form, the larger increment range.
+
+Notes
+Although we say that wide "modifies the behavior of another instruction," the wide instruction effectively treats the bytes constituting the modified instruction as operands, denaturing the embedded instruction in the process. In the case of a modified iinc instruction, one of the logical operands of the iinc is not even at the normal offset from the opcode. The embedded instruction must never be executed directly; its opcode must never be the target of any control transfer instruction.
