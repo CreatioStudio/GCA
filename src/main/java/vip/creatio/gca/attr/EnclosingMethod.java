@@ -21,22 +21,25 @@ public class EnclosingMethod extends Attribute implements DeclaredSignature {
     @Nullable
     private NameAndTypeConst method;
 
+    private EnclosingMethod(AttributeContainer container) {
+        super(container);
+    }
+
     public EnclosingMethod(ClassFile file) {
-        super(file);
+        this((AttributeContainer) file);
     }
 
     public EnclosingMethod(ClassFile classFile,
                            ClassConst clazz,
                            @Nullable NameAndTypeConst method) {
-        this(classFile);
+        this((AttributeContainer) classFile);
         this.clazz = clazz;
         this.method = method;
     }
 
     public static EnclosingMethod parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer)
     throws ClassFormatError {
-        EnclosingMethod inst = new EnclosingMethod(container.classFile());
-        inst.checkContainerType(container);
+        EnclosingMethod inst = new EnclosingMethod(container);
 
         inst.clazz = (ClassConst) pool.get(buffer.getShort());
         inst.method = (NameAndTypeConst) pool.get(buffer.getShort());

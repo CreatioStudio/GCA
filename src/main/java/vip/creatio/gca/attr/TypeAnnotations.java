@@ -9,12 +9,12 @@ public class TypeAnnotations extends TableAttribute<TypeAnnotation> {
 
     private boolean runtimeVisible;
 
-    public TypeAnnotations(ClassFile classFile) {
-        super(classFile);
+    public TypeAnnotations(AttributeContainer container) {
+        super(container);
     }
 
     public static TypeAnnotations parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer, boolean visible) {
-        TypeAnnotations inst = new TypeAnnotations(container.classFile());
+        TypeAnnotations inst = new TypeAnnotations(container);
         inst.runtimeVisible = visible;
         int len = buffer.getUShort();
         for (int i = 0; i < len; i++) {
@@ -29,7 +29,7 @@ public class TypeAnnotations extends TableAttribute<TypeAnnotation> {
     }
 
     public TypeAnnotation add(String className) {
-        TypeAnnotation anno = new TypeAnnotation(classFile, className);
+        TypeAnnotation anno = new TypeAnnotation(container.classFile(), className);
         add(anno);
         return anno;
     }

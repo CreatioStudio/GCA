@@ -1,6 +1,8 @@
 package vip.creatio.gca.attr;
 
+import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.ClassFileParser;
+import vip.creatio.gca.ConstPool;
 import vip.creatio.gca.ValueType;
 import vip.creatio.gca.constant.Const;
 import vip.creatio.gca.util.ByteVector;
@@ -11,7 +13,7 @@ import java.util.List;
 
 public class ElementValue {
 
-    private final AbstractAnnotation annotation;
+    private final ConstPool cp;
     final ValueType type;
 
     /*
@@ -25,13 +27,13 @@ public class ElementValue {
     Object union;   // such java where's my union?
     String enumName;
 
-    ElementValue(AbstractAnnotation annotation, ValueType type) {
-        this.annotation = annotation;
+    ElementValue(ConstPool cp, ValueType type) {
+        this.cp = cp;
         this.type = type;
     }
 
-    ElementValue(AbstractAnnotation annotation, ClassFileParser pool, ByteVector buffer) {
-        this.annotation = annotation;
+    ElementValue(ClassFile file, ClassFileParser pool, ByteVector buffer) {
+        this.cp = file.constPool();
         type = ValueType.fromTag(buffer.getByte());
         if (type.isValue()) {
             union = (Const.Value) pool.get(buffer.getShort());
@@ -42,12 +44,12 @@ public class ElementValue {
                 union = pool.getString(buffer.getShort());
                 enumName = pool.getString(buffer.getShort());
             } else if (type == ValueType.ANNOTATION) {
-                union = Annotation.parse(annotation.file, pool, buffer);
+                union = Annotation.parse(file, pool, buffer);
             } else {
                 int num = buffer.getUShort();
                 List<ElementValue> v = new ArrayList<>();
                 for (int i = 0; i < num; i++) {
-                    v.add(new ElementValue(annotation, pool, buffer));
+                    v.add(new ElementValue(file, pool, buffer));
                 }
                 union = v;
             }
@@ -124,13 +126,13 @@ public class ElementValue {
     @SuppressWarnings("unchecked")
     void collect() {
         if (type.isValue()) {
-            annotation.constPool().acquire((Const) union);
+            cp.acquire((Const) union);
         } else {
             if (type == ValueType.CLASS) {
-                annotation.constPool().acquireUtf((String) union);
+                cp.acquireUtf((String) union);
             } else if (type == ValueType.ENUM) {
-                annotation.constPool().acquireUtf((String) union);
-                annotation.constPool().acquireUtf(enumName);
+                cp.acquireUtf((String) union);
+                cp.acquireUtf(enumName);
             } else if (type == ValueType.ANNOTATION) {
                 ((AbstractAnnotation) union).collect();
             } else {
@@ -148,10 +150,10 @@ public class ElementValue {
             buffer.putShort(((Const) union).index());
         } else {
             if (type == ValueType.CLASS) {
-                buffer.putShort(annotation.constPool().acquireUtf((String) union).index());
+                buffer.putShort(cp.acquireUtf((String) union).index());
             } else if (type == ValueType.ENUM) {
-                buffer.putShort(annotation.constPool().acquireUtf((String) union).index());
-                buffer.putShort(annotation.constPool().acquireUtf(enumName).index());
+                buffer.putShort(cp.acquireUtf((String) union).index());
+                buffer.putShort(cp.acquireUtf(enumName).index());
             } else if (type == ValueType.ANNOTATION) {
                 ((AbstractAnnotation) union).write(buffer);
             } else {

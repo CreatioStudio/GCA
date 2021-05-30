@@ -34,7 +34,7 @@ public class Annotation extends AbstractAnnotation {
         int num = buffer.getUShort();
         for (int i = 0; i < num; i++) {
             String name = pool.getString(buffer.getUShort());
-            anno.nameValuePairs.add(new Pair<>(name, new ElementValue(anno, pool, buffer)));
+            anno.nameValuePairs.add(new Pair<>(name, new ElementValue(file, pool, buffer)));
         }
         return anno;
     }
@@ -44,7 +44,7 @@ public class Annotation extends AbstractAnnotation {
     }
 
     public ElementValue addValue(String name, ValueType type) {
-        ElementValue value = new ElementValue(this, type);
+        ElementValue value = new ElementValue(constPool(), type);
         nameValuePairs.add(new Pair<>(name, value));
         return value;
     }
@@ -61,21 +61,21 @@ public class Annotation extends AbstractAnnotation {
     }
 
     public ElementValue addConstValue(String name, Const.Value value) {
-        ElementValue v = new ElementValue(this, value.valueType());
+        ElementValue v = new ElementValue(constPool(), value.valueType());
         v.union = value;
         nameValuePairs.add(new Pair<>(name, v));
         return v;
     }
 
     public ElementValue addClassValue(String name, String clsName) {
-        ElementValue v = new ElementValue(this, ValueType.CLASS);
+        ElementValue v = new ElementValue(constPool(), ValueType.CLASS);
         v.union = clsName;
         nameValuePairs.add(new Pair<>(name, v));
         return v;
     }
 
     public ElementValue addEnumValue(String name, String enumClass, String enumName) {
-        ElementValue v = new ElementValue(this, ValueType.ENUM);
+        ElementValue v = new ElementValue(constPool(), ValueType.ENUM);
         v.union = enumClass;
         v.enumName = enumName;
         nameValuePairs.add(new Pair<>(name, v));
@@ -83,14 +83,14 @@ public class Annotation extends AbstractAnnotation {
     }
 
     public ElementValue addAnnotationValue(String name, Annotation anno) {
-        ElementValue v = new ElementValue(this, ValueType.ANNOTATION);
+        ElementValue v = new ElementValue(constPool(), ValueType.ANNOTATION);
         v.union = anno;
         nameValuePairs.add(new Pair<>(name, v));
         return v;
     }
 
     public ElementValue addArrayValue(String name, Collection<ElementValue> values) {
-        ElementValue v = new ElementValue(this, ValueType.ARRAY);
+        ElementValue v = new ElementValue(constPool(), ValueType.ARRAY);
         v.union = new ArrayList<>(values);
         nameValuePairs.add(new Pair<>(name, v));
         return v;

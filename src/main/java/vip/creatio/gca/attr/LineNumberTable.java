@@ -16,13 +16,16 @@ import vip.creatio.gca.util.Pair;
  */
 public class LineNumberTable extends TableAttribute<Pair<Integer, Integer>> {
 
-    public LineNumberTable(ClassFile classFile) {
-        super(classFile);
+    private LineNumberTable(AttributeContainer container) {
+        super(container);
+    }
+
+    public LineNumberTable(Code c) {
+        this((AttributeContainer) c);
     }
 
     public static LineNumberTable parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer) {
-        LineNumberTable inst = new LineNumberTable(container.classFile());
-        inst.checkContainerType(container);
+        LineNumberTable inst = new LineNumberTable(container);
 
         int len = buffer.getUShort();
         for (int i = 0; i < len; i++) {

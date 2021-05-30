@@ -17,17 +17,17 @@ public class Signature extends Attribute {
 
     private String signature;
 
-    public Signature(ClassFile classFile) {
-        super(classFile);
+    public Signature(AttributeContainer container) {
+        super(container);
     }
 
-    public Signature(ClassFile file, String signature) {
-        this(file);
+    public Signature(AttributeContainer container, String signature) {
+        this(container);
         this.signature = signature;
     }
 
     public static Signature parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer) {
-        Signature inst = new Signature(container.classFile());
+        Signature inst = new Signature(container);
         inst.signature = pool.getString(buffer.getUShort());
         return inst;
     }

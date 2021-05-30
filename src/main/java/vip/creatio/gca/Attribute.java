@@ -12,7 +12,9 @@ public abstract class Attribute {
     private static final Map<String, AttributeResolver> DEFAULT_RESOLVERS = new HashMap<>();
     static {
         DEFAULT_RESOLVERS.put("ConstantValue", ConstantValue::parse);
+        DEFAULT_RESOLVERS.put("AnnotationDefault", AnnotationDefault::parse);
         DEFAULT_RESOLVERS.put("Code", Code::parse);
+        DEFAULT_RESOLVERS.put("StackMapTable", StackMapTable::parse);
         DEFAULT_RESOLVERS.put("Exceptions", Exceptions::parse);
         DEFAULT_RESOLVERS.put("EnclosingMethod", EnclosingMethod::parse);
         DEFAULT_RESOLVERS.put("InnerClasses", InnerClasses::parse);
@@ -20,6 +22,7 @@ public abstract class Attribute {
         DEFAULT_RESOLVERS.put("Signature", Signature::parse);
         DEFAULT_RESOLVERS.put("SourceFile", SourceFile::parse);
         DEFAULT_RESOLVERS.put("LocalVariableTable", LocalVariableTable::parse);
+        DEFAULT_RESOLVERS.put("LocalVariableTypeTable", LocalVariableTypeTable::parse);
         DEFAULT_RESOLVERS.put("BootstrapMethods", BootstrapMethods::parse);
         DEFAULT_RESOLVERS.put("RuntimeVisibleAnnotations", (a, b, c) -> Annotations.parse(a, b, c, true));
         DEFAULT_RESOLVERS.put("RuntimeInvisibleAnnotations", (a, b, c) -> Annotations.parse(a, b, c, false));
@@ -33,20 +36,21 @@ public abstract class Attribute {
         return new HashMap<>(DEFAULT_RESOLVERS);
     }
 
-    protected final ClassFile classFile;
+    protected final AttributeContainer container;
 
-    protected Attribute(ClassFile classFile) {
-        this.classFile = classFile;
+    protected Attribute(AttributeContainer container) {
+        checkContainerType(container);
+        this.container = container;
     }
 
     public abstract String name();
 
     public ClassFile classFile() {
-        return classFile;
+        return container.classFile();
     }
 
     protected ConstPool constPool() {
-        return classFile.constPool();
+        return classFile().constPool();
     }
 
     protected abstract void writeData(ByteVector buffer);

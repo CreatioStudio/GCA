@@ -52,6 +52,15 @@ public class IncreamentOpCode extends OpCode {
     }
 
     @Override
+    public int byteSize() {
+        if (index > 255 || value > 255 || value < -256) {
+            return 6;
+        } else {
+            return super.byteSize();
+        }
+    }
+
+    @Override
     public OpCodeType type() {
         return OpCodeType.IINC;
     }

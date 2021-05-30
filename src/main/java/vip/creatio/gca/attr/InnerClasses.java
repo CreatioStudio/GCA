@@ -16,14 +16,17 @@ import java.util.EnumSet;
  */
 public class InnerClasses extends TableAttribute<InnerClasses.Class> {
 
+    private InnerClasses(AttributeContainer c) {
+        super(c);
+    }
+
     public InnerClasses(ClassFile classFile) {
-        super(classFile);
+        this((AttributeContainer) classFile);
     }
 
     public static InnerClasses parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer)
     throws ClassFormatError {
-        InnerClasses inst = new InnerClasses(container.classFile());
-        inst.checkContainerType(container);
+        InnerClasses inst = new InnerClasses(container);
 
         int num = buffer.getUShort();
         for (int i = 0; i < num; i++) {
@@ -46,12 +49,12 @@ public class InnerClasses extends TableAttribute<InnerClasses.Class> {
         for (Class i : items) {
             if (i.inner.equals(clazz)) return;
         }
-        Class i = new Class(clazz, classFile.getThisClass(), innerName, flags);
+        Class i = new Class(clazz, ((ClassFile) container).getThisClass(), innerName, flags);
         items.add(i);
     }
 
     public void add(ClassFile classFile) {
-        ClassConst c = this.classFile.constPool().acquireClass(classFile.getThisClass());
+        ClassConst c = this.constPool().acquireClass(classFile.getThisClass());
         String name = c.getName();
         name = name.substring(name.lastIndexOf('/') + 1);
         add(c, name, classFile.getAccessFlags());

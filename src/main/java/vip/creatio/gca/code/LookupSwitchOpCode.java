@@ -3,8 +3,8 @@ package vip.creatio.gca.code;
 import vip.creatio.gca.util.ByteVector;
 import vip.creatio.gca.util.Util;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class LookupSwitchOpCode extends OpCode {
 
@@ -12,7 +12,8 @@ public class LookupSwitchOpCode extends OpCode {
     private int[] data;
 
     private Label defaultBranch;
-    private final Map<Integer, Label> branches = new HashMap<>();
+    // lookupswitch requires integers to be in order, so we use a tree map
+    private final Map<Integer, Label> branches = new TreeMap<>(Integer::compareTo);
 
     LookupSwitchOpCode(CodeContainer codes, int startingOffset, ByteVector buffer) {
         super(codes);
@@ -26,7 +27,7 @@ public class LookupSwitchOpCode extends OpCode {
         data = new int[numPairs + 1];
         data[0] = defaultIndex;
         for (int i = 0; i < numPairs; i += 2) {
-            data[i + 1] = pc + buffer.getInt();
+            data[i + 1] = buffer.getInt();
             data[i + 2] = pc + buffer.getInt() - 1 /* original size */;
         }
     }
@@ -53,7 +54,7 @@ public class LookupSwitchOpCode extends OpCode {
 
     @Override
     public int byteSize() {
-        int offset = getOffset() + 1;
+        int offset = offset() + 1;
 
         if (data != null)
             return Util.align(offset) - offset + ((1 + data.length) << 2) + 1 /* original size */;
@@ -74,12 +75,11 @@ public class LookupSwitchOpCode extends OpCode {
     @Override
     public void serialize(ByteVector buffer) {
         super.serialize(buffer);
-        int offset = getOffset();
+        int offset = offset();
         int padding = Util.align(offset + 1) - offset - 1;
-        System.out.println("Padding: " + padding);
         buffer.skip(padding);
         try {
-            buffer.putInt(defaultBranch.getOffset());
+            buffer.putInt(defaultBranch.getOffset() - offset);
             buffer.putInt(branches.size());
             for (Map.Entry<Integer, Label> entry : branches.entrySet()) {
                 buffer.putInt(entry.getKey());

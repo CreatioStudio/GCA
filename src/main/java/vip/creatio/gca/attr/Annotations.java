@@ -9,12 +9,12 @@ public class Annotations extends TableAttribute<Annotation> {
 
     private boolean runtimeVisible;
 
-    public Annotations(ClassFile classFile) {
-        super(classFile);
+    public Annotations(AttributeContainer container) {
+        super(container);
     }
 
     public static Annotations parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer, boolean visible) {
-        Annotations inst = new Annotations(container.classFile());
+        Annotations inst = new Annotations(container);
         inst.runtimeVisible = visible;
         int len = buffer.getUShort();
         for (int i = 0; i < len; i++) {
@@ -29,7 +29,7 @@ public class Annotations extends TableAttribute<Annotation> {
     }
 
     public Annotation add(String className) {
-        Annotation anno = new Annotation(classFile, className);
+        Annotation anno = new Annotation(container.classFile(), className);
         add(anno);
         return anno;
     }

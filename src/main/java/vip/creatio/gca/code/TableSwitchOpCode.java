@@ -73,7 +73,7 @@ public class TableSwitchOpCode extends OpCode {
 
     @Override
     public int byteSize() {
-        int offset = getOffset() + 1;
+        int offset = offset() + 1;
         if (data != null) return Util.align(offset) - offset + (2 + data.length << 2) + 1 /* original size */;
         return Util.align(offset) - offset + ((3 + branches.size()) << 2) + 1 /* original size */;
     }
@@ -91,7 +91,7 @@ public class TableSwitchOpCode extends OpCode {
     @Override
     public void serialize(ByteVector buffer) {
         super.serialize(buffer);
-        int offset = getOffset();
+        int offset = offset();
         int padding = Util.align(offset + 1) - offset - 1;
         buffer.skip(padding);
         try {

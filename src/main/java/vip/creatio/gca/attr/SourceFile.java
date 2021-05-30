@@ -17,18 +17,21 @@ public class SourceFile extends Attribute {
 
     private String sourceName;
 
-    public SourceFile(ClassFile classFile) {
-        super(classFile);
+    private SourceFile(AttributeContainer c) {
+        super(c);
+    }
+
+    public SourceFile(ClassFile file) {
+        this((AttributeContainer) file);
     }
 
     public SourceFile(ClassFile file, String sourceName) {
-        this(file);
+        this((AttributeContainer) file);
         this.sourceName = sourceName;
     }
 
     public static SourceFile parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer) {
-        SourceFile inst = new SourceFile(container.classFile());
-        inst.checkContainerType(container);
+        SourceFile inst = new SourceFile(container);
 
         inst.sourceName = pool.getString(buffer.getShort());
         return inst;

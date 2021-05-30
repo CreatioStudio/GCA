@@ -19,7 +19,7 @@ public class Label {
     }
 
     public int getOffset() {
-        return anchor.getOffset();
+        return anchor.offset();
     }
 
     public String getName() {

@@ -1,6 +1,7 @@
 package vip.creatio.gca.attr;
 
 import vip.creatio.gca.Attribute;
+import vip.creatio.gca.AttributeContainer;
 import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.Serializer;
 import vip.creatio.gca.constant.UTFConst;
@@ -10,10 +11,10 @@ import java.util.List;
 
 public abstract class TableAttribute<T> extends Attribute {
 
-    protected final List<T> items = new ArrayList<>(4);
+    protected List<T> items = new ArrayList<>(4);
 
-    protected TableAttribute(ClassFile classFile) {
-        super(classFile);
+    protected TableAttribute(AttributeContainer container) {
+        super(container);
     }
 
     public List<T> getTable() {

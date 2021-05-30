@@ -1,14 +1,12 @@
 package vip.creatio.gca.attr;
 
 import vip.creatio.gca.*;
-import vip.creatio.gca.code.CodeContainer;
 import vip.creatio.gca.code.OpCode;
 import vip.creatio.gca.constant.ClassConst;
 import vip.creatio.gca.constant.Const;
 import vip.creatio.gca.util.ByteVector;
 import vip.creatio.gca.util.Pair;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -146,7 +144,7 @@ public class TypeAnnotation extends AbstractAnnotation {
             int num = buffer.getUShort();
             for (int i = 0; i < num; i++) {
                 String name = pool.getString(buffer.getUShort());
-                anno.nameValuePairs.add(new Pair<>(name, new ElementValue(anno, pool, buffer)));
+                anno.nameValuePairs.add(new Pair<>(name, new ElementValue(container.classFile(), pool, buffer)));
             }
         }
         return anno;
@@ -157,7 +155,7 @@ public class TypeAnnotation extends AbstractAnnotation {
     }
 
     public ElementValue addValue(String name, ValueType type) {
-        ElementValue value = new ElementValue(this, type);
+        ElementValue value = new ElementValue(constPool(), type);
         nameValuePairs.add(new Pair<>(name, value));
         return value;
     }
@@ -174,21 +172,21 @@ public class TypeAnnotation extends AbstractAnnotation {
     }
 
     public ElementValue addConstValue(String name, Const.Value value) {
-        ElementValue v = new ElementValue(this,value.valueType());
+        ElementValue v = new ElementValue(constPool(), value.valueType());
         v.union = value;
         nameValuePairs.add(new Pair<>(name, v));
         return v;
     }
 
     public ElementValue addClassValue(String name, String clsName) {
-        ElementValue v = new ElementValue(this,ValueType.CLASS);
+        ElementValue v = new ElementValue(constPool(), ValueType.CLASS);
         v.union = clsName;
         nameValuePairs.add(new Pair<>(name, v));
         return v;
     }
 
     public ElementValue addEnumValue(String name, String enumClass, String enumName) {
-        ElementValue v = new ElementValue(this, ValueType.ENUM);
+        ElementValue v = new ElementValue(constPool(), ValueType.ENUM);
         v.union = enumClass;
         v.enumName = enumName;
         nameValuePairs.add(new Pair<>(name, v));
@@ -196,14 +194,14 @@ public class TypeAnnotation extends AbstractAnnotation {
     }
 
     public ElementValue addAnnotationValue(String name, TypeAnnotation anno) {
-        ElementValue v = new ElementValue(this,ValueType.ANNOTATION);
+        ElementValue v = new ElementValue(constPool(), ValueType.ANNOTATION);
         v.union = anno;
         nameValuePairs.add(new Pair<>(name, v));
         return v;
     }
 
     public ElementValue addArrayValue(String name, Collection<ElementValue> values) {
-        ElementValue v = new ElementValue(this,ValueType.ARRAY);
+        ElementValue v = new ElementValue(constPool(), ValueType.ARRAY);
         v.union = new ArrayList<>(values);
         nameValuePairs.add(new Pair<>(name, v));
         return v;
@@ -344,10 +342,10 @@ public class TypeAnnotation extends AbstractAnnotation {
                 buffer.putShort(catchTarget.getIndex());
                 break;
             case TargetType.TARGET_OFFSET:
-                buffer.putShort(offset.getOffset());
+                buffer.putShort(offset.offset());
                 break;
             case TargetType.TARGET_TYPE_ARGUMENT:
-                buffer.putShort(offset.getOffset());
+                buffer.putShort(offset.offset());
                 buffer.putByte(typeArgumentIndex);
                 break;
             default:
@@ -428,7 +426,7 @@ public class TypeAnnotation extends AbstractAnnotation {
         }
 
         private void write(ByteVector buffer) {
-            buffer.putShort(startPc.getOffset());
+            buffer.putShort(startPc.offset());
             buffer.putShort(length);
             buffer.putShort(index);
         }

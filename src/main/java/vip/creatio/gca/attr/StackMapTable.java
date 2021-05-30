@@ -1,11 +1,15 @@
 package vip.creatio.gca.attr;
 
 import vip.creatio.gca.AttributeContainer;
-import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.ClassFileParser;
-import vip.creatio.gca.ConstPool;
+import vip.creatio.gca.code.Label;
+import vip.creatio.gca.code.OpCode;
+import vip.creatio.gca.code.OpCodeType;
+import vip.creatio.gca.constant.Const;
 import vip.creatio.gca.util.ByteVector;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 /**
@@ -64,23 +68,23 @@ import java.util.NoSuchElementException;
  */
 public class StackMapTable extends TableAttribute<StackMapTable.Frame> {
 
-    public StackMapTable(ClassFile classFile) {
-        super(classFile);
+    public StackMapTable(Code c) {
+        super(c);
+    }
+
+    private StackMapTable(AttributeContainer c) {
+        super(c);
     }
 
     public static StackMapTable parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer) {
-        StackMapTable inst = new StackMapTable(container.classFile());
-        inst.checkContainerType(container);
+        StackMapTable inst = new StackMapTable(container);
 
         int len = buffer.getUShort();
+        int[] index = new int[1];
         for (int i = 0; i < len; i++) {
-            inst.items.add(inst.new Frame(pool, buffer));
+            inst.items.add(inst.new Frame((Code) container, pool, buffer, index));
         }
         return inst;
-    }
-
-    public void add(int startPc, int length, String name, String descriptor, int index) {
-        items.add(new Frame(startPc, length, name, descriptor, index));
     }
 
     @Override
@@ -90,103 +94,305 @@ public class StackMapTable extends TableAttribute<StackMapTable.Frame> {
 
     @Override
     public String name() {
-        return "LocalVariableTable";
+        return "StackMapTable";
     }
 
     @Override
     protected void collect() {
         super.collect();
-        ConstPool pool = constPool();
         for (Frame item : items) {
-            pool.acquireUtf(item.getName());
-            pool.acquireUtf(item.getDescriptor());
+            item.collect();
         }
     }
 
     @Override
     protected void writeData(ByteVector buffer) {
         buffer.putShort((short) items.size());
+        int[] lastIndex = new int[1];
         for (Frame i : items) {
-            i.write(buffer);
+            i.write(buffer, lastIndex);
         }
+    }
+
+    private Code code() {
+        return (Code) container;
     }
 
     public final class Frame {
 
-        private int startPc;
-        private int length;
-        private String name;
-        private String descriptor;
-        private int index;
+        private final FrameType type;
+        private int k;  // local variable index
+        private Label label;  // non-null
+        private List<VerificationInfo> stack;
+        private List<VerificationInfo> locals;
 
-        Frame(int startPc, int length, String name, String descriptor, int index) {
-            this.startPc = startPc;
-            this.length = length;
-            this.name = name;
-            this.descriptor = descriptor;
-            this.index = index;
+        Frame(Code c, ClassFileParser pool, ByteVector buffer, int[] lastIndex /* int pointer */ ) {
+            int v = buffer.getUByte();
+            this.type = FrameType.fromTag(v);
+            int offDelta;
+            switch (this.type) {
+                case SAME:
+                    offDelta = v;
+                    this.label = c.visitLabel(c.fromOffset(lastIndex[0] + offDelta));
+                    lastIndex[0] += offDelta + 1;
+                    break;
+                case SAME_LOCAL_1_STACK_ITEM:
+                    offDelta = v - type.getTagLow();
+                    this.label = c.visitLabel(c.fromOffset(lastIndex[0] + offDelta));
+                    lastIndex[0] += offDelta + 1;
+                    this.stack = new ArrayList<>();
+                    this.stack.add(new VerificationInfo(c, pool, buffer));
+                    break;
+                case SAME_LOCAL_1_STACK_ITEM_EX:
+                    offDelta = buffer.getUShort();
+                    this.label = c.visitLabel(c.fromOffset(lastIndex[0] + offDelta));
+                    lastIndex[0] += offDelta + 1;
+                    this.stack = new ArrayList<>();
+                    this.stack.add(new VerificationInfo(c, pool, buffer));
+                    break;
+                case CHOP:
+                    this.k = 251 - v;
+                    offDelta = buffer.getUShort();
+                    this.label = c.visitLabel(c.fromOffset(lastIndex[0] + offDelta));
+                    lastIndex[0] += offDelta + 1;
+                    break;
+                case SAME_EX:
+                    offDelta = buffer.getUShort();
+                    this.label = c.visitLabel(c.fromOffset(lastIndex[0] + offDelta));
+                    lastIndex[0] += offDelta + 1;
+                    break;
+                case APPEND:
+                    this.k = v - 251;
+                    offDelta = buffer.getUShort();
+                    this.label = c.visitLabel(c.fromOffset(lastIndex[0] + offDelta));
+                    lastIndex[0] += offDelta + 1;
+                    this.locals = new ArrayList<>();
+                    for (int i = 0; i < k; i++) {
+                        locals.add(new VerificationInfo(c, pool, buffer));
+                    }
+                    break;
+                case FULL:
+                    offDelta = buffer.getUShort();
+                    this.label = c.visitLabel(c.fromOffset(lastIndex[0] + offDelta));
+                    lastIndex[0] += offDelta + 1;
+
+                    int num = buffer.getUShort();
+                    this.locals = new ArrayList<>();
+                    for (int i = 0; i < num; i++) {
+                        locals.add(new VerificationInfo(c, pool, buffer));
+                    }
+
+                    num = buffer.getUShort();
+                    this.stack = new ArrayList<>();
+                    for (int i = 0; i < num; i++) {
+                        stack.add(new VerificationInfo(c, pool, buffer));
+                    }
+                    break;
+            }
         }
 
-        Frame(ClassFileParser pool, ByteVector buffer) {
-            startPc = buffer.getUShort();
-            length = buffer.getUShort();
-            name = pool.getString(buffer.getUShort());
-            descriptor = pool.getString(buffer.getUShort());
-            index = buffer.getUShort();
+        public FrameType getType() {
+            return type;
         }
 
-        public int getStartPc() {
-            return startPc;
+        public void setLabel(Label label) {
+            this.label = label;
         }
 
-        public void setStartPc(int startPc) {
-            this.startPc = startPc;
+        public Label getLabel() {
+            return label;
         }
 
-        public int getLength() {
-            return length;
+        // get k
+        public int getChopIndex() {
+            checkType(FrameType.CHOP);
+            return k;
         }
 
-        public void setLength(int length) {
-            this.length = length;
+        public void setChopIndex(int k) {
+            checkType(FrameType.CHOP);
+            this.k = k;
         }
 
-        public String getName() {
-            return name;
+        public List<VerificationInfo> getLocals() {
+            checkType(FrameType.APPEND, FrameType.FULL);
+            return locals;
         }
 
-        public void setName(String name) {
-            this.name = name;
+        public List<VerificationInfo> getStacks() {
+            checkType(FrameType.FULL);
+            return stack;
         }
 
-        public String getDescriptor() {
-            return descriptor;
+        public VerificationInfo getStack() {
+            checkType(FrameType.SAME_LOCAL_1_STACK_ITEM, FrameType.SAME_LOCAL_1_STACK_ITEM_EX);
+            return stack.get(0);
         }
 
-        public void setDescriptor(String descriptor) {
-            this.descriptor = descriptor;
+        public void setStack(VerificationInfo v) {
+            checkType(FrameType.SAME_LOCAL_1_STACK_ITEM, FrameType.SAME_LOCAL_1_STACK_ITEM_EX);
+            stack.set(0, v);
         }
 
-        public int getIndex() {
-            return index;
+        private void write(ByteVector buffer, int[] lastIndex /* int ptr */ ) {
+            int offset = label.getOffset();
+            int offsetDelta = label.getOffset() - lastIndex[0];
+            lastIndex[0] = offset + 1;
+
+            switch (type) {
+                case SAME:
+                    if (offsetDelta <  64) {
+                        buffer.putByte(offsetDelta);
+                        break;
+                    }
+                case SAME_EX:
+                    buffer.putByte(type.getTagLow());
+                    buffer.putShort(offsetDelta);
+                    break;
+                case SAME_LOCAL_1_STACK_ITEM:
+                    if (offsetDelta < 64) {
+                        buffer.putByte(type.getTagLow() + offsetDelta);
+                        stack.get(0).write(buffer);
+                        break;
+                    }
+                case SAME_LOCAL_1_STACK_ITEM_EX:
+                    buffer.putByte(type.getTagLow());
+                    buffer.putShort(offsetDelta);
+                    stack.get(0).write(buffer);
+                    break;
+                case CHOP:
+                    buffer.putByte(251 - k);
+                    buffer.putShort(offsetDelta);
+                    break;
+                case APPEND:
+                    buffer.putByte(251 + k);
+                    buffer.putShort(offsetDelta);
+                    for (int i = 0; i < k; i++) {
+                        locals.get(i).write(buffer);
+                    }
+                    break;
+                case FULL:
+                    buffer.putByte(type.getTagLow());
+                    buffer.putShort(offsetDelta);
+                    buffer.putShort(locals.size());
+                    for (VerificationInfo l : locals) {
+                        l.write(buffer);
+                    }
+                    buffer.putShort(stack.size());
+                    for (VerificationInfo s : stack) {
+                        s.write(buffer);
+                    }
+                    break;
+            }
         }
 
-        public void setIndex(int index) {
-            this.index = index;
-        }
-
-        public void write(ByteVector buffer) {
-            buffer.putShort(startPc);
-            buffer.putShort(length);
-            buffer.putShort(constPool().acquireUtf(name).index());
-            buffer.putShort(constPool().acquireUtf(descriptor).index());
-            buffer.putShort(index);
+        private void collect() {
+            if (locals != null) {
+                for (VerificationInfo l : locals) {
+                    l.collect();
+                }
+            }
+            if (stack != null) {
+                for (VerificationInfo s : stack) {
+                    s.collect();
+                }
+            }
         }
 
         @Override
         public String toString() {
-            return "{start_pc=" + startPc + ",length=" + length + ",name=" + name + ",descriptor="
-                    + descriptor + ",index=" + index + '}';
+            StringBuilder sb = new StringBuilder(type.toString());
+            sb.append("{offset=").append(label.getOffset());
+            switch (type) {
+                case SAME_LOCAL_1_STACK_ITEM:
+                case SAME_LOCAL_1_STACK_ITEM_EX:
+                    sb.append(",stack=").append(getStack());
+                    break;
+                case CHOP:
+                    sb.append(",chop_index=").append(k);
+                    break;
+                case APPEND:
+                    sb.append(",append=").append(getLocals());
+                    break;
+                case FULL:
+                    sb.append(",locals=").append(getLocals());
+                    sb.append(",stacks=").append(getStacks());
+                    break;
+            }
+            sb.append('}');
+
+            return sb.toString();
+        }
+
+        private void checkType(FrameType type) {
+            if (this.type != type) {
+                throw new UnsupportedOperationException("Only frame with type " + type + " can do this operation!");
+            }
+        }
+
+        private void checkType(FrameType type1, FrameType type2) {
+            if (this.type != type1 && this.type != type2) {
+                throw new UnsupportedOperationException("Only frame with type " + type1 + " and " + type2 + " can do this operation!");
+            }
+        }
+    }
+
+    public final class VerificationInfo {
+        private final VarInfo type;
+        private Object data;
+
+        VerificationInfo(Code c, ClassFileParser pool, ByteVector buffer) {
+            this.type = VarInfo.fromTag(buffer.getUByte());
+            if (this.type == VarInfo.OBJECT) {
+                this.data = pool.get(buffer.getUShort());
+            } else if (this.type == VarInfo.UNINIT_VAR) {
+                this.data = c.fromOffset(buffer.getUShort()); // new operator
+                assert data != null;
+                if (((OpCode) data).type() != OpCodeType.NEW) throw new ClassFormatError("should be a NEW opcode here");
+            }
+        }
+
+        public VarInfo getType() {
+            return type;
+        }
+
+        public Const getConstant() {
+            if (type != VarInfo.OBJECT)
+                throw new UnsupportedOperationException("This operation can only be performed on Object_var_info");
+            return (Const) data;
+        }
+
+        public void setConstant(Const c) {
+            if (type != VarInfo.OBJECT)
+                throw new UnsupportedOperationException("This operation can only be performed on Object_var_info");
+            data = c;
+        }
+
+        public OpCode getOpCode() {
+            if (type != VarInfo.OBJECT)
+                throw new UnsupportedOperationException("This operation can only be performed on Uninitialized_var_info");
+            return (OpCode) data;
+        }
+
+        public void setConstant(OpCode c) {
+            if (type != VarInfo.UNINIT_VAR)
+                throw new UnsupportedOperationException("This operation can only be performed on Uninitialized_var_info");
+            data = c;
+        }
+
+        private void write(ByteVector buffer) {
+            buffer.putByte(type.getTag());
+            if (type == VarInfo.OBJECT) {
+                buffer.putShort(((Const) data).index());
+            } else if (type == VarInfo.UNINIT_VAR) {
+                buffer.putShort(((OpCode) data).offset());
+            }
+        }
+
+        private void collect() {
+            if (type == VarInfo.OBJECT) {
+                constPool().acquire((Const) data);
+            }
         }
     }
 

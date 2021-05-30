@@ -9,7 +9,7 @@ import vip.creatio.gca.util.ByteVector;
 
 @Immutable
 public class StringConst extends Const.Value {
-    private /* final */ String string;
+    private String string;
 
     public StringConst(ConstPool pool, String string) {
         super(pool, ConstType.STRING);
@@ -58,6 +58,10 @@ public class StringConst extends Const.Value {
 
     public String getString() {
         return string;
+    }
+
+    public void setString(String string) {
+        this.string = string;
     }
 
     @Override

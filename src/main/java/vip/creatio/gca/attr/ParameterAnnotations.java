@@ -14,12 +14,12 @@ public class ParameterAnnotations extends TableAttribute<List<Annotation>> {
 
     private boolean runtimeVisible;
 
-    public ParameterAnnotations(ClassFile classFile) {
-        super(classFile);
+    public ParameterAnnotations(AttributeContainer container) {
+        super(container);
     }
 
     public static ParameterAnnotations parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer, boolean visible) {
-        ParameterAnnotations inst = new ParameterAnnotations(container.classFile());
+        ParameterAnnotations inst = new ParameterAnnotations(container);
         inst.runtimeVisible = visible;
         int len = buffer.getUByte();
         for (int i = 0; i < len; i++) {

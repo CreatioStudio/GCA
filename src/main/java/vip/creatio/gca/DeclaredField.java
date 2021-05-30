@@ -34,7 +34,7 @@ public class DeclaredField extends DeclaredObject {
 
     public void setConstantValue(@Nullable Object value) {
         ConstantValue v = getOrAddAttribute("ConstantValue",
-                () -> new ConstantValue(classFile));
+                () -> new ConstantValue(this));
         v.setValue(value);
     }
 

@@ -41,21 +41,21 @@ public class LabelOpCode extends OpCode {
 
     @Override
     void parse() {
-        this.label = codes.addLabel(codes.fromOffset(getOffset() + offset));
+        this.label = codes.addLabel(codes.fromOffset(offset() + offset));
     }
 
     @Override
     public String toString() {
-        return super.toString() + ' ' +  + label.getAnchor().getOffset();
+        return super.toString() + ' ' +  + label.getAnchor().offset();
     }
 
     @Override
     public void serialize(ByteVector buffer) {
         super.serialize(buffer);
         if (type == OpCodeType.GOTO_W || type == OpCodeType.JSR_W) {
-            buffer.putInt(label.getOffset() - getOffset());
+            buffer.putInt(label.getOffset() - offset());
         } else {
-            buffer.putShort((short) (label.getOffset() - getOffset()));
+            buffer.putShort((short) (label.getOffset() - offset()));
         }
     }
 }

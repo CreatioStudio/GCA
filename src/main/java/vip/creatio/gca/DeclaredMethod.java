@@ -1,6 +1,7 @@
 package vip.creatio.gca;
 
 import org.jetbrains.annotations.NotNull;
+import vip.creatio.gca.attr.AnnotationDefault;
 import vip.creatio.gca.attr.Code;
 import vip.creatio.gca.attr.Exceptions;
 import vip.creatio.gca.code.BytecodeException;
@@ -51,12 +52,19 @@ public class DeclaredMethod extends DeclaredObject {
                     "check if it has code using hasCode() before getting it");
         }
         return getOrAddAttribute("Code",
-                () -> new Code(classFile));
+                () -> new Code(this));
+    }
+
+    public @NotNull AnnotationDefault defaultValue() {
+        if (!hasCode()) {
+            throw new RuntimeException("Only abstract method of an annotation can set this");
+        }
+        return getOrAddAttribute("AnnotationDefault", () -> new AnnotationDefault(this));
     }
 
     public @NotNull List<ClassConst> exceptions() {
         Exceptions exc = getOrAddAttribute("Exceptions",
-                () -> new Exceptions(classFile));
+                () -> new Exceptions(this));
         return exc.getTable();
     }
 

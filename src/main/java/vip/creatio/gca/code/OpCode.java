@@ -1,11 +1,12 @@
 package vip.creatio.gca.code;
 
+import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.ClassFileParser;
 import vip.creatio.gca.ConstPool;
 import vip.creatio.gca.Serializer;
+import vip.creatio.gca.attr.Code;
 import vip.creatio.gca.util.BiHashMap;
 
-import java.math.BigInteger;
 import vip.creatio.gca.util.ByteVector;
 import vip.creatio.gca.util.Util;
 
@@ -32,16 +33,7 @@ public abstract class OpCode implements Serializer {
         return type().byteSize();
     }
 
-    // called when all opcodes of a method is parsed
-    void parse() {}
-
-    void collect() {}
-
-    final ConstPool constPool() {
-        return codes.constPool();
-    }
-
-    public final int getOffset() {
+    public final int offset() {
         return codes.offsetOf(this);
     }
 
@@ -50,13 +42,45 @@ public abstract class OpCode implements Serializer {
         buffer.putByte(type().getTag());
     }
 
-    final CodeContainer getCodes() {
-        return codes;
+    public final boolean belongTo(Code c) {
+        return codes.codeAttr() == c;   // strictly equals
     }
 
     @Override
     public String toString() {
         return type().name().toLowerCase();
+    }
+
+    public OpCode next() {
+        return codes.next(this);
+    }
+
+    public OpCode prev() {
+        return codes.prev(this);
+    }
+
+    public boolean hasNext() {
+        return codes.hasNext(this);
+    }
+
+    public boolean hasPrev() {
+        return codes.hasPrev(this);
+    }
+
+
+    // internals
+
+    final CodeContainer getCodes() {
+        return codes;
+    }
+
+    // called when all opcodes of a method is parsed
+    void parse() {}
+
+    void collect() {}
+
+    final ConstPool constPool() {
+        return codes.constPool();
     }
 
     static OpCode parse(ClassFileParser pool,

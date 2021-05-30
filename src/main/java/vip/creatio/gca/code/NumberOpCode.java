@@ -59,6 +59,15 @@ public class NumberOpCode extends OpCode {
     }
 
     @Override
+    public int byteSize() {
+        if (type != OpCodeType.BIPUSH && (data > 255 || data < -256)) {
+            return 4;
+        } else {
+            return super.byteSize();
+        }
+    }
+
+    @Override
     public String toString() {
         return super.toString() + ' ' + data;
     }

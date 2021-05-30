@@ -14,7 +14,10 @@ public enum ConstType {
     NAME_AND_TYPE((byte) 0x0C),
     METHOD_HANDLE((byte) 0x0F),
     METHOD_TYPE((byte) 0x10),
-    INVOKE_DYNAMIC((byte) 0x12);
+    INVOKE_DYNAMIC((byte) 0x12),
+    MODULE((byte) 0x13),
+    PACKAGE((byte) 0x14),
+    ;
 
     final byte tag;
 

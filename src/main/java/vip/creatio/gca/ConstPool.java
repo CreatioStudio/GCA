@@ -284,6 +284,14 @@ public abstract class ConstPool implements Iterable<Const> {
                         pool.set(i, buffer.position(), new InvokeDynamicConst(pool.getPool()));
                         buffer.position(buffer.position() + 4);
                         break;
+                    case MODULE:
+                        pool.set(i, buffer.position(), new ModuleConst(pool.getPool()));
+                        buffer.position(buffer.position() + 2);
+                        break;
+                    case PACKAGE:
+                        pool.set(i, buffer.position(), new PackageConst(pool.getPool()));
+                        buffer.position(buffer.position() + 2);
+                        break;
                 }
             }
         } catch (RuntimeException e) {

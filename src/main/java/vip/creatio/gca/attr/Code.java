@@ -5,6 +5,7 @@ import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.*;
 import vip.creatio.gca.code.BytecodeException;
 import vip.creatio.gca.code.CodeContainer;
+import vip.creatio.gca.code.Label;
 import vip.creatio.gca.code.OpCode;
 import vip.creatio.gca.constant.ClassConst;
 
@@ -30,13 +31,16 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
     private final List<ExceptionTable> tables = new ArrayList<>();
     private final List<Attribute> attributes = new ArrayList<>();
 
-    public Code(ClassFile file) {
-        super(file);
+    private Code(AttributeContainer container) {
+        super(container);
+    }
+
+    public Code(DeclaredMethod mth) {
+        this((AttributeContainer) mth);
     }
 
     public static Code parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer) {
-        Code c = new Code(container.classFile());
-        c.checkContainerType(container);
+        Code c = new Code(container);
 
         c.maxStack = buffer.getShort() & 0xFFFF;
         c.maxLocals = buffer.getShort() & 0xFFFF;
@@ -57,6 +61,7 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
             }
         }
 
+        c.codes.parseFinished();
         return c;
     }
 
@@ -103,12 +108,30 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
         return codes.fromOffset(offset);
     }
 
+    public @Nullable OpCode fromOffsetNearest(int offset) {
+        return codes.fromOffsetNearest(offset);
+    }
+
     public int indexOf(OpCode code) {
         return codes.indexOf(code);
     }
 
     public OpCode get(int index) {
         return codes.fromIndex(index);
+    }
+
+    public Label getLabel(OpCode code) {
+        return codes.getLabel(code);
+    }
+
+    public Label visitLabel(OpCode code) {
+        Label l = getLabel(code);
+        if (l == null) l = codes.addLabel(code);
+        return l;
+    }
+
+    public Label getLabel(String name) {
+        return codes.getLabel(name);
     }
 
     @Override
@@ -132,6 +155,18 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
             tab.write(buffer);
         }
         AttributeContainer.super.writeAttributes(buffer);
+    }
+
+    public LocalVariableTable variableTable() {
+        return getOrAddAttribute("LocalVariableTable", () -> new LocalVariableTable(this));
+    }
+
+    public LineNumberTable lineNumberTable() {
+        return getOrAddAttribute("LineNumberTable", () -> new LineNumberTable(this));
+    }
+
+    public StackMapTable stackMapTable() {
+        return getOrAddAttribute("StackMapTable", () -> new StackMapTable(this));
     }
 
     @Override

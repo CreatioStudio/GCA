@@ -41,12 +41,12 @@ public class BytecodeException extends RuntimeException {
 
         Iterator<OpCode> iter = container.iterator();
         // move to the proper position
-        while (iter.hasNext() && offset - iter.next().getOffset() > 40);
+        while (iter.hasNext() && offset - iter.next().offset() > 40);
 
         for (int i = 0; i < 40; i++) {
             if (!iter.hasNext()) break;
             OpCode op = iter.next();
-            String off = Integer.toString(op.getOffset());
+            String off = Integer.toString(op.offset());
             try {
                 String name = detailedOp ? op.toString() : op.type().name().toLowerCase();
                 sb.append("\n     ").append(off).append(" ".repeat(5 - off.length()))

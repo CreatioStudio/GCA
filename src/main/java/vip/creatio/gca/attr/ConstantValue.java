@@ -21,18 +21,21 @@ public class ConstantValue extends Attribute {
     // can be Integer, Float, Double, Long and String
     private Object constantValue;
 
-    public ConstantValue(ClassFile file) {
-        super(file);
+    private ConstantValue(AttributeContainer container) {
+        super(container);
     }
 
-    public ConstantValue(ClassFile file, Object constantValue) {
-        this(file);
+    public ConstantValue(DeclaredField field) {
+        this((AttributeContainer) field);
+    }
+
+    public ConstantValue(DeclaredField field, Object constantValue) {
+        this((AttributeContainer) field);
         this.constantValue = constantValue;
     }
 
     public static ConstantValue parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer) {
-        ConstantValue inst = new ConstantValue(container.classFile());
-        inst.checkContainerType(container);
+        ConstantValue inst = new ConstantValue(container);
 
         inst.constantValue = ((Const.Value) pool.get(buffer.getShort())).value();
         return inst;

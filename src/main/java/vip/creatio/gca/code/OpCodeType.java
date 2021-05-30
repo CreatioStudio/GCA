@@ -6382,9 +6382,9 @@ public enum OpCodeType {
      * wide
      * &lt;opcode&gt;
      * indexbyte1
-     * indexbyte2
+     * indexbyte2</code></pre>
      * where &lt;opcode&gt; is one of iload, fload, aload, lload, dload, istore, fstore,
-     * astore, lstore, dstore, or ret</code></pre><br><br>
+     * astore, lstore, dstore, or ret<br><br>
      *
      * <b>Format 2 </b><pre><code>
      * wide

@@ -32,6 +32,7 @@ implements AttributeContainer, AccessFlagContainer, DeclaredSignature {
         this.name = pool.getString(s);
         this.descriptor = pool.getString(buffer.getShort());
         int attrCount = buffer.getShort() & 0xFFFF;
+
         for (int i = 0; i < attrCount; i++) {
             try {
                 attributes.add(pool.resolveAttribute(this, buffer));

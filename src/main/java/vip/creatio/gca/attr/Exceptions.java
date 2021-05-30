@@ -13,14 +13,17 @@ import vip.creatio.gca.util.ByteVector;
  */
 public class Exceptions extends TableAttribute<ClassConst> {
 
-    public Exceptions(ClassFile classFile) {
-        super(classFile);
+    private Exceptions(AttributeContainer container) {
+        super(container);
+    }
+
+    public Exceptions(DeclaredMethod mth) {
+        this((AttributeContainer) mth);
     }
 
     public static Exceptions parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer)
     throws ClassFormatError {
-        Exceptions inst = new Exceptions(container.classFile());
-        inst.checkContainerType(container);
+        Exceptions inst = new Exceptions(container);
 
         int len = buffer.getUShort();
         for (int i = 0; i < len; i++) {

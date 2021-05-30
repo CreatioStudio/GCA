@@ -40,7 +40,9 @@ public class CodeContainer implements Iterable<OpCode> {
         for (OpCode op : list) {
             op.parse();
         }
+    }
 
+    public void parseFinished() {
         offsetMap = null;
     }
 
@@ -52,6 +54,55 @@ public class CodeContainer implements Iterable<OpCode> {
         return list.get(index);
     }
 
+    public boolean hasNext(OpCode code) {
+        return next(code) != null;
+    }
+
+    public OpCode next(OpCode code) {
+        boolean take = false;
+        for (OpCode op : list) {
+            if (take) {
+                return op;
+            }
+            if (op == code) {
+                take = true;
+            }
+        }
+        return null;
+    }
+
+    public boolean hasPrev(OpCode code) {
+        return prev(code) != null;
+    }
+
+    public OpCode prev(OpCode code) {
+        OpCode prev = null;
+        for (OpCode op : list) {
+            if (op == code) return prev;
+            prev = op;
+        }
+        return prev;
+    }
+
+    public Label getLabel(String name) {
+        return labels.get(name);
+    }
+
+    public Label getLabel(OpCode code) {
+        for (Label l : labels.values()) {
+            if (l.getAnchor() == code) return l;
+        }
+        return null;
+    }
+
+    public Collection<Label> getLabels() {
+        return labels.values();
+    }
+
+    public Set<String> getLabelNames() {
+        return labels.keySet();
+    }
+
     public @Nullable OpCode fromOffset(int offset) {
         if (offsetMap != null) return offsetMap.get(offset);
 
@@ -61,6 +112,36 @@ public class CodeContainer implements Iterable<OpCode> {
             else sum += op.byteSize();
         }
         return null;
+    }
+
+    public @Nullable OpCode fromOffsetNearest(int offset) {
+        if (offsetMap != null) {
+            OpCode nearest = null;
+            int delta = Integer.MAX_VALUE;
+            for (Map.Entry<Integer, OpCode> e : offsetMap.entrySet()) {
+                int d = offset - e.getKey();
+                if (d < 0) continue;
+                if (d < delta) {
+                    delta = d;
+                    nearest = e.getValue();
+                }
+            }
+            return nearest;
+        } else {
+            OpCode nearest = null;
+            int delta = Integer.MAX_VALUE;
+            int sum = 0;
+            for (OpCode op : list) {
+                int d = offset - sum;
+                if (d < 0) return nearest;
+                if (d < delta) {
+                    delta = d;
+                    nearest = op;
+                }
+                sum += op.byteSize();
+            }
+            return nearest;
+        }
     }
 
     public int offsetOf(OpCode code) {
@@ -102,6 +183,10 @@ public class CodeContainer implements Iterable<OpCode> {
 
     ClassFile classFile() {
         return code.classFile();
+    }
+
+    Code codeAttr() {
+        return code;
     }
 
     public void write(ByteVector buffer) {

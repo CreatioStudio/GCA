@@ -6,6 +6,7 @@ import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.DeclaredMethod;
 import vip.creatio.gca.attr.Code;
 import vip.creatio.gca.code.OpCode;
+import vip.creatio.gca.constant.ClassConst;
 import vip.creatio.gca.util.ByteVector;
 
 import java.io.*;
@@ -28,15 +29,18 @@ public class Main {
         System.out.println("ConstSize: " + classFile.constPool().size());
         classFile.setMajorVer(55);
 
-        for (DeclaredMethod method : classFile.getMethods()) {
-            Code c = method.code();
-            c.attributes().clear();
-            method.attributes().removeIf(a -> !a.name().equals("Code"));
+        //classFile.setSuperClass(classFile.constPool().acquireClass("jdk/internal/reflect/MagicAccessorImpl"));
+        classFile.setThisClass(classFile.constPool().acquireClass("vip/creatio/gca/test/Example"));
 
-            //c.removeAttribute("LineNumberTable");
-            //c.removeAttribute("LocalVariableTable");
-            //c.removeAttribute("StackMapTable");
-        }
+//        for (DeclaredMethod method : classFile.getMethods()) {
+//            Code c = method.code();
+//            c.attributes().clear();
+//            method.attributes().removeIf(a -> !a.name().equals("Code"));
+//
+//            //c.removeAttribute("LineNumberTable");
+//            //c.removeAttribute("LocalVariableTable");
+//            //c.removeAttribute("StackMapTable");
+//        }
 
 //        for (DeclaredField f : classFile.getFields()) {
 //            f.setName(random());

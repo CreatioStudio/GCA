@@ -15,14 +15,17 @@ import vip.creatio.gca.util.ByteVector;
 
 public class BootstrapMethods extends TableAttribute<BootstrapMethods.Method> {
 
-    public BootstrapMethods(ClassFile classFile) {
-        super(classFile);
+    private BootstrapMethods(AttributeContainer c) {
+        super(c);
+    }
+
+    public BootstrapMethods(ClassFile file) {
+        this((AttributeContainer) file);
     }
 
     public static BootstrapMethods parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer)
     throws ClassFormatError {
-        BootstrapMethods inst = new BootstrapMethods(container.classFile());
-        inst.checkContainerType(container);
+        BootstrapMethods inst = new BootstrapMethods(container);
 
         int num = buffer.getUShort();
 
