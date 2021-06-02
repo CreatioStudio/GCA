@@ -15,6 +15,8 @@ public interface AttributeContainer {
 
     ClassFile classFile();      // should be packed into a larger interface
 
+    AttributeContainer copy();
+
     List<Attribute> attributes();
 
     default void addAttribute(Attribute att) {
@@ -56,10 +58,6 @@ public interface AttributeContainer {
 
     default boolean hasAttribute(String name) {
         return getAttribute(name) != null;
-    }
-
-    default int attributeCount() {
-        return attributes().size();
     }
 
     default void writeAttributes(ByteVector buffer) {

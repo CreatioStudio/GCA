@@ -67,8 +67,8 @@ public class ClassFile implements AttributeContainer, AccessFlagContainer {
         }
 
         // get class versions
-        minorVer = buffer.getShort();
-        majorVer = buffer.getShort();
+        minorVer = buffer.getUShort();
+        majorVer = buffer.getUShort();
 
         // read constants
         constPool = new ConstPoolImpl(this);
@@ -79,20 +79,20 @@ public class ClassFile implements AttributeContainer, AccessFlagContainer {
         accessFlags = AccessFlag.resolveClass(buffer.getShort());
 
         // read this class and super class object
-        thisClass = (ClassConst) pool.get(buffer.getShort() & 0xFFFF);
-        superClass = (ClassConst) pool.get(buffer.getShort() & 0xFFFF);
+        thisClass = (ClassConst) pool.get(buffer.getUShort());
+        superClass = (ClassConst) pool.get(buffer.getUShort());
 
         // read interfaces
         {
-            int iCount = buffer.getShort() & 0xFFFF;
+            int iCount = buffer.getUShort();
             for (int i = 0; i < iCount; i++) {
-                interfaces.add((ClassConst) pool.get(buffer.getShort() & 0xFFFF));
+                interfaces.add((ClassConst) pool.get(buffer.getUShort()));
             }
         }
 
         // read fields
         {
-            int fieldCount = buffer.getShort() & 0xFFFF;
+            int fieldCount = buffer.getUShort();
             for (int i = 0; i < fieldCount; i++) {
                 fields.add(new DeclaredField(this, pool, buffer));
             }
@@ -100,7 +100,7 @@ public class ClassFile implements AttributeContainer, AccessFlagContainer {
 
         // read methods
         {
-            int methodCount = buffer.getShort() & 0xFFFF;
+            int methodCount = buffer.getUShort();
             for (int i = 0; i < methodCount; i++) {
                 methods.add(new DeclaredMethod(this, pool, buffer));
             }
@@ -108,7 +108,7 @@ public class ClassFile implements AttributeContainer, AccessFlagContainer {
 
         // read attributes
         {
-            int attrCount = buffer.getShort() & 0xFFFF;
+            int attrCount = buffer.getUShort();
             for (int i = 0; i < attrCount; i++) {
                 attributes.add(pool.resolveAttribute(buffer));
             }
@@ -181,7 +181,7 @@ public class ClassFile implements AttributeContainer, AccessFlagContainer {
         return interfaces;
     }
 
-    public @Nullable DeclaredField getField(String name) {
+    public DeclaredField getField(String name) {
         for (DeclaredField f : fields) {
             if (f.getName().equals(name)) return f;
         }
@@ -199,9 +199,10 @@ public class ClassFile implements AttributeContainer, AccessFlagContainer {
         return field;
     }
 
-    public @Nullable DeclaredMethod getMethod(String name, String... signatures) {
+    public DeclaredMethod getMethod(String name, String... signatures) {
         for (DeclaredMethod method : methods) {
-            if (Arrays.equals(method.getSignatures(), signatures)) return method;
+            if (method.getName().equals(name) && Arrays.equals(method.getDescriptors(), signatures))
+                return method;
         }
         return null;
     }
@@ -212,14 +213,6 @@ public class ClassFile implements AttributeContainer, AccessFlagContainer {
             if (mth.getName().equals(name)) mths.add(mth);
         }
         return mths;
-    }
-
-    // Get or create method
-    public @NotNull DeclaredMethod visitMethod(String name, String rtype, String... ptype) {
-        String[] signatures = new String[ptype.length + 1];
-        System.arraycopy(ptype, 0, signatures, 1, ptype.length);
-        signatures[0] = rtype;
-        return visitMethod(name, signatures);
     }
 
     // Get or create method
@@ -234,7 +227,7 @@ public class ClassFile implements AttributeContainer, AccessFlagContainer {
         return method;
     }
 
-    public @Nullable ClassConst getInterface(String clsName) {
+    public ClassConst getInterface(String clsName) {
         for (ClassConst c : interfaces) {
             if (c.getName().equals(clsName)) return c;
         }
@@ -254,9 +247,14 @@ public class ClassFile implements AttributeContainer, AccessFlagContainer {
         return attributes;
     }
 
-    public @NotNull SourceFile sourceFile() {
-        return getOrAddAttribute("SourceFile",
-                () -> new SourceFile(this));
+    public @Nullable String getSourceFile() {
+        SourceFile sf = getAttribute("SourceFile");
+        return sf == null ? null : sf.getSource();
+    }
+
+    public void setSourceFile(@Nullable String name) {
+        SourceFile sf = getOrAddAttribute("SourceFile", () -> new SourceFile(this));
+        sf.setSource(name);
     }
 
     public @NotNull InnerClasses innerClasses() {
@@ -275,13 +273,13 @@ public class ClassFile implements AttributeContainer, AccessFlagContainer {
 
     public @Nullable String getSignature() {
         Signature sig = getAttribute("Signature");
-        return sig == null ? null : sig.getSignature() == null ? null : sig.getSignature();
+        return sig == null ? null : sig.getGenericSignature() == null ? null : sig.getGenericSignature();
     }
 
     public void setSignature(@Nullable String s) {
         getOrAddAttribute("Signature",
                 () -> new Signature(this))
-                .setSignature(s);
+                .setGenericSignature(s);
     }
 
     public boolean isDeprecated() {
@@ -329,16 +327,33 @@ public class ClassFile implements AttributeContainer, AccessFlagContainer {
     }
 
     public void collect() {
+        boolean previous = constPool.isWriting();
+        ((ConstPoolImpl) constPool).setWriting(true);
         constPool.collect();
         constPool.acquire(thisClass, superClass);
         constPool.acquire(interfaces);
         for (DeclaredField f : fields) {
-            f.collectConstants();
+            f.collect();
         }
         for (DeclaredMethod mth : methods) {
-            mth.collectConstants();
+            mth.collect();
         }
         AttributeContainer.super.collectConstants();
+        ((ConstPoolImpl) constPool).setWriting(previous);
+    }
+
+    public ClassFile copy() {
+        ClassFile c = new ClassFile();
+        c.majorVer = majorVer;
+        c.minorVer = minorVer;
+        c.accessFlags = EnumSet.copyOf(accessFlags);
+        c.constPool = new ConstPoolImpl(this);
+        for (Const constant : constPool) {
+            c.constPool.add(constant.copy());
+        }
+        //TODO
+
+        return c;
     }
 
     public byte[] toByteArray() {

@@ -3,18 +3,18 @@ package vip.creatio.gca.constant;
 import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.util.ClassUtil;
 import vip.creatio.gca.ConstPool;
-import vip.creatio.gca.DeclaredSignature;
+import vip.creatio.gca.Descriptor;
 import vip.creatio.gca.ClassFileParser;
 import vip.creatio.gca.util.Immutable;
 
 import vip.creatio.gca.util.ByteVector;
 
 @Immutable
-public class NameAndTypeConst extends Const implements DeclaredSignature {
+public class NameAndTypeConst extends Const implements Descriptor {
     private /* final */ String name;
-    private /* final */ String descriptor;
+    private String descriptor;
 
-    private /* final */ String[] signatures;
+    private String[] descriptors;
 
     public NameAndTypeConst(ConstPool pool) {
         super(pool, ConstType.NAME_AND_TYPE);
@@ -70,8 +70,14 @@ public class NameAndTypeConst extends Const implements DeclaredSignature {
         return name;
     }
 
-    public String getDescriptor() {
+    @Override
+    public @Nullable String getDescriptor() {
         return descriptor;
+    }
+
+    @Override
+    public void setDescriptor(String str) {
+        this.descriptor = str;
     }
 
     @Override
@@ -91,11 +97,11 @@ public class NameAndTypeConst extends Const implements DeclaredSignature {
 
     @Override
     public void recache() {
-        this.signatures = ClassUtil.fromSignature(descriptor);
+        this.descriptors = ClassUtil.fromSignature(descriptor);
     }
 
     @Override
-    public @Nullable String[] getSignatures() {
-        return signatures;
+    public @Nullable String[] getDescriptors() {
+        return descriptors;
     }
 }

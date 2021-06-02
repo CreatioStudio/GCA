@@ -17,7 +17,7 @@ public class InvocationOpCode extends OpCode {
         if (type == OpCodeType.INVOKEINTERFACE) buffer.getShort();  // jump 2 bytes
     }
 
-    InvocationOpCode(CodeContainer codes, OpCodeType type, RefConst constant) {
+    public InvocationOpCode(CodeContainer codes, OpCodeType type, RefConst constant) {
         super(codes);
         this.type = type;
         this.refConst = constant;

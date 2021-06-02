@@ -69,18 +69,18 @@ public class TypeAnnotation extends AbstractAnnotation {
 
     private final List<Pair<String, ElementValue>> nameValuePairs = new ArrayList<>();
 
-    TypeAnnotation(ClassFile file) {
-        super(file);
+    TypeAnnotation(ConstPool pool) {
+        super(pool);
     }
 
-    public TypeAnnotation(ClassFile file, String type) {
-        this(file);
+    public TypeAnnotation(ConstPool pool, String type) {
+        this(pool);
         this.type = type;
     }
 
     static TypeAnnotation parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer) {
         //assert container instanceof Code;
-        TypeAnnotation anno = new TypeAnnotation(container.classFile());
+        TypeAnnotation anno = new TypeAnnotation(container.classFile().constPool());
         anno.target = TargetType.fromTag(buffer.getByte());
 
         // read union "target_info"
@@ -382,6 +382,11 @@ public class TypeAnnotation extends AbstractAnnotation {
             constPool().acquireUtf(p.getKey());
             p.getValue().collect();
         }
+    }
+
+    @Override
+    AbstractAnnotation copy() {
+        return null;
     }
 
     public static class VarTable {

@@ -15,7 +15,7 @@ public class InvokeDynamicOpCode extends OpCode {
         buffer.getShort();      // skip 2 bytes
     }
 
-    InvokeDynamicOpCode(CodeContainer codes, InvokeDynamicConst ref) {
+    public InvokeDynamicOpCode(CodeContainer codes, InvokeDynamicConst ref) {
         super(codes);
         this.ref = ref;
     }

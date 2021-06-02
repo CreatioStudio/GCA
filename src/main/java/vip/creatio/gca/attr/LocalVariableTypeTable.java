@@ -2,8 +2,6 @@ package vip.creatio.gca.attr;
 
 import vip.creatio.gca.AttributeContainer;
 import vip.creatio.gca.ClassFileParser;
-import vip.creatio.gca.ConstPool;
-import vip.creatio.gca.code.OpCode;
 import vip.creatio.gca.util.ByteVector;
 
 import java.util.ArrayList;
@@ -136,7 +134,7 @@ public class LocalVariableTypeTable extends TableAttribute<LocalVariableTable.Va
             int index = buffer.getUShort();
             for (LocalVariableTable.Variable item : inst.items) {
                 if (item.getIndex() == index && item.getName().equals(name)) {
-                    item.setSignature(signature);
+                    item.setDescriptor(signature);
                 }
             }
         }
@@ -157,7 +155,7 @@ public class LocalVariableTypeTable extends TableAttribute<LocalVariableTable.Va
     protected void writeData(ByteVector buffer) {
         List<LocalVariableTable.Variable> list = new ArrayList<>();
         for (LocalVariableTable.Variable item : items) {
-            if (item.getSignature() != null) list.add(item);
+            if (item.getDescriptor() != null) list.add(item);
         }
         buffer.putShort(list.size());
         for (LocalVariableTable.Variable item : list) {
@@ -165,7 +163,7 @@ public class LocalVariableTypeTable extends TableAttribute<LocalVariableTable.Va
             buffer.putShort(startPc);
             buffer.putShort(item.getEnd().offset() - startPc + item.getEnd().byteSize());
             buffer.putShort(constPool().acquireUtf(item.getName()).index());
-            buffer.putShort(constPool().acquireUtf(item.getSignature()).index());
+            buffer.putShort(constPool().acquireUtf(item.getDescriptor()).index());
             buffer.putShort(item.getIndex());
         }
     }
@@ -173,7 +171,7 @@ public class LocalVariableTypeTable extends TableAttribute<LocalVariableTable.Va
     @Override
     public boolean isEmpty() {
         for (LocalVariableTable.Variable item : items) {
-            if (item.getSignature() != null) return false;
+            if (item.getDescriptor() != null) return false;
         }
         return true;
     }

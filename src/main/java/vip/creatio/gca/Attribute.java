@@ -19,7 +19,7 @@ public abstract class Attribute {
         DEFAULT_RESOLVERS.put("EnclosingMethod", EnclosingMethod::parse);
         DEFAULT_RESOLVERS.put("InnerClasses", InnerClasses::parse);
         DEFAULT_RESOLVERS.put("LineNumberTable", LineNumberTable::parse);
-        DEFAULT_RESOLVERS.put("Signature", Signature::parse);
+        //DEFAULT_RESOLVERS.put("Signature", Signature::parse);//TODO
         DEFAULT_RESOLVERS.put("SourceFile", SourceFile::parse);
         DEFAULT_RESOLVERS.put("LocalVariableTable", LocalVariableTable::parse);
         DEFAULT_RESOLVERS.put("LocalVariableTypeTable", LocalVariableTypeTable::parse);
@@ -36,7 +36,7 @@ public abstract class Attribute {
         return new HashMap<>(DEFAULT_RESOLVERS);
     }
 
-    protected final AttributeContainer container;
+    protected AttributeContainer container;
 
     protected Attribute(AttributeContainer container) {
         checkContainerType(container);
@@ -44,6 +44,8 @@ public abstract class Attribute {
     }
 
     public abstract String name();
+
+    //public abstract Attribute copy();
 
     public ClassFile classFile() {
         return container.classFile();
@@ -103,6 +105,11 @@ public abstract class Attribute {
         @Override
         public String name() {
             return name;
+        }
+
+        //@Override
+        public Attribute copy() {
+            return new Undefined((ClassFile) container, name, data);
         }
 
         @Override

@@ -1,11 +1,10 @@
 package vip.creatio.gca.attr;
 
-import vip.creatio.gca.Attribute;
-import vip.creatio.gca.AttributeContainer;
-import vip.creatio.gca.ClassFile;
-import vip.creatio.gca.ClassFileParser;
+import org.jetbrains.annotations.Nullable;
+import vip.creatio.gca.*;
 
 import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.ClassUtil;
 
 /**
  * The Signature attribute records generic signature information for
@@ -13,9 +12,12 @@ import vip.creatio.gca.util.ByteVector;
  * in the Java programming language would include references to type
  * variables or parameterized types.
  */
-public class Signature extends Attribute {
+//TODO: make signatures into something like GenericType[]
+public class Signature extends Attribute implements GenericSignature {
 
     private String signature;
+
+    private @Nullable String[] signatures;
 
     public Signature(AttributeContainer container) {
         super(container);
@@ -37,12 +39,24 @@ public class Signature extends Attribute {
         return "Signature";
     }
 
-    public String getSignature() {
+    public String getGenericSignature() {
         return signature;
     }
 
-    public void setSignature(String signature) {
+    public void setGenericSignature(String signature) {
         this.signature = signature;
+    }
+
+    @Override
+    public @Nullable String[] getGenericSignatures() {
+        return signatures;
+    }
+
+    @Override
+    public void recache() {
+        if (signature != null) {
+            signatures = ClassUtil.fromSignature(signature);
+        }
     }
 
     @Override

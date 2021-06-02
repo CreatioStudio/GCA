@@ -2,19 +2,20 @@ package vip.creatio.gca.constant;
 
 import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.ConstPool;
-import vip.creatio.gca.DeclaredSignature;
+import vip.creatio.gca.Descriptor;
 import vip.creatio.gca.ClassFileParser;
 
 import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.ClassUtil;
 
-public class RefConst extends Const implements DeclaredSignature{
+public class RefConst extends Const implements Descriptor {
     private ClassConst clazz;
     private NameAndTypeConst pair;
 
     public RefConst(ConstPool pool, ConstType type, ClassConst clazz, String name, String descriptor) {
         super(pool, type);
         this.clazz = clazz;
-        this.pair = new NameAndTypeConst(pool, name, descriptor);
+        this.pair = new NameAndTypeConst(pool, name, ClassUtil.toBytecodeName(descriptor));
         recache();
     }
 
@@ -107,7 +108,7 @@ public class RefConst extends Const implements DeclaredSignature{
     }
 
     @Override
-    public @Nullable String[] getSignatures() {
-        return pair.getSignatures();
+    public @Nullable String[] getDescriptors() {
+        return pair.getDescriptors();
     }
 }

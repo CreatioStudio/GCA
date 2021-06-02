@@ -3,12 +3,12 @@ package vip.creatio.gca.constant;
 import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.ConstPool;
 import vip.creatio.gca.ClassFileParser;
-import vip.creatio.gca.DeclaredSignature;
+import vip.creatio.gca.Descriptor;
 import vip.creatio.gca.attr.BootstrapMethods;
 
 import vip.creatio.gca.util.ByteVector;
 
-public class InvokeDynamicConst extends Const implements DeclaredSignature {
+public class InvokeDynamicConst extends Const implements Descriptor {
     private BootstrapMethods.Method method;
     private NameAndTypeConst pair;
 
@@ -41,7 +41,7 @@ public class InvokeDynamicConst extends Const implements DeclaredSignature {
     @Override
     public void write(ByteVector buffer) {
         buffer.putByte(tag());
-        buffer.putShort(method.getIndex());
+        buffer.putShort(method.index());
         buffer.putShort(pool.acquire(pair).index());
     }
 
@@ -102,8 +102,18 @@ public class InvokeDynamicConst extends Const implements DeclaredSignature {
     }
 
     @Override
-    public @Nullable String[] getSignatures() {
-        return pair.getSignatures();
+    public @Nullable String[] getDescriptors() {
+        return pair.getDescriptors();
+    }
+
+    @Override
+    public @Nullable String getDescriptor() {
+        return pair.getDescriptor();
+    }
+
+    @Override
+    public void setDescriptor(String str) {
+        pair.setDescriptor(str);
     }
 
     @Override

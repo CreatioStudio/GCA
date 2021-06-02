@@ -4,7 +4,6 @@ import org.jetbrains.annotations.NotNull;
 import vip.creatio.gca.attr.AnnotationDefault;
 import vip.creatio.gca.attr.Code;
 import vip.creatio.gca.attr.Exceptions;
-import vip.creatio.gca.code.BytecodeException;
 import vip.creatio.gca.constant.ClassConst;
 
 import vip.creatio.gca.util.ByteVector;
@@ -34,7 +33,7 @@ public class DeclaredMethod extends DeclaredObject {
                    String[] signatures,
                    Attribute... attributes) {
         super(bc, flags, name, descriptor, attributes);
-        this.signatures = signatures;
+        this.descriptors = signatures;
     }
 
     @Override
@@ -69,6 +68,6 @@ public class DeclaredMethod extends DeclaredObject {
     }
 
     public String toString() {
-        return "Method{name=" + getName() + ",descriptor=" + getDescriptor();
+        return "Method{name=" + getName() + ",descriptor=" + getDescriptor() + '}';
     }
 }

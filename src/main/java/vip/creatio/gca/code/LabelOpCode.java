@@ -9,7 +9,7 @@ public class LabelOpCode extends OpCode {
     private Label label;
     private int offset;
 
-    LabelOpCode(CodeContainer codes, OpCodeType type, Label label) {
+    public LabelOpCode(CodeContainer codes, OpCodeType type, Label label) {
         super(codes);
         this.type = type;
         this.label = label;
@@ -53,9 +53,9 @@ public class LabelOpCode extends OpCode {
     public void serialize(ByteVector buffer) {
         super.serialize(buffer);
         if (type == OpCodeType.GOTO_W || type == OpCodeType.JSR_W) {
-            buffer.putInt(label.getOffset() - offset());
+            buffer.putInt(label.offset() - offset());
         } else {
-            buffer.putShort((short) (label.getOffset() - offset()));
+            buffer.putShort((short) (label.offset() - offset()));
         }
     }
 }

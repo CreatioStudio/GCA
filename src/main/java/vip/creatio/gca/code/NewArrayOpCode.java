@@ -1,6 +1,8 @@
 package vip.creatio.gca.code;
 
 import vip.creatio.gca.ClassFileParser;
+import vip.creatio.gca.ValueType;
+import vip.creatio.gca.constant.ClassConst;
 import vip.creatio.gca.constant.Const;
 
 import vip.creatio.gca.util.ByteVector;
@@ -23,9 +25,53 @@ public class NewArrayOpCode extends OpCode {
     }
 
     private final boolean isPrimitive;
-    private Const refType;
+    private ClassConst refType;
     private Class<?> primitiveType;
     private int dimension = 1;
+
+    public NewArrayOpCode(CodeContainer codes, ClassConst type) {
+        this(codes, type, 1);
+    }
+
+    public NewArrayOpCode(CodeContainer codes, ClassConst type, int dimension) {
+        super(codes);
+        this.isPrimitive = false;
+        this.refType = type;
+        this.dimension = dimension;
+    }
+
+    public NewArrayOpCode(CodeContainer codes, ValueType type) {
+        super(codes);
+        isPrimitive = true;
+        switch (type) {
+            case BYTE:
+                primitiveType = byte.class;
+                break;
+            case CHAR:
+                primitiveType = byte.class;
+                break;
+            case DOUBLE:
+                primitiveType = double.class;
+                break;
+            case FLOAT:
+                primitiveType = float.class;
+                break;
+            case INT:
+                primitiveType = int.class;
+                break;
+            case LONG:
+                primitiveType = long.class;
+                break;
+            case SHORT:
+                primitiveType = short.class;
+                break;
+            case BOOLEAN:
+                primitiveType = boolean.class;
+                break;
+            default:
+                throw new UnsupportedOperationException("Unsupport type: " + type);
+        }
+    }
 
     NewArrayOpCode(CodeContainer codes, OpCodeType type, ClassFileParser pool, ByteVector buffer) {
         super(codes);
@@ -40,10 +86,10 @@ public class NewArrayOpCode extends OpCode {
             }
         } else if (type == OpCodeType.ANEWARRAY) {
             this.isPrimitive = false;
-            this.refType = pool.get(buffer.getShort());
+            this.refType = (ClassConst) pool.get(buffer.getShort());
         } else if (type == OpCodeType.MULTIANEWARRAY) {
             this.isPrimitive = false;
-            this.refType = pool.get(buffer.getShort());
+            this.refType = (ClassConst) pool.get(buffer.getShort());
             this.dimension = buffer.getByte() & 0xFF;
         } else {
             throw new ClassFormatError("Invalid type: " + type);
@@ -54,11 +100,11 @@ public class NewArrayOpCode extends OpCode {
         return isPrimitive;
     }
 
-    public Const getArrayType() {
+    public ClassConst getArrayType() {
         return refType;
     }
 
-    public void setArrayType(Const refType) {
+    public void setArrayType(ClassConst refType) {
         this.refType = refType;
     }
 

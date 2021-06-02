@@ -29,7 +29,7 @@ public class TypeAnnotations extends TableAttribute<TypeAnnotation> {
     }
 
     public TypeAnnotation add(String className) {
-        TypeAnnotation anno = new TypeAnnotation(container.classFile(), className);
+        TypeAnnotation anno = new TypeAnnotation(container.classFile().constPool(), className);
         add(anno);
         return anno;
     }

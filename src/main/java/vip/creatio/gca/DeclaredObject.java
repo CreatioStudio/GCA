@@ -13,7 +13,7 @@ import vip.creatio.gca.util.ByteVector;
 import java.util.*;
 
 abstract class DeclaredObject
-implements AttributeContainer, AccessFlagContainer, DeclaredSignature {
+implements AttributeContainer, AccessFlagContainer, Descriptor, GenericSignature {
 
     protected final ClassFile classFile;
     protected EnumSet<AccessFlag> accessFlags;
@@ -22,7 +22,7 @@ implements AttributeContainer, AccessFlagContainer, DeclaredSignature {
     protected String descriptor;
     protected List<Attribute> attributes = new ArrayList<>();
 
-    protected String[] signatures;
+    protected String[] descriptors;
     protected RefConst constRef;
 
     DeclaredObject(ClassFile bc, ClassFileParser pool, ByteVector buffer) {
@@ -78,6 +78,38 @@ implements AttributeContainer, AccessFlagContainer, DeclaredSignature {
         recache();
     }
 
+    @Override
+    public String[] getDescriptors() {
+        return descriptors;
+    }
+
+    public @Nullable String getGenericSignature() {
+        Signature sig = getAttribute("Signature");
+        return sig == null ? null : sig.getGenericSignature() == null ? null : sig.getGenericSignature();
+    }
+
+    public void setGenericSignature(@Nullable String s) {
+        getOrAddAttribute("Signature",
+                () -> new Signature(classFile))
+                .setGenericSignature(s);
+    }
+
+    @Override
+    public int getParameterCount() {
+        return Descriptor.super.getParameterCount();
+    }
+
+    @Override //TODO
+    public AttributeContainer copy() {
+        return null;
+    }
+
+    @Override
+    public @Nullable String[] getGenericSignatures() {
+        Signature sig = getAttribute("Signature");
+        return sig == null ? null : sig.getGenericSignatures();
+    }
+
     public ClassFile classFile() {
         return classFile;
     }
@@ -111,17 +143,6 @@ implements AttributeContainer, AccessFlagContainer, DeclaredSignature {
         return getAttribute("Deprecated") != null;
     }
 
-    public @Nullable String getSignature() {
-        Signature sig = getAttribute("Signature");
-        return sig == null ? null : sig.getSignature() == null ? null : sig.getSignature();
-    }
-
-    public void setSignature(@Nullable String s) {
-        getOrAddAttribute("Signature",
-                () -> new Signature(classFile))
-                .setSignature(s);
-    }
-
     // create a new reference const in constant pool
     public RefConst getReference() {
         if (constRef == null) addRefConst();
@@ -147,10 +168,8 @@ implements AttributeContainer, AccessFlagContainer, DeclaredSignature {
 
     public void write(ByteVector buffer) {
         buffer.putShort(AccessFlag.serialize(accessFlags));
-        UTFConst name = constPool().acquireUtf(this.name);
-        UTFConst desc = constPool().acquireUtf(descriptor);
-        buffer.putShort(name.index());
-        buffer.putShort(desc.index());
+        buffer.putShort(constPool().acquireUtf(this.name).index());
+        buffer.putShort(constPool().acquireUtf(descriptor).index());
 
         try {
             AttributeContainer.super.writeAttributes(buffer);
@@ -160,13 +179,16 @@ implements AttributeContainer, AccessFlagContainer, DeclaredSignature {
         }
     }
 
-    @Override
-    public void recache() {
-        this.signatures = ClassUtil.fromSignature(descriptor);
+    protected void collect() {
+        constPool().acquireUtf(this.name);
+        constPool().acquireUtf(descriptor);
+        collectConstants();
     }
 
     @Override
-    public String[] getSignatures() {
-        return signatures;
+    public void recache() {
+        this.descriptors = ClassUtil.fromSignature(descriptor);
+        //Signature sig = getAttribute("Signature");//TODO
+        //if (sig != null) sig.recache();
     }
 }

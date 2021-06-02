@@ -34,10 +34,10 @@ public abstract class ConstPool implements Iterable<Const> {
     public abstract boolean contains(Const c);
 
     public int indexOf(Const c) {
-        int index = 1;
+        int i = 1;
         for (Const constant : this) {
-            if (constant.equals(c)) return index;
-            else index += constant instanceof Const.DualSlot ? 2 : 1;
+            if (constant.equals(c)) return i;
+            else i += constant instanceof Const.DualSlot ? 2 : 1;
         }
         return -1;
     }
@@ -49,7 +49,7 @@ public abstract class ConstPool implements Iterable<Const> {
         int i = 1;
         for (Const constant : this) {
             if (i == index) return constant;
-            else index += constant instanceof Const.DualSlot ? 2 : 1;
+            else i += constant instanceof Const.DualSlot ? 2 : 1;
         }
         return null;
     }
@@ -124,10 +124,10 @@ public abstract class ConstPool implements Iterable<Const> {
 
 
 
-    public abstract RefConst acquireFieldRef(ClassConst clazz, String name, String typeSig);
+    public abstract RefConst acquireFieldRef(ClassConst clazz, String name, String type);
 
-    public RefConst acquireFieldRef(String clazzSig, String name, String typeSig) {
-        return acquireFieldRef(acquireClass(clazzSig), name, typeSig);
+    public RefConst acquireFieldRef(String clazzSig, String name, String type) {
+        return acquireFieldRef(acquireClass(clazzSig), name, type);
     }
 
     public RefConst acquireFieldRef(ClassConst clazz, String name, ClassConst typeClass) {
@@ -309,34 +309,5 @@ public abstract class ConstPool implements Iterable<Const> {
     }
 
     protected void collect() {}
-
-    protected class AccessItr implements Iterator<Const> {
-        private final Iterator<Const> itr;
-
-        public AccessItr(Iterator<Const> itr) {
-            this.itr = itr;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return itr.hasNext();
-        }
-
-        @Override
-        public Const next() {
-            return itr.next();
-        }
-
-        @Override
-        public void remove() {
-            if (isWriting()) throw new IllegalStateException("constant cannot be removed in parsing period");
-            itr.remove();
-        }
-
-        @Override
-        public void forEachRemaining(Consumer<? super Const> action) {
-            itr.forEachRemaining(action);
-        }
-    }
 
 }

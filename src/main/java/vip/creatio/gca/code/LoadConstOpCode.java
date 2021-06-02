@@ -22,7 +22,7 @@ public class LoadConstOpCode extends OpCode {
         constant = pool.get(index);
     }
 
-    LoadConstOpCode(CodeContainer codes, Const constant) {
+    public LoadConstOpCode(CodeContainer codes, Const constant) {
         super(codes);
         this.constant = constant;
     }

@@ -3,9 +3,9 @@ package vip.creatio.gca.attr;
 import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.AttributeContainer;
 import vip.creatio.gca.ClassFileParser;
-import vip.creatio.gca.ConstPool;
 
-import vip.creatio.gca.DeclaredSignature;
+import vip.creatio.gca.Descriptor;
+import vip.creatio.gca.GenericSignature;
 import vip.creatio.gca.code.OpCode;
 import vip.creatio.gca.util.ByteVector;
 import vip.creatio.gca.util.ClassUtil;
@@ -167,13 +167,15 @@ public class LocalVariableTable extends TableAttribute<LocalVariableTable.Variab
         }
     }
 
-    public final class Variable implements DeclaredSignature {
+    public final class Variable implements Descriptor, GenericSignature {
 
         private OpCode start;
         private OpCode end;
         private String name;
         private String descriptor;
         private int index;
+
+        private @Nullable String[] descriptors;
 
         private @Nullable String signature; // From LocalVariableTypeTable, might be null
         private @Nullable String[] signatures;
@@ -227,13 +229,28 @@ public class LocalVariableTable extends TableAttribute<LocalVariableTable.Variab
             this.descriptor = descriptor;
         }
 
-        public @Nullable String getSignature() {
+        public @Nullable String getGenericSignature() {
             return signature;
         }
 
-        public void setSignature(@Nullable String signature) {
+        public void setGenericSignature(@Nullable String signature) {
             this.signature = signature;
             recache();
+        }
+
+        @Override
+        public @Nullable String[] getGenericSignatures() {
+            return signatures;
+        }
+
+        @Override
+        public @Nullable String[] getDescriptors() {
+            return descriptors;
+        }
+
+        @Override
+        public int getParameterCount() {
+            return Descriptor.super.getParameterCount();
         }
 
         public int getIndex() {
@@ -271,14 +288,10 @@ public class LocalVariableTable extends TableAttribute<LocalVariableTable.Variab
         }
 
         @Override
-        public @Nullable String[] getSignatures() {
-            return signatures;
-        }
-
-        @Override
         public void recache() {
             if (signature != null)
                 this.signatures = ClassUtil.fromSignature(signature);
+            this.descriptors = ClassUtil.fromSignature(descriptor);
         }
     }
 }

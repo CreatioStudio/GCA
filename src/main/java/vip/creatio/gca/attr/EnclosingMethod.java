@@ -13,7 +13,7 @@ import vip.creatio.gca.util.ClassUtil;
  * is a local class or an anonymous class. A class may have no more
  * than one EnclosingMethod attribute.
  */
-public class EnclosingMethod extends Attribute implements DeclaredSignature {
+public class EnclosingMethod extends Attribute implements Descriptor {
 
     private ClassConst clazz;
     // If the current class is not immediately enclosed by a method
@@ -63,8 +63,18 @@ public class EnclosingMethod extends Attribute implements DeclaredSignature {
     }
 
     @Override
-    public @Nullable String[] getSignatures() {
-        return method == null ? null : method.getSignatures();
+    public @Nullable String getDescriptor() {
+        return method == null ? null : method.getDescriptor();
+    }
+
+    @Override
+    public void setDescriptor(String str) {
+        if (method != null) method.setDescriptor(str);
+    }
+
+    @Override
+    public @Nullable String[] getDescriptors() {
+        return method == null ? null : method.getDescriptors();
     }
 
     @Override

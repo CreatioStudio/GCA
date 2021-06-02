@@ -4,7 +4,6 @@ import sun.misc.Unsafe;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.lang.invoke.LambdaMetafactory;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 

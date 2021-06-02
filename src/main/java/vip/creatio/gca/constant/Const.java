@@ -9,7 +9,7 @@ import vip.creatio.gca.util.ByteVector;
 @SuppressWarnings("unused")
 public abstract class Const {
 
-    protected final ConstPool pool;
+    protected ConstPool pool;
     protected final ConstType type;
     
     Const(ConstPool pool, ConstType type) {

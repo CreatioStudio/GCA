@@ -1,5 +1,6 @@
 package vip.creatio.gca.attr;
 
+import vip.creatio.gca.Attribute;
 import vip.creatio.gca.AttributeContainer;
 import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.ClassFileParser;
@@ -29,13 +30,18 @@ public class Annotations extends TableAttribute<Annotation> {
     }
 
     public Annotation add(String className) {
-        Annotation anno = new Annotation(container.classFile(), className);
+        Annotation anno = new Annotation(container.classFile().constPool(), className);
         add(anno);
         return anno;
     }
 
     public boolean remove(String className) {
         return items.removeIf(annotation -> annotation.getClassName().equals(className));
+    }
+
+    //@Override
+    public Attribute copy() {
+        return null;
     }
 
     @Override

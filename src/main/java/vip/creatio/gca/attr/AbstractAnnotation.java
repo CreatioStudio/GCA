@@ -6,13 +6,10 @@ import vip.creatio.gca.util.ByteVector;
 
 abstract class AbstractAnnotation {
 
-    final ClassFile file;
-
     final ConstPool pool;
 
-    AbstractAnnotation(ClassFile file) {
-        this.file = file;
-        this.pool = file.constPool();
+    AbstractAnnotation(ConstPool pool) {
+        this.pool = pool;
     }
 
     final ConstPool constPool() {
@@ -22,5 +19,7 @@ abstract class AbstractAnnotation {
     abstract void write(ByteVector buffer);
 
     abstract void collect();
+
+    abstract AbstractAnnotation copy();
 
 }

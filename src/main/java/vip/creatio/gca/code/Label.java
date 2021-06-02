@@ -10,6 +10,10 @@ public class Label {
         this.anchor = anchor;
     }
 
+    public Label(String name) {
+        this.name = name;
+    }
+
     public OpCode getAnchor() {
         return anchor;
     }
@@ -18,8 +22,12 @@ public class Label {
         this.anchor = anchor;
     }
 
-    public int getOffset() {
+    public int offset() {
         return anchor.offset();
+    }
+
+    public int index() {
+        return anchor.index();
     }
 
     public String getName() {
@@ -33,5 +41,14 @@ public class Label {
     @Override
     public String toString() {
         return "Label{name=" + name + ",anchor=" + anchor +  '}';
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Label) {
+            return ((Label) obj).name.equals(name)
+                    && ((Label) obj).anchor.equals(anchor);
+        }
+        return false;
     }
 }

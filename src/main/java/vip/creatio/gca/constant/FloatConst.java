@@ -11,7 +11,7 @@ public class FloatConst extends Const.Value {
 
     private final float data;
 
-    FloatConst(ConstPool pool, float data) {
+    public FloatConst(ConstPool pool, float data) {
         super(pool, ConstType.FLOAT);
         this.data = data;
     }

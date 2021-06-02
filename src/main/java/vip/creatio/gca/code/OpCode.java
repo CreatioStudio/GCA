@@ -1,6 +1,5 @@
 package vip.creatio.gca.code;
 
-import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.ClassFileParser;
 import vip.creatio.gca.ConstPool;
 import vip.creatio.gca.Serializer;
@@ -19,6 +18,7 @@ public abstract class OpCode implements Serializer {
     public static final int FLAG_LOAD =             0b0000_0000_0000_0100;
     public static final int FLAG_STORE =            0b0000_0000_0000_1000;
     public static final int FLAG_MATH =             0b0000_0000_0001_0000;
+    public static final int FLAG_IF =               0b0000_0000_0010_0000;
 
     final CodeContainer codes;
 
@@ -37,13 +37,13 @@ public abstract class OpCode implements Serializer {
         return codes.offsetOf(this);
     }
 
+    public final int index() {
+        return codes.indexOf(this);
+    }
+
     @Override
     public void serialize(ByteVector buffer) {
         buffer.putByte(type().getTag());
-    }
-
-    public final boolean belongTo(Code c) {
-        return codes.codeAttr() == c;   // strictly equals
     }
 
     @Override
@@ -65,6 +65,11 @@ public abstract class OpCode implements Serializer {
 
     public boolean hasPrev() {
         return codes.hasPrev(this);
+    }
+
+    // get or create label that attached on this opcode
+    public Label visitLabel() {
+        return codes.visitLabel(this);
     }
 
 
@@ -208,7 +213,7 @@ public abstract class OpCode implements Serializer {
                     if (type == null) {
                         throw new BytecodeException(codes, offset, "Unknown opcode type: 0x" + Util.toHex(op));
                     }
-                    code = new Unary(codes, type);
+                    code = new UnaryOpCode(codes, type);
                     break;
                 //Unary
             }
@@ -219,18 +224,4 @@ public abstract class OpCode implements Serializer {
         return code; //TODO
     }
 
-    public static class Unary extends OpCode {
-
-        private final OpCodeType type;
-
-        Unary(CodeContainer codes, OpCodeType type) {
-            super(codes);
-            this.type = type;
-        }
-
-        @Override
-        public OpCodeType type() {
-            return type;
-        }
-    }
 }

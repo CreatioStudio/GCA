@@ -3,13 +3,16 @@ package vip.creatio.gca.constant;
 import vip.creatio.gca.ClassFileParser;
 import vip.creatio.gca.ConstPool;
 import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.ClassUtil;
 
 abstract class AbstractTypeConst extends Const {
     private String name;
+    private String bcName;
 
     AbstractTypeConst(ConstPool pool, ConstType type, String name) {
         super(pool, type);
         this.name = name;
+        this.bcName = ClassUtil.toBytecodeName(name);
     }
 
     AbstractTypeConst(ConstPool pool, ConstType type) {
@@ -24,25 +27,31 @@ abstract class AbstractTypeConst extends Const {
     @Override
     protected void write(ByteVector buffer) {
         buffer.putByte(tag());
-        buffer.putShort(pool.acquireUtf(name).index());
+        buffer.putShort(pool.acquireUtf(bcName).index());
     }
 
     @Override
     void collect() {
-        pool.acquireUtf(name);
+        pool.acquireUtf(bcName);
     }
 
     @Override
     void parse(ClassFileParser pool, ByteVector buffer) {
-        name = pool.getString(buffer.getShort());
+        bcName = pool.getString(buffer.getShort());
+        name = ClassUtil.toBinaryName(bcName);
     }
 
     public void setName(String name) {
         this.name = name;
+        this.bcName = ClassUtil.toBytecodeName(name);
     }
 
     public String getName() {
         return name;
+    }
+
+    public String getBytecodeName() {
+        return bcName;
     }
 
     @Override

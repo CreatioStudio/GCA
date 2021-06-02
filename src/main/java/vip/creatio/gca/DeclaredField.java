@@ -40,6 +40,6 @@ public class DeclaredField extends DeclaredObject {
 
     @Override
     public String toString() {
-        return "Field{name=" + getName() + ",descriptor=" + getDescriptor();
+        return "Field{name=" + getName() + ",descriptor=" + getDescriptor() + '}';
     }
 }

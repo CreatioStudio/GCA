@@ -16,6 +16,10 @@ public class TableSwitchOpCode extends OpCode {
     private Label defaultBranch;
     private final List<Label> branches = new ArrayList<>();
 
+    public TableSwitchOpCode(CodeContainer codes) {
+        super(codes);
+    }
+
     TableSwitchOpCode(CodeContainer codes, int startingOffset, ByteVector buffer) {
         super(codes);
         int pc = buffer.position() - startingOffset;
@@ -95,11 +99,11 @@ public class TableSwitchOpCode extends OpCode {
         int padding = Util.align(offset + 1) - offset - 1;
         buffer.skip(padding);
         try {
-            buffer.putInt(defaultBranch.getOffset() - offset);
+            buffer.putInt(defaultBranch.offset() - offset);
             buffer.putInt(startValue);
             buffer.putInt(startValue + branches.size() - 1);
             for (Label branch : branches) {
-                buffer.putInt(branch.getOffset() - offset);
+                buffer.putInt(branch.offset() - offset);
             }
         } catch (Exception e) {
             throw new BytecodeException(codes, offset, e, "")
@@ -113,9 +117,9 @@ public class TableSwitchOpCode extends OpCode {
         StringBuilder sb = new StringBuilder();
         sb.append("tableswitch from ").append(startValue).append(" to ").append(branches.size() + startValue);
         for (int i = 0; i < branches.size(); i++) {
-            sb.append("\n        ").append(i).append(": ").append(branches.get(i).getOffset());
+            sb.append("\n        ").append(i).append(": ").append(branches.get(i).offset());
         }
-        sb.append("\n        default: ").append(defaultBranch.getOffset());
+        sb.append("\n        default: ").append(defaultBranch.offset());
         return sb.toString();
     }
 

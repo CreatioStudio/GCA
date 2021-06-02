@@ -19,17 +19,17 @@ public class Annotation extends AbstractAnnotation {
 
     private final List<Pair<String, ElementValue>> nameValuePairs = new ArrayList<>();
 
-    Annotation(ClassFile file) {
-        super(file);
+    Annotation(ConstPool pool) {
+        super(pool);
     }
 
-    public Annotation(ClassFile file, String type) {
-        this(file);
+    public Annotation(ConstPool pool, String type) {
+        this(pool);
         this.type = type;
     }
 
     static Annotation parse(ClassFile file, ClassFileParser pool, ByteVector buffer) {
-        Annotation anno = new Annotation(file);
+        Annotation anno = new Annotation(file.constPool());
         anno.type = pool.getString(buffer.getUShort());
         int num = buffer.getUShort();
         for (int i = 0; i < num; i++) {
@@ -117,4 +117,8 @@ public class Annotation extends AbstractAnnotation {
         }
     }
 
+    @Override
+    AbstractAnnotation copy() {
+        return new Annotation(pool, type);
+    }
 }

@@ -133,7 +133,7 @@ public class ClassUtil {
                 length[0] = ptr - index;
                 return new String(chars, index, ptr - index);
             default:
-                throw new RuntimeException("Unknown token: " + chars[0]);
+                throw new RuntimeException("Unknown token: '" + chars[0] + "' @ " + index + " in " + new String(chars));
         }
     }
 
@@ -162,6 +162,10 @@ public class ClassUtil {
         }
         sb.append(')');
         return sb.append(toSignature(signatures[0])).toString().replace('.', '/');
+    }
+
+    public static String getSignature(String sig) {
+        return toSignature(sig);
     }
 
     public static String getSignature(Method mth) {

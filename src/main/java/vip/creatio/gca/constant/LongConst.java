@@ -11,7 +11,7 @@ public class LongConst extends Const.Value implements Const.DualSlot {
 
     private final long data;
 
-    LongConst(ConstPool pool, long data) {
+    public LongConst(ConstPool pool, long data) {
         super(pool, ConstType.LONG);
         this.data = data;
     }

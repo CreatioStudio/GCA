@@ -15,6 +15,10 @@ public class LookupSwitchOpCode extends OpCode {
     // lookupswitch requires integers to be in order, so we use a tree map
     private final Map<Integer, Label> branches = new TreeMap<>(Integer::compareTo);
 
+    public LookupSwitchOpCode(CodeContainer codes) {
+        super(codes);
+    }
+
     LookupSwitchOpCode(CodeContainer codes, int startingOffset, ByteVector buffer) {
         super(codes);
         int pc = buffer.position() - startingOffset;
@@ -79,11 +83,11 @@ public class LookupSwitchOpCode extends OpCode {
         int padding = Util.align(offset + 1) - offset - 1;
         buffer.skip(padding);
         try {
-            buffer.putInt(defaultBranch.getOffset() - offset);
+            buffer.putInt(defaultBranch.offset() - offset);
             buffer.putInt(branches.size());
             for (Map.Entry<Integer, Label> entry : branches.entrySet()) {
                 buffer.putInt(entry.getKey());
-                buffer.putInt(entry.getValue().getOffset() - offset);
+                buffer.putInt(entry.getValue().offset() - offset);
             }
         } catch (Exception e) {
             throw new BytecodeException(codes, offset, e, "")
@@ -97,9 +101,9 @@ public class LookupSwitchOpCode extends OpCode {
         StringBuilder sb = new StringBuilder();
         sb.append("lookupswitch ").append(branches.size());
         for (Map.Entry<Integer, Label> entry : branches.entrySet()) {
-            sb.append("\n        ").append(entry.getKey()).append(": ").append(entry.getValue().getOffset());
+            sb.append("\n        ").append(entry.getKey()).append(": ").append(entry.getValue().offset());
         }
-        sb.append("\n        default: ").append(defaultBranch.getOffset());
+        sb.append("\n        default: ").append(defaultBranch.offset());
         return sb.toString();
     }
 

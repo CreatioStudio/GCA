@@ -96,7 +96,7 @@ public class BootstrapMethods extends TableAttribute<BootstrapMethods.Method> {
             this.arguments.add(arg);
         }
 
-        public int getIndex() {
+        public int index() {
             return items.indexOf(this);
         }
 

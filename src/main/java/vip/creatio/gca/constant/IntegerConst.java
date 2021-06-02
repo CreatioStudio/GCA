@@ -11,7 +11,7 @@ public class IntegerConst extends Const.Value {
 
     private final int data;
 
-    IntegerConst(ConstPool pool, int data) {
+    public IntegerConst(ConstPool pool, int data) {
         super(pool, ConstType.INTEGER);
         this.data = data;
     }

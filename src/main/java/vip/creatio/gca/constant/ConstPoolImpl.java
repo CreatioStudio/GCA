@@ -6,11 +6,15 @@ import vip.creatio.gca.ConstPool;
 import vip.creatio.gca.ClassFileParser;
 
 import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.ClassUtil;
+
 import java.util.*;
+import java.util.function.Consumer;
 
 public class ConstPoolImpl extends ConstPool {
 
     Set<Const> constants = new HashSet<>();
+    int size;
     //List<Const> constants = new ArrayList<>();
     //HashMap<Integer, Const> constMap = new HashMap<>();
 
@@ -55,14 +59,9 @@ public class ConstPoolImpl extends ConstPool {
 
     @Override
     protected void collect() {
-        int i = 0;
         for (Const c : new HashSet<>(constants)) {
-            /*if (c != null)*/ c.collect();
+            c.collect();
         }
-//        while (i < constants.size()) {
-//            Const c = constants.get(i++);
-//            if (c != null) c.collect();
-//        }
     }
 
     @SuppressWarnings("unchecked")
@@ -80,11 +79,20 @@ public class ConstPoolImpl extends ConstPool {
     public void remove(Const c) {
         if (isWriting()) throw new IllegalStateException("constant cannot be removed in parsing period");
         constants.remove(c);
+        size--;
     }
 
     public void remove(String str) {
         if (isWriting()) throw new IllegalStateException("constant cannot be removed in parsing period");
         constants.removeIf(u -> u instanceof UTFConst && ((UTFConst) u).string().equals(str));
+        recalcSize();
+    }
+
+    private void recalcSize() {
+        size = 0;
+        for (Const c : this) {
+            size += c instanceof Const.DualSlot ? 2 : 1;
+        }
     }
 
     public List<UTFConst> acquireUtf() {
@@ -123,8 +131,8 @@ public class ConstPoolImpl extends ConstPool {
         return acquire(new StringConst(this, s));
     }
 
-    public RefConst acquireFieldRef(ClassConst clazz, String name, String descriptor) {
-        return acquire(new RefConst(this, ConstType.FIELDREF, clazz, name, descriptor));
+    public RefConst acquireFieldRef(ClassConst clazz, String name, String type) {
+        return acquire(new RefConst(this, ConstType.FIELDREF, clazz, name, ClassUtil.getSignature(type)));
     }
 
     public RefConst acquireMethodRef(ClassConst clazz, String name, String descriptor) {
@@ -150,28 +158,17 @@ public class ConstPoolImpl extends ConstPool {
 
 
     public void add(Const constant) {
+        constant.pool = this;
         constants.add(constant);
         if (isWriting()) {
             //constMap.put(constants.size() - 1, constant);
             constant.collect();
         }
-        if (constant instanceof Const.DualSlot) constants.add(constant);
+        size += constant instanceof Const.DualSlot ? 2 : 1;
     }
 
-    // index - starts from 1, 0 means null
-//    public Const get(int index) {
-//        if (index == 0) return null;
-//        return constants.get((index & 0xFFFF) - 1);
-//    }
-
     public int size() {
-        //if (isWriting()) return constMap.size();
-        return constants.size();
-//        int sum = 0;
-//        for (Const c : constants) {
-//            if (c != null) sum++;
-//        }
-//        return sum;
+        return size;
     }
 
     public static void parseConstant(ClassFileParser pool, Const c, ByteVector buf) {
@@ -184,4 +181,33 @@ public class ConstPoolImpl extends ConstPool {
         return new AccessItr(constants.iterator());
     }
 
+    protected class AccessItr implements Iterator<Const> {
+        private final Iterator<Const> itr;
+
+        public AccessItr(Iterator<Const> itr) {
+            this.itr = itr;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return itr.hasNext();
+        }
+
+        @Override
+        public Const next() {
+            return itr.next();
+        }
+
+        @Override
+        public void remove() {
+            if (isWriting()) throw new IllegalStateException("constant cannot be removed in parsing period");
+            itr.remove();
+            size--;
+        }
+
+        @Override
+        public void forEachRemaining(Consumer<? super Const> action) {
+            itr.forEachRemaining(action);
+        }
+    }
 }

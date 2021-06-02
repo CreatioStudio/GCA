@@ -4,6 +4,7 @@ import vip.creatio.gca.ConstPool;
 import vip.creatio.gca.ClassFileParser;
 
 import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.ClassUtil;
 
 public class ClassConst extends AbstractTypeConst {
 

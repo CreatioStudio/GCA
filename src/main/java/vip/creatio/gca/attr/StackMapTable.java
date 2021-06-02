@@ -235,8 +235,8 @@ public class StackMapTable extends TableAttribute<StackMapTable.Frame> {
         }
 
         private void write(ByteVector buffer, int[] lastIndex /* int ptr */ ) {
-            int offset = label.getOffset();
-            int offsetDelta = label.getOffset() - lastIndex[0];
+            int offset = label.offset();
+            int offsetDelta = label.offset() - lastIndex[0];
             lastIndex[0] = offset + 1;
 
             switch (type) {
@@ -302,7 +302,7 @@ public class StackMapTable extends TableAttribute<StackMapTable.Frame> {
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder(type.toString());
-            sb.append("{offset=").append(label.getOffset());
+            sb.append("{offset=").append(label.offset());
             switch (type) {
                 case SAME_LOCAL_1_STACK_ITEM:
                 case SAME_LOCAL_1_STACK_ITEM_EX:

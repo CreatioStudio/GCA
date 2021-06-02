@@ -11,7 +11,7 @@ public class DoubleConst extends Const.Value implements Const.DualSlot {
 
     private final double data;
 
-    DoubleConst(ConstPool pool, double data) {
+    public DoubleConst(ConstPool pool, double data) {
         super(pool, ConstType.DOUBLE);
         this.data = data;
     }

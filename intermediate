@@ -1,34 +1,29 @@
 Operation
-Extend local variable index by additional bytes
+Store reference into local variable
 
-Format 1
+Format
 
-wide
-<opcode>
-indexbyte1
-indexbyte2
-where <opcode> is one of iload, fload, aload, lload, dload, istore, fstore, astore, lstore, dstore, or ret
-
-Format 2
-
-wide
-iinc
-indexbyte1
-indexbyte2
-constbyte1
-constbyte2
+astore_<n>
 Forms
-wide = 196 (0xc4)
+astore_0 = 75 (0x4b)
+
+astore_1 = 76 (0x4c)
+
+astore_2 = 77 (0x4d)
+
+astore_3 = 78 (0x4e)
 
 Operand Stack
-Same as modified instruction
+..., objectref →
+
+...
 
 Description
-The wide instruction modifies the behavior of another instruction. It takes one of two formats, depending on the instruction being modified. The first form of the wide instruction modifies one of the instructions iload, fload, aload, lload, dload, istore, fstore, astore, lstore, dstore, or ret (§iload, §fload, §aload, §lload, §dload, §istore, §fstore, §astore, §lstore, §dstore, §ret). The second form applies only to the iinc instruction (§iinc).
-
-In either case, the wide opcode itself is followed in the compiled code by the opcode of the instruction wide modifies. In either form, two unsigned bytes indexbyte1 and indexbyte2 follow the modified opcode and are assembled into a 16-bit unsigned index to a local variable in the current frame (§2.6), where the value of the index is (indexbyte1 << 8) | indexbyte2. The calculated index must be an index into the local variable array of the current frame. Where the wide instruction modifies an lload, dload, lstore, or dstore instruction, the index following the calculated index (index + 1) must also be an index into the local variable array. In the second form, two immediate unsigned bytes constbyte1 and constbyte2 follow indexbyte1 and indexbyte2 in the code stream. Those bytes are also assembled into a signed 16-bit constant, where the constant is (constbyte1 << 8) | constbyte2.
-
-The widened bytecode operates as normal, except for the use of the wider index and, in the case of the second form, the larger increment range.
+The <n> must be an index into the local variable array of the current frame (§2.6). The objectref on the top of the operand stack must be of type returnAddress or of type reference. It is popped from the operand stack, and the value of the local variable at <n> is set to objectref.
 
 Notes
-Although we say that wide "modifies the behavior of another instruction," the wide instruction effectively treats the bytes constituting the modified instruction as operands, denaturing the embedded instruction in the process. In the case of a modified iinc instruction, one of the logical operands of the iinc is not even at the normal offset from the opcode. The embedded instruction must never be executed directly; its opcode must never be the target of any control transfer instruction.
+An astore_<n> instruction is used with an objectref of type returnAddress when implementing the finally clauses of the Java programming language (§3.13).
+
+An aload_<n> instruction (§aload_<n>) cannot be used to load a value of type returnAddress from a local variable onto the operand stack. This asymmetry with the corresponding astore_<n> instruction is intentional.
+
+Each of the astore_<n> instructions is the same as astore with an index of <n>, except that the operand <n> is implicit.

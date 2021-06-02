@@ -8,6 +8,12 @@ public class IncreamentOpCode extends OpCode {
     private int index;
     private int value;
 
+    public IncreamentOpCode(CodeContainer codes, int index, int value) {
+        super(codes);
+        this.index = index;
+        this.value = value;
+    }
+
     IncreamentOpCode(CodeContainer codes, ByteVector buffer, boolean wide) {
         super(codes);
         if (wide) {
@@ -37,7 +43,7 @@ public class IncreamentOpCode extends OpCode {
 
     @Override
     public void serialize(ByteVector buffer) {
-        if (index > 255 || value > 255 || value < -256) {
+        if (index > 0xFF || value > 0xFF || value < -0xFF) {
             buffer.putByte(OpCodeType.WIDE.getTag());
             super.serialize(buffer);
 
@@ -53,7 +59,7 @@ public class IncreamentOpCode extends OpCode {
 
     @Override
     public int byteSize() {
-        if (index > 255 || value > 255 || value < -256) {
+        if (index > 0xFF || value > 0xFF || value < -0xFF) {
             return 6;
         } else {
             return super.byteSize();

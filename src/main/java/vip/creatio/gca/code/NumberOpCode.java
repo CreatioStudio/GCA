@@ -8,7 +8,7 @@ public class NumberOpCode extends OpCode {
     private final OpCodeType type;
     private final int data;
 
-    NumberOpCode(CodeContainer codes, OpCodeType type, int data) {
+    public NumberOpCode(CodeContainer codes, OpCodeType type, int data) {
         super(codes);
         this.type = type;
         this.data = data;
@@ -56,6 +56,10 @@ public class NumberOpCode extends OpCode {
             super.serialize(buffer);
             buffer.putInt(data);
         }
+    }
+
+    public int data() {
+        return data;
     }
 
     @Override

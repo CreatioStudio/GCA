@@ -26,7 +26,7 @@ public enum OpCodeType {
      * <b>Description: </b><br>
      * Do nothing.
      */
-    NOP             ((byte) 0x0, 1),       //Do nothing
+    NOP             ((byte) 0x0, 1, 0),       //Do nothing
 
     /* Push const */
 
@@ -53,7 +53,7 @@ public enum OpCodeType {
      * <b>Notes: </b><br>
      * The Java Virtual Machine does not mandate a concrete value for null.
      */
-    ACONST_NULL     ((byte) 0x1, 1),       //Push null
+    ACONST_NULL     ((byte) 0x1, 1, 1),       //Push null
 
     /**
      * <b>Operation: </b>
@@ -85,25 +85,25 @@ public enum OpCodeType {
      * Each of this family of instructions is equivalent to bipush &lt;i&gt; for the
      * respective value of &lt;i&gt;, except that the operand &lt;i&gt; is implicit.
      */
-    ICONST_M1       ((byte) 0x2, 1),       //Push int constant (-1)
+    ICONST_M1       ((byte) 0x2, 1, 1),       //Push int constant (-1)
 
     /** @see OpCodeType#ICONST_M1 */
-    ICONST_0        ((byte) 0x3, 1),       //Push int constant
+    ICONST_0        ((byte) 0x3, 1, 1),       //Push int constant
 
     /** @see OpCodeType#ICONST_M1 */
-    ICONST_1        ((byte) 0x4, 1),       //Push int constant
+    ICONST_1        ((byte) 0x4, 1, 1),       //Push int constant
 
     /** @see OpCodeType#ICONST_M1 */
-    ICONST_2        ((byte) 0x5, 1),       //Push int constant
+    ICONST_2        ((byte) 0x5, 1, 1),       //Push int constant
 
     /** @see OpCodeType#ICONST_M1 */
-    ICONST_3        ((byte) 0x6, 1),       //Push int constant
+    ICONST_3        ((byte) 0x6, 1, 1),       //Push int constant
 
     /** @see OpCodeType#ICONST_M1 */
-    ICONST_4        ((byte) 0x7, 1),       //Push int constant
+    ICONST_4        ((byte) 0x7, 1, 1),       //Push int constant
 
     /** @see OpCodeType#ICONST_M1 */
-    ICONST_5        ((byte) 0x8, 1),       //Push int constant
+    ICONST_5        ((byte) 0x8, 1, 1),       //Push int constant
 
     /**
      * <b>Operation: </b>
@@ -126,10 +126,10 @@ public enum OpCodeType {
      * <b>Description: </b><br>
      * Push the long constant &lt;l&gt; (0 or 1) onto the operand stack.
      */
-    LCONST_0        ((byte) 0x9, 1),       //Push long constant
+    LCONST_0        ((byte) 0x9, 1, 2),       //Push long constant
 
     /** @see OpCodeType#LCONST_0 */
-    LCONST_1        ((byte) 0xA, 1),       //Push long constant
+    LCONST_1        ((byte) 0xA, 1, 2),       //Push long constant
 
     /**
      * <b>Operation: </b>
@@ -153,13 +153,13 @@ public enum OpCodeType {
      * <b>Description: </b><br>
      * Push the float constant &lt;f&gt; (0.0, 1.0, or 2.0) onto the operand stack.
      */
-    FCONST_0        ((byte) 0xB, 1),       //Push float
+    FCONST_0        ((byte) 0xB, 1, 1),       //Push float
 
     /** @see OpCodeType#FCONST_0 */
-    FCONST_1        ((byte) 0xC, 1),       //Push float
+    FCONST_1        ((byte) 0xC, 1, 1),       //Push float
 
     /** @see OpCodeType#FCONST_0 */
-    FCONST_2        ((byte) 0xD, 1),       //Push float
+    FCONST_2        ((byte) 0xD, 1, 1),       //Push float
 
     /**
      * <b>Operation: </b>
@@ -182,10 +182,10 @@ public enum OpCodeType {
      * <b>Description: </b><br>
      * Push the double constant &lt;d&gt; (0.0 or 1.0) onto the operand stack.
      */
-    DCONST_0        ((byte) 0xE, 1),       //Push double
+    DCONST_0        ((byte) 0xE, 1, 2),       //Push double
 
     /** @see OpCodeType#DCONST_0 */
-    DCONST_1        ((byte) 0xF, 1),       //Push double
+    DCONST_1        ((byte) 0xF, 1, 2),       //Push double
 
 
     /**
@@ -210,7 +210,7 @@ public enum OpCodeType {
      * The immediate byte is sign-extended to an int value. That value is pushed onto the
      * operand stack.
      */
-    BIPUSH          ((byte) 0x10, 2),      //Push byte
+    BIPUSH          ((byte) 0x10, 2, 1),      //Push byte
 
     /**
      * <b>Operation: </b>
@@ -237,7 +237,7 @@ public enum OpCodeType {
      * value is then sign-extended to an int value. That value is pushed onto the operand
      * stack.
      */
-    SIPUSH          ((byte) 0x11, 3),      //Push short
+    SIPUSH          ((byte) 0x11, 3, 1),      //Push short
 
     /**
      * <b>Operation: </b>
@@ -293,7 +293,7 @@ public enum OpCodeType {
      * float value set (§2.3.2) because a constant of type float in the constant pool
      * (§4.4.4) must be taken from the float value set.
      */
-    LDC             ((byte) 0x12, 2),      //Push item from run-time constant pool
+    LDC             ((byte) 0x12, 2, 1),      //Push item from run-time constant pool
 
     /**
      * <b>Operation: </b>
@@ -356,7 +356,7 @@ public enum OpCodeType {
      * float value set (§2.3.2) because a constant of type float in the constant pool
      * (§4.4.4) must be taken from the float value set.
      */
-    LDC_W           ((byte) 0x13, 3),      //Push item from run-time constant pool (wide index)
+    LDC_W           ((byte) 0x13, 3, 1),      //Push item from run-time constant pool (wide index)
 
     /**
      * <b>Operation: </b>
@@ -394,7 +394,7 @@ public enum OpCodeType {
      * the double value set (§2.3.2) because a constant of type double in the constant pool
      * (§4.4.5) must be taken from the double value set.
      */
-    LDC2_W          ((byte) 0x14, 3),      //Push long or double from run-time constant pool (wide index)
+    LDC2_W          ((byte) 0x14, 3, 2),      //Push long or double from run-time constant pool (wide index)
 
     /* Load from local variable */
 
@@ -425,7 +425,7 @@ public enum OpCodeType {
      * The iload opcode can be used in conjunction with the wide instruction (§wide) to
      * access a local variable using a two-byte unsigned index.
      */
-    ILOAD           ((byte) 0x15, 2, OpCode.FLAG_LOAD),      //Load int from local variable
+    ILOAD           ((byte) 0x15, 2, 1, OpCode.FLAG_LOAD),      //Load int from local variable
 
     /**
      * <b>Operation: </b>
@@ -454,7 +454,7 @@ public enum OpCodeType {
      * The lload opcode can be used in conjunction with the wide instruction (§wide) to
      * access a local variable using a two-byte unsigned index.
      */
-    LLOAD           ((byte) 0x16, 2, OpCode.FLAG_LOAD),      //Load long from local variable
+    LLOAD           ((byte) 0x16, 2, 2, OpCode.FLAG_LOAD),      //Load long from local variable
 
     /**
      * <b>Operation: </b>
@@ -483,7 +483,7 @@ public enum OpCodeType {
      * The fload opcode can be used in conjunction with the wide instruction (§wide) to
      * access a local variable using a two-byte unsigned index.
      */
-    FLOAD           ((byte) 0x17, 2, OpCode.FLAG_LOAD),      //Load float from local variable
+    FLOAD           ((byte) 0x17, 2, 1, OpCode.FLAG_LOAD),      //Load float from local variable
 
     /**
      * <b>Operation: </b>
@@ -512,7 +512,7 @@ public enum OpCodeType {
      * The dload opcode can be used in conjunction with the wide instruction (§wide) to
      * access a local variable using a two-byte unsigned index.
      */
-    DLOAD           ((byte) 0x18, 2, OpCode.FLAG_LOAD),      //Load double from local variable
+    DLOAD           ((byte) 0x18, 2, 2, OpCode.FLAG_LOAD),      //Load double from local variable
 
     /**
      * <b>Operation: </b>
@@ -545,7 +545,7 @@ public enum OpCodeType {
      * The aload opcode can be used in conjunction with the wide instruction (§wide) to
      * access a local variable using a two-byte unsigned index.
      */
-    ALOAD           ((byte) 0x19, 2, OpCode.FLAG_LOAD),      //Load reference from local variable
+    ALOAD           ((byte) 0x19, 2, 1, OpCode.FLAG_LOAD),      //Load reference from local variable
 
 
     //########## Fast loading ##########//
@@ -579,16 +579,16 @@ public enum OpCodeType {
      * Each of the iload_&lt;n&gt; instructions is the same as iload with an index of
      * &lt;n&gt;, except that the operand &lt;n&gt; is implicit.
      */
-    ILOAD_0         ((byte) 0x1A, 1, OpCode.FLAG_LOAD),      //Load int from local variable
+    ILOAD_0         ((byte) 0x1A, 1, 1, OpCode.FLAG_LOAD),      //Load int from local variable
 
     /** @see OpCodeType#ILOAD_0 */
-    ILOAD_1         ((byte) 0x1B, 1, OpCode.FLAG_LOAD),      //Load int from local variable
+    ILOAD_1         ((byte) 0x1B, 1, 1, OpCode.FLAG_LOAD),      //Load int from local variable
 
     /** @see OpCodeType#ILOAD_0 */
-    ILOAD_2         ((byte) 0x1C, 1, OpCode.FLAG_LOAD),      //Load int from local variable
+    ILOAD_2         ((byte) 0x1C, 1, 1, OpCode.FLAG_LOAD),      //Load int from local variable
 
     /** @see OpCodeType#ILOAD_0 */
-    ILOAD_3         ((byte) 0x1D, 1, OpCode.FLAG_LOAD),      //Load int from local variable
+    ILOAD_3         ((byte) 0x1D, 1, 1, OpCode.FLAG_LOAD),      //Load int from local variable
 
     /**
      * <b>Operation: </b>
@@ -619,16 +619,16 @@ public enum OpCodeType {
      * Each of the lload_&lt;n&gt; instructions is the same as lload with an index of
      * &lt;n&gt;, except that the operand &lt;n&gt; is implicit.
      */
-    LLOAD_0         ((byte) 0x1E, 1, OpCode.FLAG_LOAD),      //Load long from local variable
+    LLOAD_0         ((byte) 0x1E, 1, 2, OpCode.FLAG_LOAD),      //Load long from local variable
 
     /** @see OpCodeType#LLOAD_0 */
-    LLOAD_1         ((byte) 0x1F, 1, OpCode.FLAG_LOAD),      //Load long from local variable
+    LLOAD_1         ((byte) 0x1F, 1, 2, OpCode.FLAG_LOAD),      //Load long from local variable
 
     /** @see OpCodeType#LLOAD_0 */
-    LLOAD_2         ((byte) 0x20, 1, OpCode.FLAG_LOAD),      //Load long from local variable
+    LLOAD_2         ((byte) 0x20, 1, 2, OpCode.FLAG_LOAD),      //Load long from local variable
 
     /** @see OpCodeType#LLOAD_0 */
-    LLOAD_3         ((byte) 0x21, 1, OpCode.FLAG_LOAD),      //Load long from local variable
+    LLOAD_3         ((byte) 0x21, 1, 2, OpCode.FLAG_LOAD),      //Load long from local variable
 
     /**
      * <b>Operation: </b>
@@ -659,16 +659,16 @@ public enum OpCodeType {
      * Each of the fload_&lt;n&gt; instructions is the same as fload with an index of
      * &lt;n&gt;, except that the operand &lt;n&gt; is implicit.
      */
-    FLOAD_0         ((byte) 0x22, 1, OpCode.FLAG_LOAD),      //Load float from local variable
+    FLOAD_0         ((byte) 0x22, 1, 1, OpCode.FLAG_LOAD),      //Load float from local variable
 
     /** @see OpCodeType#FLOAD_0 */
-    FLOAD_1         ((byte) 0x23, 1, OpCode.FLAG_LOAD),      //Load float from local variable
+    FLOAD_1         ((byte) 0x23, 1, 1, OpCode.FLAG_LOAD),      //Load float from local variable
 
     /** @see OpCodeType#FLOAD_0 */
-    FLOAD_2         ((byte) 0x24, 1, OpCode.FLAG_LOAD),      //Load float from local variable
+    FLOAD_2         ((byte) 0x24, 1, 1, OpCode.FLAG_LOAD),      //Load float from local variable
 
     /** @see OpCodeType#FLOAD_0 */
-    FLOAD_3         ((byte) 0x25, 1, OpCode.FLAG_LOAD),      //Load float from local variable
+    FLOAD_3         ((byte) 0x25, 1, 1, OpCode.FLAG_LOAD),      //Load float from local variable
 
     /**
      * <b>Operation: </b>
@@ -699,16 +699,16 @@ public enum OpCodeType {
      * Each of the dload_&lt;n&gt; instructions is the same as dload with an index of
      * &lt;n&gt;, except that the operand &lt;n&gt; is implicit.
      */
-    DLOAD_0         ((byte) 0x26, 1, OpCode.FLAG_LOAD),      //Load double from local variable
+    DLOAD_0         ((byte) 0x26, 1, 2, OpCode.FLAG_LOAD),      //Load double from local variable
 
     /** @see OpCodeType#DLOAD_0 */
-    DLOAD_1         ((byte) 0x27, 1, OpCode.FLAG_LOAD),      //Load double from local variable
+    DLOAD_1         ((byte) 0x27, 1, 2, OpCode.FLAG_LOAD),      //Load double from local variable
 
     /** @see OpCodeType#DLOAD_0 */
-    DLOAD_2         ((byte) 0x28, 1, OpCode.FLAG_LOAD),      //Load double from local variable
+    DLOAD_2         ((byte) 0x28, 1, 2, OpCode.FLAG_LOAD),      //Load double from local variable
 
     /** @see OpCodeType#DLOAD_0 */
-    DLOAD_3         ((byte) 0x29, 1, OpCode.FLAG_LOAD),      //Load double from local variable
+    DLOAD_3         ((byte) 0x29, 1, 2, OpCode.FLAG_LOAD),      //Load double from local variable
 
     /**
      * <b>Operation: </b>
@@ -743,16 +743,16 @@ public enum OpCodeType {
      * Each of the aload_&lt;n&gt; instructions is the same as aload with an index of
      * &lt;n&gt;, except that the operand &lt;n&gt; is implicit.
      */
-    ALOAD_0         ((byte) 0x2A, 1, OpCode.FLAG_LOAD),      //Load reference from local variable
+    ALOAD_0         ((byte) 0x2A, 1, 1, OpCode.FLAG_LOAD),      //Load reference from local variable
 
     /** @see OpCodeType#ALOAD_0 */
-    ALOAD_1         ((byte) 0x2B, 1, OpCode.FLAG_LOAD),      //Load reference from local variable
+    ALOAD_1         ((byte) 0x2B, 1, 1, OpCode.FLAG_LOAD),      //Load reference from local variable
 
     /** @see OpCodeType#ALOAD_0 */
-    ALOAD_2         ((byte) 0x2C, 1, OpCode.FLAG_LOAD),      //Load reference from local variable
+    ALOAD_2         ((byte) 0x2C, 1, 1, OpCode.FLAG_LOAD),      //Load reference from local variable
 
     /** @see OpCodeType#ALOAD_0 */
-    ALOAD_3         ((byte) 0x2D, 1, OpCode.FLAG_LOAD),      //Load reference from local variable
+    ALOAD_3         ((byte) 0x2D, 1, 1, OpCode.FLAG_LOAD),      //Load reference from local variable
 
     //########## Array load ##########//
 
@@ -785,7 +785,7 @@ public enum OpCodeType {
      * Otherwise, if index is not within the bounds of the array referenced by arrayref,
      * the iaload instruction throws an <code>ArrayIndexOutOfBoundsException.</code>
      */
-    IALOAD          ((byte) 0x2E, 1),      //Load int from array
+    IALOAD          ((byte) 0x2E, 1, -1),      //Load int from array
 
     /**
      * <b>Operation: </b>
@@ -816,7 +816,7 @@ public enum OpCodeType {
      * Otherwise, if index is not within the bounds of the array referenced by arrayref,
      * the laload instruction throws an <code>ArrayIndexOutOfBoundsException.</code>
      */
-    LALOAD          ((byte) 0x2F, 1),      //Load long from array
+    LALOAD          ((byte) 0x2F, 1, 0),      //Load long from array
 
     /**
      * <b>Operation: </b>
@@ -847,7 +847,7 @@ public enum OpCodeType {
      * Otherwise, if index is not within the bounds of the array referenced by arrayref,
      * the faload instruction throws an <code>ArrayIndexOutOfBoundsException.</code>
      */
-    FALOAD          ((byte) 0x30, 1),      //Load float from array
+    FALOAD          ((byte) 0x30, 1, -1),      //Load float from array
 
     /**
      * <b>Operation: </b>
@@ -878,7 +878,7 @@ public enum OpCodeType {
      * Otherwise, if index is not within the bounds of the array referenced by arrayref,
      * the daload instruction throws an <code>ArrayIndexOutOfBoundsException.</code>
      */
-    DALOAD          ((byte) 0x31, 1),      //Load double from array
+    DALOAD          ((byte) 0x31, 1, 0),      //Load double from array
 
     /**
      * <b>Operation: </b>
@@ -909,7 +909,7 @@ public enum OpCodeType {
      * Otherwise, if index is not within the bounds of the array referenced by arrayref,
      * the aaload instruction throws an <code>ArrayIndexOutOfBoundsException.</code>
      */
-    AALOAD          ((byte) 0x32, 1),      //Load reference from array
+    AALOAD          ((byte) 0x32, 1, -1),      //Load reference from array
 
     /**
      * <b>Operation: </b>
@@ -948,7 +948,7 @@ public enum OpCodeType {
      * implementations may implement packed boolean arrays; the baload instruction of such
      * implementations must be used to access those arrays.
      */
-    BALOAD          ((byte) 0x33, 1),      //Load byte or boolean from array
+    BALOAD          ((byte) 0x33, 1, -1),      //Load byte or boolean from array
 
     /**
      * <b>Operation: </b>
@@ -979,7 +979,7 @@ public enum OpCodeType {
      * Otherwise, if index is not within the bounds of the array referenced by arrayref,
      * the caload instruction throws an <code>ArrayIndexOutOfBoundsException.</code>
      */
-    CALOAD          ((byte) 0x34, 1),      //Load char from array
+    CALOAD          ((byte) 0x34, 1, -1),      //Load char from array
 
     /**
      * <b>Operation: </b>
@@ -1010,7 +1010,7 @@ public enum OpCodeType {
      * Otherwise, if index is not within the bounds of the array referenced by arrayref,
      * the saload instruction throws an <code>ArrayIndexOutOfBoundsException.</code>
      */
-    SALOAD          ((byte) 0x35, 1),      //Load short from array
+    SALOAD          ((byte) 0x35, 1, -1),      //Load short from array
 
     //########## Store to local variable ##########//
 
@@ -1042,7 +1042,7 @@ public enum OpCodeType {
      * The istore opcode can be used in conjunction with the wide instruction (§wide) to
      * access a local variable using a two-byte unsigned index.
      */
-    ISTORE          ((byte) 0x36, 2, OpCode.FLAG_STORE),      //Store int into local variable
+    ISTORE          ((byte) 0x36, 2, -1, OpCode.FLAG_STORE),      //Store int into local variable
 
     /**
      * <b>Operation: </b>
@@ -1072,7 +1072,7 @@ public enum OpCodeType {
      * The lstore opcode can be used in conjunction with the wide instruction (§wide) to
      * access a local variable using a two-byte unsigned index.
      */
-    LSTORE          ((byte) 0x37, 2, OpCode.FLAG_STORE),      //Store long into local variable
+    LSTORE          ((byte) 0x37, 2, -2, OpCode.FLAG_STORE),      //Store long into local variable
 
     /**
      * <b>Operation: </b>
@@ -1103,7 +1103,7 @@ public enum OpCodeType {
      * The fstore opcode can be used in conjunction with the wide instruction (§wide) to
      * access a local variable using a two-byte unsigned index.
      */
-    FSTORE          ((byte) 0x38, 2, OpCode.FLAG_STORE),      //Store float into local variable
+    FSTORE          ((byte) 0x38, 2, -1, OpCode.FLAG_STORE),      //Store float into local variable
 
     /**
      * <b>Operation: </b>
@@ -1134,7 +1134,7 @@ public enum OpCodeType {
      * The dstore opcode can be used in conjunction with the wide instruction (§wide) to
      * access a local variable using a two-byte unsigned index.
      */
-    DSTORE          ((byte) 0x39, 2, OpCode.FLAG_STORE),      //Store double into local variable
+    DSTORE          ((byte) 0x39, 2, -2, OpCode.FLAG_STORE),      //Store double into local variable
 
     /**
      * <b>Operation: </b>
@@ -1171,7 +1171,7 @@ public enum OpCodeType {
      * The astore opcode can be used in conjunction with the wide instruction (§wide) to
      * access a local variable using a two-byte unsigned index.
      */
-    ASTORE          ((byte) 0x3A, 2, OpCode.FLAG_STORE),      //Store reference into local variable
+    ASTORE          ((byte) 0x3A, 2, -1, OpCode.FLAG_STORE),      //Store reference into local variable
 
     /**
      * <b>Operation: </b>
@@ -1203,16 +1203,16 @@ public enum OpCodeType {
      * Each of the istore_&lt;n&gt; instructions is the same as istore with an index of
      * &lt;n&gt;, except that the operand &lt;n&gt; is implicit.
      */
-    ISTORE_0        ((byte) 0x3B, 1, OpCode.FLAG_STORE),      //Store int into local variable
+    ISTORE_0        ((byte) 0x3B, 1, -1, OpCode.FLAG_STORE),      //Store int into local variable
 
     /** @see OpCodeType#ISTORE_0 */
-    ISTORE_1        ((byte) 0x3C, 1, OpCode.FLAG_STORE),      //Store int into local variable
+    ISTORE_1        ((byte) 0x3C, 1, -1, OpCode.FLAG_STORE),      //Store int into local variable
 
     /** @see OpCodeType#ISTORE_0 */
-    ISTORE_2        ((byte) 0x3D, 1, OpCode.FLAG_STORE),      //Store int into local variable
+    ISTORE_2        ((byte) 0x3D, 1, -1, OpCode.FLAG_STORE),      //Store int into local variable
 
     /** @see OpCodeType#ISTORE_0 */
-    ISTORE_3        ((byte) 0x3E, 1, OpCode.FLAG_STORE),      //Store int into local variable
+    ISTORE_3        ((byte) 0x3E, 1, -1, OpCode.FLAG_STORE),      //Store int into local variable
 
     /**
      * <b>Operation: </b>
@@ -1244,16 +1244,16 @@ public enum OpCodeType {
      * Each of the lstore_&lt;n&gt; instructions is the same as lstore with an index of
      * &lt;n&gt;, except that the operand &lt;n&gt; is implicit.
      */
-    LSTORE_0        ((byte) 0x3F, 1, OpCode.FLAG_STORE),      //Store long into local variable
+    LSTORE_0        ((byte) 0x3F, 1, -2, OpCode.FLAG_STORE),      //Store long into local variable
 
     /** @see OpCodeType#LSTORE_0 */
-    LSTORE_1        ((byte) 0x40, 1, OpCode.FLAG_STORE),      //Store long into local variable
+    LSTORE_1        ((byte) 0x40, 1, -2, OpCode.FLAG_STORE),      //Store long into local variable
 
     /** @see OpCodeType#LSTORE_0 */
-    LSTORE_2        ((byte) 0x41, 1, OpCode.FLAG_STORE),      //Store long into local variable
+    LSTORE_2        ((byte) 0x41, 1, -2, OpCode.FLAG_STORE),      //Store long into local variable
 
     /** @see OpCodeType#LSTORE_0 */
-    LSTORE_3        ((byte) 0x42, 1, OpCode.FLAG_STORE),      //Store long into local variable
+    LSTORE_3        ((byte) 0x42, 1, -2, OpCode.FLAG_STORE),      //Store long into local variable
 
     /**
      * <b>Operation: </b>
@@ -1285,16 +1285,16 @@ public enum OpCodeType {
      * Each of the fstore_&lt;n&gt; instructions is the same as fstore with an index of
      * &lt;n&gt;, except that the operand &lt;n&gt; is implicit.
      */
-    FSTORE_0        ((byte) 0x43, 1, OpCode.FLAG_STORE),      //Store float into local variable
+    FSTORE_0        ((byte) 0x43, 1, -1, OpCode.FLAG_STORE),      //Store float into local variable
 
     /** @see OpCodeType#FSTORE_0 */
-    FSTORE_1        ((byte) 0x44, 1, OpCode.FLAG_STORE),      //Store float into local variable
+    FSTORE_1        ((byte) 0x44, 1, -1, OpCode.FLAG_STORE),      //Store float into local variable
 
     /** @see OpCodeType#FSTORE_0 */
-    FSTORE_2        ((byte) 0x45, 1, OpCode.FLAG_STORE),      //Store float into local variable
+    FSTORE_2        ((byte) 0x45, 1, -1, OpCode.FLAG_STORE),      //Store float into local variable
 
     /** @see OpCodeType#FSTORE_0 */
-    FSTORE_3        ((byte) 0x46, 1, OpCode.FLAG_STORE),      //Store float into local variable
+    FSTORE_3        ((byte) 0x46, 1, -1, OpCode.FLAG_STORE),      //Store float into local variable
 
     /**
      * <b>Operation: </b>
@@ -1327,27 +1327,64 @@ public enum OpCodeType {
      * Each of the dstore_&lt;n&gt; instructions is the same as dstore with an index of
      * &lt;n&gt;, except that the operand &lt;n&gt; is implicit.
      */
-    DSTORE_0        ((byte) 0x47, 1, OpCode.FLAG_STORE),      //Store double into local variable
+    DSTORE_0        ((byte) 0x47, 1, -2, OpCode.FLAG_STORE),      //Store double into local variable
 
     /** @see OpCodeType#DSTORE_0 */
-    DSTORE_1        ((byte) 0x48, 1, OpCode.FLAG_STORE),      //Store double into local variable
+    DSTORE_1        ((byte) 0x48, 1, -2, OpCode.FLAG_STORE),      //Store double into local variable
 
     /** @see OpCodeType#DSTORE_0 */
-    DSTORE_2        ((byte) 0x49, 1, OpCode.FLAG_STORE),      //Store double into local variable
+    DSTORE_2        ((byte) 0x49, 1, -2, OpCode.FLAG_STORE),      //Store double into local variable
 
     /** @see OpCodeType#DSTORE_0 */
-    DSTORE_3        ((byte) 0x4A, 1, OpCode.FLAG_STORE),      //Store double into local variable
+    DSTORE_3        ((byte) 0x4A, 1, -2, OpCode.FLAG_STORE),      //Store double into local variable
 
-    ASTORE_0        ((byte) 0x4B, 1, OpCode.FLAG_STORE),      //Store reference into local variable
+    /**
+     * <b>Operation: </b>
+     * Store reference into local variable <br><br>
+     *
+     * <b>Format: </b><pre><code>
+     * astore_&lt;n&gt;
+     * </code></pre>
+     *
+     * <b>Forms: </b><pre><code>
+     * astore_0 = 75 (0x4b)
+     * astore_1 = 76 (0x4c)
+     * astore_2 = 77 (0x4d)
+     * astore_3 = 78 (0x4e)
+     * </code></pre>
+     *
+     * <b>Operand Stack: </b><pre><code>
+     * ..., objectref →
+     * ...
+     * </code></pre>
+     *
+     * <b>Description: </b><br>
+     * The &lt;n&gt; must be an index into the local variable array of the current frame
+     * (§2.6). The objectref on the top of the operand stack must be of type returnAddress
+     * or of type reference. It is popped from the operand stack, and the value of the
+     * local variable at &lt;n&gt; is set to objectref. <br><br>
+     *
+     * <b>Notes: </b><br>
+     * An astore_&lt;n&gt; instruction is used with an objectref of type returnAddress when
+     * implementing the finally clauses of the Java programming language (§3.13). <br><br>
+     *
+     * An aload_&lt;n&gt; instruction (§aload_&lt;n&gt;) cannot be used to load a value of
+     * type returnAddress from a local variable onto the operand stack. This asymmetry with
+     * the corresponding astore_&lt;n&gt; instruction is intentional. <br><br>
+     *
+     * Each of the astore_&lt;n&gt; instructions is the same as astore with an index of
+     * &lt;n&gt;, except that the operand &lt;n&gt; is implicit.
+     */
+    ASTORE_0        ((byte) 0x4B, 1, -1, OpCode.FLAG_STORE),      //Store reference into local variable
 
     /** @see OpCodeType#ASTORE_0 */
-    ASTORE_1        ((byte) 0x4C, 1, OpCode.FLAG_STORE),      //Store reference into local variable
+    ASTORE_1        ((byte) 0x4C, 1, -1, OpCode.FLAG_STORE),      //Store reference into local variable
 
     /** @see OpCodeType#ASTORE_0 */
-    ASTORE_2        ((byte) 0x4D, 1, OpCode.FLAG_STORE),      //Store reference into local variable
+    ASTORE_2        ((byte) 0x4D, 1, -1, OpCode.FLAG_STORE),      //Store reference into local variable
 
     /** @see OpCodeType#ASTORE_0 */
-    ASTORE_3        ((byte) 0x4E, 1, OpCode.FLAG_STORE),      //Store reference into local variable
+    ASTORE_3        ((byte) 0x4E, 1, -1, OpCode.FLAG_STORE),      //Store reference into local variable
 
     //########## Array store ##########//
 
@@ -1380,7 +1417,7 @@ public enum OpCodeType {
      * Otherwise, if index is not within the bounds of the array referenced by arrayref,
      * the iastore instruction throws an <code>ArrayIndexOutOfBoundsException.</code>
      */
-    IASTORE         ((byte) 0x4F, 1),      //Store into int array
+    IASTORE         ((byte) 0x4F, 1, -3),      //Store into int array
 
     /**
      * <b>Operation: </b>
@@ -1411,7 +1448,7 @@ public enum OpCodeType {
      * Otherwise, if index is not within the bounds of the array referenced by arrayref,
      * the lastore instruction throws an <code>ArrayIndexOutOfBoundsException.</code>
      */
-    LASTORE         ((byte) 0x50, 1),      //Store into long array
+    LASTORE         ((byte) 0x50, 1, -4),      //Store into long array
 
     /**
      * <b>Operation: </b>
@@ -1443,7 +1480,7 @@ public enum OpCodeType {
      * Otherwise, if index is not within the bounds of the array referenced by arrayref,
      * the fastore instruction throws an <code>ArrayIndexOutOfBoundsException.</code>
      */
-    FASTORE         ((byte) 0x51, 1),      //Store into float array
+    FASTORE         ((byte) 0x51, 1, -3),      //Store into float array
 
     /**
      * <b>Operation: </b>
@@ -1475,7 +1512,7 @@ public enum OpCodeType {
      * Otherwise, if index is not within the bounds of the array referenced by arrayref,
      * the dastore instruction throws an <code>ArrayIndexOutOfBoundsException.</code>
      */
-    DASTORE         ((byte) 0x52, 1),      //Store into double array
+    DASTORE         ((byte) 0x52, 1, -4),      //Store into double array
 
     /**
      * <b>Operation: </b>
@@ -1536,7 +1573,7 @@ public enum OpCodeType {
      * compatible (JLS §5.2) with the actual type of the components of the array, aastore
      * throws an <code>ArrayStoreException.</code>
      */
-    AASTORE         ((byte) 0x53, 1),      //Store into reference array
+    AASTORE         ((byte) 0x53, 1, -3),      //Store into reference array
 
     /**
      * <b>Operation: </b>
@@ -1575,7 +1612,7 @@ public enum OpCodeType {
      * bastore instruction must be able to store boolean values into packed boolean arrays
      * as well as byte values into byte arrays.
      */
-    BASTORE         ((byte) 0x54, 1),      //Store into byte or boolean array
+    BASTORE         ((byte) 0x54, 1, -3),      //Store into byte or boolean array
 
     /**
      * <b>Operation: </b>
@@ -1606,7 +1643,7 @@ public enum OpCodeType {
      * Otherwise, if index is not within the bounds of the array referenced by arrayref,
      * the castore instruction throws an <code>ArrayIndexOutOfBoundsException.</code>
      */
-    CASTORE         ((byte) 0x55, 1),      //Store into char array
+    CASTORE         ((byte) 0x55, 1, -3),      //Store into char array
 
     /**
      * <b>Operation: </b>
@@ -1637,7 +1674,7 @@ public enum OpCodeType {
      * Otherwise, if index is not within the bounds of the array referenced by arrayref,
      * the sastore instruction throws an <code>ArrayIndexOutOfBoundsException.</code>
      */
-    SASTORE         ((byte) 0x56, 1),      //Store into short array
+    SASTORE         ((byte) 0x56, 1, -3),      //Store into short array
 
     //########## Number conversion ##########//
 
@@ -1668,7 +1705,7 @@ public enum OpCodeType {
      * all values of type int are exactly representable by type long, the conversion is
      * exact.
      */
-    I2L             ((byte) 0x85, 1, OpCode.FLAG_MATH),      //Convert int to long
+    I2L             ((byte) 0x85, 1, 1, OpCode.FLAG_MATH),      //Convert int to long
 
     /**
      * <b>Operation: </b>
@@ -1697,7 +1734,7 @@ public enum OpCodeType {
      * result in a loss of precision because values of type float have only 24 significand
      * bits.
      */
-    I2F             ((byte) 0x86, 1, OpCode.FLAG_MATH),      //Convert int to float
+    I2F             ((byte) 0x86, 1, 0, OpCode.FLAG_MATH),      //Convert int to float
 
     /**
      * <b>Operation: </b>
@@ -1726,7 +1763,7 @@ public enum OpCodeType {
      * all values of type int are exactly representable by type double, the conversion is
      * exact.
      */
-    I2D             ((byte) 0x87, 1, OpCode.FLAG_MATH),      //Convert int to double
+    I2D             ((byte) 0x87, 1, 1, OpCode.FLAG_MATH),      //Convert int to double
 
     /**
      * <b>Operation: </b>
@@ -1756,7 +1793,7 @@ public enum OpCodeType {
      * lose information about the overall magnitude of value. The result may also not have
      * the same sign as value.
      */
-    L2I             ((byte) 0x88, 1, OpCode.FLAG_MATH),      //Convert long to int
+    L2I             ((byte) 0x88, 1, -1, OpCode.FLAG_MATH),      //Convert long to int
 
     /**
      * <b>Operation: </b>
@@ -1784,7 +1821,7 @@ public enum OpCodeType {
      * The l2f instruction performs a widening primitive conversion (JLS §5.1.2) that may
      * lose precision because values of type float have only 24 significand bits.
      */
-    L2F             ((byte) 0x89, 1, OpCode.FLAG_MATH),      //Convert long to float
+    L2F             ((byte) 0x89, 1, -1, OpCode.FLAG_MATH),      //Convert long to float
 
     /**
      * <b>Operation: </b>
@@ -1812,7 +1849,7 @@ public enum OpCodeType {
      * The l2d instruction performs a widening primitive conversion (JLS §5.1.2) that may
      * lose precision because values of type double have only 53 significand bits.
      */
-    L2D             ((byte) 0x8A, 1, OpCode.FLAG_MATH),      //Convert long to double
+    L2D             ((byte) 0x8A, 1, 0, OpCode.FLAG_MATH),      //Convert long to double
 
     /**
      * <b>Operation: </b>
@@ -1852,7 +1889,7 @@ public enum OpCodeType {
      * The f2i instruction performs a narrowing primitive conversion (JLS §5.1.3). It may
      * lose information about the overall magnitude of value' and may also lose precision.
      */
-    F2I             ((byte) 0x8B, 1, OpCode.FLAG_MATH),      //Convert float to int
+    F2I             ((byte) 0x8B, 1, 0, OpCode.FLAG_MATH),      //Convert float to int
 
     /**
      * <b>Operation: </b>
@@ -1892,7 +1929,7 @@ public enum OpCodeType {
      * The f2l instruction performs a narrowing primitive conversion (JLS §5.1.3). It may
      * lose information about the overall magnitude of value' and may also lose precision.
      */
-    F2L             ((byte) 0x8C, 1, OpCode.FLAG_MATH),      //Convert float to long
+    F2L             ((byte) 0x8C, 1, 1, OpCode.FLAG_MATH),      //Convert float to long
 
     /**
      * <b>Operation: </b>
@@ -1929,7 +1966,7 @@ public enum OpCodeType {
      * is taken from the float-extended-exponent value set and the target result is
      * constrained to the double value set, rounding of value may be required.
      */
-    F2D             ((byte) 0x8D, 1, OpCode.FLAG_MATH),      //Convert float to double
+    F2D             ((byte) 0x8D, 1, 1, OpCode.FLAG_MATH),      //Convert float to double
 
     /**
      * <b>Operation: </b>
@@ -1968,7 +2005,7 @@ public enum OpCodeType {
      * The d2i instruction performs a narrowing primitive conversion (JLS §5.1.3). It may
      * lose information about the overall magnitude of value' and may also lose precision.
      */
-    D2I             ((byte) 0x8E, 1, OpCode.FLAG_MATH),      //Convert double to int
+    D2I             ((byte) 0x8E, 1, -1, OpCode.FLAG_MATH),      //Convert double to int
 
     /**
      * <b>Operation: </b>
@@ -2007,7 +2044,7 @@ public enum OpCodeType {
      * The d2l instruction performs a narrowing primitive conversion (JLS §5.1.3). It may
      * lose information about the overall magnitude of value' and may also lose precision.
      */
-    D2L             ((byte) 0x8F, 1, OpCode.FLAG_MATH),      //Convert double to long
+    D2L             ((byte) 0x8F, 1, 0, OpCode.FLAG_MATH),      //Convert double to long
 
     /**
      * <b>Operation: </b>
@@ -2047,7 +2084,7 @@ public enum OpCodeType {
      * The d2f instruction performs a narrowing primitive conversion (JLS §5.1.3). It may
      * lose information about the overall magnitude of value' and may also lose precision.
      */
-    D2F             ((byte) 0x90, 1, OpCode.FLAG_MATH),      //Convert double to float
+    D2F             ((byte) 0x90, 1, -1, OpCode.FLAG_MATH),      //Convert double to float
 
     /**
      * <b>Operation: </b>
@@ -2076,7 +2113,7 @@ public enum OpCodeType {
      * lose information about the overall magnitude of value. The result may also not have
      * the same sign as value.
      */
-    I2B             ((byte) 0x91, 1, OpCode.FLAG_MATH),      //Convert int to byte
+    I2B             ((byte) 0x91, 1, 0, OpCode.FLAG_MATH),      //Convert int to byte
 
     /**
      * <b>Operation: </b>
@@ -2105,7 +2142,7 @@ public enum OpCodeType {
      * lose information about the overall magnitude of value. The result (which is always
      * positive) may also not have the same sign as value.
      */
-    I2C             ((byte) 0x92, 1, OpCode.FLAG_MATH),      //Convert int to char
+    I2C             ((byte) 0x92, 1, 0, OpCode.FLAG_MATH),      //Convert int to char
 
     /**
      * <b>Operation: </b>
@@ -2134,7 +2171,7 @@ public enum OpCodeType {
      * lose information about the overall magnitude of value. The result may also not have
      * the same sign as value.
      */
-    I2S             ((byte) 0x93, 1, OpCode.FLAG_MATH),      //Convert int to short
+    I2S             ((byte) 0x93, 1, 0, OpCode.FLAG_MATH),      //Convert int to short
 
     //########## Number operation ##########//
 
@@ -2170,7 +2207,7 @@ public enum OpCodeType {
      * Despite the fact that overflow may occur, execution of an iadd instruction never
      * throws a run-time exception.
      */
-    IADD            ((byte) 0x60, 1, OpCode.FLAG_MATH),      //Add int                       (+)
+    IADD            ((byte) 0x60, 1, -1, OpCode.FLAG_MATH),      //Add int                       (+)
 
     /**
      * <b>Operation: </b>
@@ -2205,7 +2242,7 @@ public enum OpCodeType {
      * Despite the fact that overflow may occur, execution of an isub instruction never
      * throws a run-time exception.
      */
-    ISUB            ((byte) 0x64, 1, OpCode.FLAG_MATH),      //Subtract int                  (-)
+    ISUB            ((byte) 0x64, 1, -1, OpCode.FLAG_MATH),      //Subtract int                  (-)
 
     /**
      * <b>Operation: </b>
@@ -2237,7 +2274,7 @@ public enum OpCodeType {
      * Despite the fact that overflow may occur, execution of an imul instruction never
      * throws a run-time exception.
      */
-    IMUL            ((byte) 0x68, 1, OpCode.FLAG_MATH),      //Multiply int                  (*)
+    IMUL            ((byte) 0x68, 1, -1, OpCode.FLAG_MATH),      //Multiply int                  (*)
 
     /**
      * <b>Operation: </b>
@@ -2275,7 +2312,7 @@ public enum OpCodeType {
      * If the value of the divisor in an int division is 0, idiv throws an
      * <code>ArithmeticException.</code>
      */
-    IDIV            ((byte) 0x6C, 1, OpCode.FLAG_MATH),      //Divide int                    (/)
+    IDIV            ((byte) 0x6C, 1, -1, OpCode.FLAG_MATH),      //Divide int                    (/)
 
     /**
      * <b>Operation: </b>
@@ -2311,7 +2348,7 @@ public enum OpCodeType {
      * If the value of the divisor for an int remainder operator is 0, irem throws an
      * <code>ArithmeticException.</code>
      */
-    IREM            ((byte) 0x70, 1, OpCode.FLAG_MATH),      //Remainder int                 (%)
+    IREM            ((byte) 0x70, 1, -1, OpCode.FLAG_MATH),      //Remainder int                 (%)
 
     /**
      * <b>Operation: </b>
@@ -2343,7 +2380,7 @@ public enum OpCodeType {
      *
      * For all int values x, -x equals (~x)+1.
      */
-    INEG            ((byte) 0x74, 1, OpCode.FLAG_MATH),      //Negate int                    (-)
+    INEG            ((byte) 0x74, 1, 0, OpCode.FLAG_MATH),      //Negate int                    (-)
 
     /**
      * <b>Operation: </b>
@@ -2373,7 +2410,7 @@ public enum OpCodeType {
      * The shift distance actually used is always in the range 0 to 31, inclusive, as if
      * value2 were subjected to a bitwise logical AND with the mask value 0x1f.
      */
-    ISHL            ((byte) 0x78, 1, OpCode.FLAG_MATH),      //Shift left int                (<<)
+    ISHL            ((byte) 0x78, 1, -1, OpCode.FLAG_MATH),      //Shift left int                (<<)
 
     /**
      * <b>Operation: </b>
@@ -2404,7 +2441,7 @@ public enum OpCodeType {
      * s. The shift distance actually used is always in the range 0 to 31, inclusive, as if
      * value2 were subjected to a bitwise logical AND with the mask value 0x1f.
      */
-    ISHR            ((byte) 0x7A, 1, OpCode.FLAG_MATH),      //Arithmetic shift right int    (>>)
+    ISHR            ((byte) 0x7A, 1, -1, OpCode.FLAG_MATH),      //Arithmetic shift right int    (>>)
 
     /**
      * <b>Operation: </b>
@@ -2436,7 +2473,7 @@ public enum OpCodeType {
      * ~s) term cancels out the propagated sign bit. The shift distance actually used is
      * always in the range 0 to 31, inclusive.
      */
-    IUSHR           ((byte) 0x7C, 1, OpCode.FLAG_MATH),      //Logical shift right int       (>>>)
+    IUSHR           ((byte) 0x7C, 1, -1, OpCode.FLAG_MATH),      //Logical shift right int       (>>>)
 
     /**
      * <b>Operation: </b>
@@ -2460,7 +2497,7 @@ public enum OpCodeType {
      * An int result is calculated by taking the bitwise AND (conjunction) of value1 and
      * value2. The result is pushed onto the operand stack.
      */
-    IAND            ((byte) 0x7E, 1, OpCode.FLAG_MATH),      //Boolean bitwise AND int       (&)
+    IAND            ((byte) 0x7E, 1, -1, OpCode.FLAG_MATH),      //Boolean bitwise AND int       (&)
 
     /**
      * <b>Operation: </b>
@@ -2484,7 +2521,7 @@ public enum OpCodeType {
      * An int result is calculated by taking the bitwise inclusive OR of value1 and value2.
      * The result is pushed onto the operand stack.
      */
-    IOR             ((byte) 0x80, 1, OpCode.FLAG_MATH),      //Boolean bitwise OR int        (|)
+    IOR             ((byte) 0x80, 1, -1, OpCode.FLAG_MATH),      //Boolean bitwise OR int        (|)
 
     /**
      * <b>Operation: </b>
@@ -2508,7 +2545,7 @@ public enum OpCodeType {
      * An int result is calculated by taking the bitwise exclusive OR of value1 and value2.
      * The result is pushed onto the operand stack.
      */
-    IXOR            ((byte) 0x82, 1, OpCode.FLAG_MATH),      //Boolean bitwise XOR int       (^)
+    IXOR            ((byte) 0x82, 1, -1, OpCode.FLAG_MATH),      //Boolean bitwise XOR int       (^)
 
     /**
      * <b>Operation: </b>
@@ -2539,7 +2576,7 @@ public enum OpCodeType {
      * access a local variable using a two-byte unsigned index and to increment it by a
      * two-byte immediate signed value.
      */
-    IINC            ((byte) 0x84, 3, OpCode.FLAG_MATH),      //Increment local variable by constant
+    IINC            ((byte) 0x84, 3, 0, OpCode.FLAG_MATH),      //Increment local variable by constant
 
 
     //long number operation
@@ -2574,7 +2611,7 @@ public enum OpCodeType {
      * Despite the fact that overflow may occur, execution of an ladd instruction never
      * throws a run-time exception.
      */
-    LADD            ((byte) 0x61, 1, OpCode.FLAG_MATH),      //Add long                      (+)
+    LADD            ((byte) 0x61, 1, -2, OpCode.FLAG_MATH),      //Add long                      (+)
 
     /**
      * <b>Operation: </b>
@@ -2609,7 +2646,7 @@ public enum OpCodeType {
      * Despite the fact that overflow may occur, execution of an lsub instruction never
      * throws a run-time exception.
      */
-    LSUB            ((byte) 0x65, 1, OpCode.FLAG_MATH),      //Subtract long                 (-)
+    LSUB            ((byte) 0x65, 1, -2, OpCode.FLAG_MATH),      //Subtract long                 (-)
 
     /**
      * <b>Operation: </b>
@@ -2641,7 +2678,7 @@ public enum OpCodeType {
      * Despite the fact that overflow may occur, execution of an lmul instruction never
      * throws a run-time exception.
      */
-    LMUL            ((byte) 0x69, 1, OpCode.FLAG_MATH),      //Multiply long                 (*)
+    LMUL            ((byte) 0x69, 1, -2, OpCode.FLAG_MATH),      //Multiply long                 (*)
 
     /**
      * <b>Operation: </b>
@@ -2679,7 +2716,7 @@ public enum OpCodeType {
      * If the value of the divisor in a long division is 0, ldiv throws an
      * <code>ArithmeticException.</code>
      */
-    LDIV            ((byte) 0x6D, 1, OpCode.FLAG_MATH),      //Divide long                   (/)
+    LDIV            ((byte) 0x6D, 1, -2, OpCode.FLAG_MATH),      //Divide long                   (/)
 
     /**
      * <b>Operation: </b>
@@ -2715,7 +2752,7 @@ public enum OpCodeType {
      * If the value of the divisor for a long remainder operator is 0, lrem throws an
      * <code>ArithmeticException.</code>
      */
-    LREM            ((byte) 0x71, 1, OpCode.FLAG_MATH),      //Remainder long                (%)
+    LREM            ((byte) 0x71, 1, -2, OpCode.FLAG_MATH),      //Remainder long                (%)
 
     /**
      * <b>Operation: </b>
@@ -2747,7 +2784,7 @@ public enum OpCodeType {
      *
      * For all long values x, -x equals (~x)+1.
      */
-    LNEG            ((byte) 0x75, 1, OpCode.FLAG_MATH),      //Negate long                   (-)
+    LNEG            ((byte) 0x75, 1, 0, OpCode.FLAG_MATH),      //Negate long                   (-)
 
     /**
      * <b>Operation: </b>
@@ -2778,7 +2815,7 @@ public enum OpCodeType {
      * inclusive, as if value2 were subjected to a bitwise logical AND with the mask value
      * 0x3f.
      */
-    LSHL            ((byte) 0x79, 1, OpCode.FLAG_MATH),      //Shift left long               (<<)
+    LSHL            ((byte) 0x79, 1, -1, OpCode.FLAG_MATH),      //Shift left long               (<<)
 
     /**
      * <b>Operation: </b>
@@ -2810,7 +2847,7 @@ public enum OpCodeType {
      * inclusive, as if value2 were subjected to a bitwise logical AND with the mask value
      * 0x3f.
      */
-    LSHR            ((byte) 0x7B, 1, OpCode.FLAG_MATH),      //Arithmetic shift right long   (>>)
+    LSHR            ((byte) 0x7B, 1, -1, OpCode.FLAG_MATH),      //Arithmetic shift right long   (>>)
 
     /**
      * <b>Operation: </b>
@@ -2842,7 +2879,7 @@ public enum OpCodeType {
      * ~s) term cancels out the propagated sign bit. The shift distance actually used is
      * always in the range 0 to 63, inclusive.
      */
-    LUSHR           ((byte) 0x7D, 1, OpCode.FLAG_MATH),      //Logical shift right long      (>>>)
+    LUSHR           ((byte) 0x7D, 1, -1, OpCode.FLAG_MATH),      //Logical shift right long      (>>>)
 
     /**
      * <b>Operation: </b>
@@ -2866,7 +2903,7 @@ public enum OpCodeType {
      * A long result is calculated by taking the bitwise AND of value1 and value2. The
      * result is pushed onto the operand stack.
      */
-    LAND            ((byte) 0x7F, 1, OpCode.FLAG_MATH),      //Boolean bitwise AND long      (&)
+    LAND            ((byte) 0x7F, 1, -2, OpCode.FLAG_MATH),      //Boolean bitwise AND long      (&)
 
     /**
      * <b>Operation: </b>
@@ -2890,7 +2927,7 @@ public enum OpCodeType {
      * A long result is calculated by taking the bitwise inclusive OR of value1 and value2.
      * The result is pushed onto the operand stack.
      */
-    LOR             ((byte) 0x81, 1, OpCode.FLAG_MATH),      //Boolean bitwise OR long       (|)
+    LOR             ((byte) 0x81, 1, -2, OpCode.FLAG_MATH),      //Boolean bitwise OR long       (|)
 
     /**
      * <b>Operation: </b>
@@ -2914,7 +2951,7 @@ public enum OpCodeType {
      * A long result is calculated by taking the bitwise exclusive OR of value1 and value2.
      * The result is pushed onto the operand stack.
      */
-    LXOR            ((byte) 0x83, 1, OpCode.FLAG_MATH),      //Boolean bitwise XOR long      (^)
+    LXOR            ((byte) 0x83, 1, -2, OpCode.FLAG_MATH),      //Boolean bitwise XOR long      (^)
 
 
     //float number operation
@@ -2964,7 +3001,7 @@ public enum OpCodeType {
      * 754. Despite the fact that overflow, underflow, or loss of precision may occur,
      * execution of an fadd instruction never throws a run-time exception.
      */
-    FADD            ((byte) 0x62, 1, OpCode.FLAG_MATH),      //Add float                     (+)
+    FADD            ((byte) 0x62, 1, -1, OpCode.FLAG_MATH),      //Add float                     (+)
 
     /**
      * <b>Operation: </b>
@@ -2996,7 +3033,7 @@ public enum OpCodeType {
      * 754. Despite the fact that overflow, underflow, or loss of precision may occur,
      * execution of an fsub instruction never throws a run-time exception.
      */
-    FSUB            ((byte) 0x66, 1, OpCode.FLAG_MATH),      //Subtract float                (-)
+    FSUB            ((byte) 0x66, 1, -1, OpCode.FLAG_MATH),      //Subtract float                (-)
 
     /**
      * <b>Operation: </b>
@@ -3041,7 +3078,7 @@ public enum OpCodeType {
      * 754. Despite the fact that overflow, underflow, or loss of precision may occur,
      * execution of an fmul instruction never throws a run-time exception.
      */
-    FMUL            ((byte) 0x6A, 1, OpCode.FLAG_MATH),      //Multiply float                (*)
+    FMUL            ((byte) 0x6A, 1, -1, OpCode.FLAG_MATH),      //Multiply float                (*)
 
     /**
      * <b>Operation: </b>
@@ -3093,7 +3130,7 @@ public enum OpCodeType {
      * precision may occur, execution of an fdiv instruction never throws a run-time
      * exception.
      */
-    FDIV            ((byte) 0x6E, 1, OpCode.FLAG_MATH),      //Divide float                  (/)
+    FDIV            ((byte) 0x6E, 1, -1, OpCode.FLAG_MATH),      //Divide float                  (/)
 
     /**
      * <b>Operation: </b>
@@ -3151,7 +3188,7 @@ public enum OpCodeType {
      * The IEEE 754 remainder operation may be computed by the library routine
      * Math.IEEEremainder.
      */
-    FREM            ((byte) 0x72, 1, OpCode.FLAG_MATH),      //Remainder float               (%)
+    FREM            ((byte) 0x72, 1, -1, OpCode.FLAG_MATH),      //Remainder float               (%)
 
     /**
      * <b>Operation: </b>
@@ -3186,7 +3223,7 @@ public enum OpCodeType {
      *     <li>If the operand is a zero, the result is the zero of opposite sign.</li>
      * </ul>
      */
-    FNEG            ((byte) 0x76, 1, OpCode.FLAG_MATH),      //Negate float                  (-)
+    FNEG            ((byte) 0x76, 1, 0, OpCode.FLAG_MATH),      //Negate float                  (-)
 
 
     //double number operation
@@ -3239,7 +3276,7 @@ public enum OpCodeType {
      * 754. Despite the fact that overflow, underflow, or loss of precision may occur,
      * execution of a dadd instruction never throws a run-time exception.
      */
-    DADD            ((byte) 0x63, 1, OpCode.FLAG_MATH),      //Add double                    (+)
+    DADD            ((byte) 0x63, 1, -2, OpCode.FLAG_MATH),      //Add double                    (+)
 
     /**
      * <b>Operation: </b>
@@ -3272,7 +3309,7 @@ public enum OpCodeType {
      * 754. Despite the fact that overflow, underflow, or loss of precision may occur,
      * execution of a dsub instruction never throws a run-time exception.
      */
-    DSUB            ((byte) 0x67, 1, OpCode.FLAG_MATH),      //Subtract double               (-)
+    DSUB            ((byte) 0x67, 1, -2, OpCode.FLAG_MATH),      //Subtract double               (-)
 
     /**
      * <b>Operation: </b>
@@ -3318,7 +3355,7 @@ public enum OpCodeType {
      * 754. Despite the fact that overflow, underflow, or loss of precision may occur,
      * execution of a dmul instruction never throws a run-time exception.
      */
-    DMUL            ((byte) 0x6B, 1, OpCode.FLAG_MATH),      //Multiply double               (*)
+    DMUL            ((byte) 0x6B, 1, -2, OpCode.FLAG_MATH),      //Multiply double               (*)
 
     /**
      * <b>Operation: </b>
@@ -3371,7 +3408,7 @@ public enum OpCodeType {
      * precision may occur, execution of a ddiv instruction never throws a run-time
      * exception.
      */
-    DDIV            ((byte) 0x6F, 1, OpCode.FLAG_MATH),      //Divide double                 (/)
+    DDIV            ((byte) 0x6F, 1, -2, OpCode.FLAG_MATH),      //Divide double                 (/)
 
     /**
      * <b>Operation: </b>
@@ -3429,7 +3466,7 @@ public enum OpCodeType {
      * The IEEE 754 remainder operation may be computed by the library routine
      * Math.IEEEremainder.
      */
-    DREM            ((byte) 0x73, 1, OpCode.FLAG_MATH),      //Remainder double              (%)
+    DREM            ((byte) 0x73, 1, -2, OpCode.FLAG_MATH),      //Remainder double              (%)
 
     /**
      * <b>Operation: </b>
@@ -3464,7 +3501,7 @@ public enum OpCodeType {
      *     <li>If the operand is a zero, the result is the zero of opposite sign.</li>
      * </ul>
      */
-    DNEG            ((byte) 0x77, 1, OpCode.FLAG_MATH),      //Negate double                 (-)
+    DNEG            ((byte) 0x77, 1, 0, OpCode.FLAG_MATH),      //Negate double                 (-)
 
 
     //########## Comparision ##########//
@@ -3495,7 +3532,7 @@ public enum OpCodeType {
      * value2, the int value 0 is pushed onto the operand stack. If value1 is less than
      * value2, the int value -1 is pushed onto the operand stack.
      */
-    LCMP            ((byte) 0x94, 1, OpCode.FLAG_MATH),
+    LCMP            ((byte) 0x94, 1, -3, OpCode.FLAG_MATH),
 
     //Compare float
 
@@ -3548,10 +3585,10 @@ public enum OpCodeType {
      * fails on non-NaN values or fails because it encountered a NaN. For more information,
      * see §3.5.
      */
-    FCMPL           ((byte) 0x95, 1, OpCode.FLAG_MATH),
+    FCMPL           ((byte) 0x95, 1, -1, OpCode.FLAG_MATH),
     
     /** @see OpCodeType#FCMPG */
-    FCMPG           ((byte) 0x96, 1, OpCode.FLAG_MATH),
+    FCMPG           ((byte) 0x96, 1, -1, OpCode.FLAG_MATH),
 
     //Compare double
 
@@ -3604,10 +3641,10 @@ public enum OpCodeType {
      * fails on non-NaN values or fails because it encountered a NaN. For more information,
      * see §3.5.
      */
-    DCMPL           ((byte) 0x97, 1, OpCode.FLAG_MATH),
+    DCMPL           ((byte) 0x97, 1, -3, OpCode.FLAG_MATH),
     
     /** @see OpCodeType#DCMPL */
-    DCMPG           ((byte) 0x98, 1, OpCode.FLAG_MATH),
+    DCMPG           ((byte) 0x98, 1, -3, OpCode.FLAG_MATH),
 
 
     //########## Condition ##########//
@@ -3662,22 +3699,22 @@ public enum OpCodeType {
      * Otherwise, execution proceeds at the address of the instruction following this
      * if&lt;cond&gt; instruction.
      */
-    IFEQ            ((byte) 0x99, 3, OpCode.FLAG_JUMP),      //if and only if value = 0
+    IFEQ            ((byte) 0x99, 3, -1, OpCode.FLAG_JUMP | OpCode.FLAG_IF),      //if and only if value = 0
 
     /** @see OpCodeType#IFEQ */
-    IFNE            ((byte) 0x9A, 3, OpCode.FLAG_JUMP),      //if and only if value ≠ 0
+    IFNE            ((byte) 0x9A, 3, -1, OpCode.FLAG_JUMP | OpCode.FLAG_IF),      //if and only if value ≠ 0
 
     /** @see OpCodeType#IFEQ */
-    IFLT            ((byte) 0x9B, 3, OpCode.FLAG_JUMP),      //if and only if value < 0
+    IFLT            ((byte) 0x9B, 3, -1, OpCode.FLAG_JUMP | OpCode.FLAG_IF),      //if and only if value < 0
 
     /** @see OpCodeType#IFEQ */
-    IFGE            ((byte) 0x9C, 3, OpCode.FLAG_JUMP),      //if and only if value ≥ 0
+    IFGE            ((byte) 0x9C, 3, -1, OpCode.FLAG_JUMP | OpCode.FLAG_IF),      //if and only if value ≥ 0
 
     /** @see OpCodeType#IFEQ */
-    IFGT            ((byte) 0x9D, 3, OpCode.FLAG_JUMP),      //if and only if value > 0
+    IFGT            ((byte) 0x9D, 3, -1, OpCode.FLAG_JUMP | OpCode.FLAG_IF),      //if and only if value > 0
 
     /** @see OpCodeType#IFEQ */
-    IFLE            ((byte) 0x9E, 3, OpCode.FLAG_JUMP),      //if and only if value ≤ 0
+    IFLE            ((byte) 0x9E, 3, -1, OpCode.FLAG_JUMP | OpCode.FLAG_IF),      //if and only if value ≤ 0
 
     //Branch if int comparison succeeds                 (if_icmp<cond>)
 
@@ -3729,22 +3766,22 @@ public enum OpCodeType {
      * Otherwise, execution proceeds at the address of the instruction following this
      * if_icmp&lt;cond&gt; instruction.
      */
-    IF_ICMPEQ       ((byte) 0x9F, 3, OpCode.FLAG_JUMP),      //if and only if value1 = value2
+    IF_ICMPEQ       ((byte) 0x9F, 3, -2, OpCode.FLAG_JUMP | OpCode.FLAG_IF),      //if and only if value1 = value2
 
     /** @see OpCodeType#IF_ICMPEQ */
-    IF_ICMPNE       ((byte) 0xA0, 3, OpCode.FLAG_JUMP),      //if and only if value1 ≠ value2
+    IF_ICMPNE       ((byte) 0xA0, 3, -2, OpCode.FLAG_JUMP | OpCode.FLAG_IF),      //if and only if value1 ≠ value2
 
     /** @see OpCodeType#IF_ICMPEQ */
-    IF_ICMPLT       ((byte) 0xA1, 3, OpCode.FLAG_JUMP),      //if and only if value1 < value2
+    IF_ICMPLT       ((byte) 0xA1, 3, -2, OpCode.FLAG_JUMP | OpCode.FLAG_IF),      //if and only if value1 < value2
 
     /** @see OpCodeType#IF_ICMPEQ */
-    IF_ICMPGE       ((byte) 0xA2, 3, OpCode.FLAG_JUMP),      //if and only if value1 ≥ value2
+    IF_ICMPGE       ((byte) 0xA2, 3, -2, OpCode.FLAG_JUMP | OpCode.FLAG_IF),      //if and only if value1 ≥ value2
 
     /** @see OpCodeType#IF_ICMPEQ */
-    IF_ICMPGT       ((byte) 0xA3, 3, OpCode.FLAG_JUMP),      //if and only if value1 > value2
+    IF_ICMPGT       ((byte) 0xA3, 3, -2, OpCode.FLAG_JUMP | OpCode.FLAG_IF),      //if and only if value1 > value2
 
     /** @see OpCodeType#IF_ICMPEQ */
-    IF_ICMPLE       ((byte) 0xA4, 3, OpCode.FLAG_JUMP),      //if and only if value1 ≤ value2
+    IF_ICMPLE       ((byte) 0xA4, 3, -2, OpCode.FLAG_JUMP | OpCode.FLAG_IF),      //if and only if value1 ≤ value2
 
     //Branch if reference comparison succeeds           (if_acmp<cond>)
 
@@ -3787,10 +3824,10 @@ public enum OpCodeType {
      * Otherwise, if the comparison fails, execution proceeds at the address of the
      * instruction following this if_acmp&lt;cond&gt; instruction.
      */
-    IF_ACMPEQ       ((byte) 0xA5, 3, OpCode.FLAG_JUMP),      //if and only if value1 = value2
+    IF_ACMPEQ       ((byte) 0xA5, 3, -2, OpCode.FLAG_JUMP | OpCode.FLAG_IF),      //if and only if value1 = value2
 
     /** @see OpCodeType#IF_ACMPEQ */
-    IF_ACMPNE       ((byte) 0xA6, 3, OpCode.FLAG_JUMP),      //if and only if value1 ≠ value2
+    IF_ACMPNE       ((byte) 0xA6, 3, -2, OpCode.FLAG_JUMP | OpCode.FLAG_IF),      //if and only if value1 ≠ value2
 
     //Special
 
@@ -3883,7 +3920,7 @@ public enum OpCodeType {
      * (checkcast throws an exception, instanceof pushes a result code), and its effect on
      * the operand stack.
      */
-    CHECKCAST       ((byte) 0xC0, 3),      //Check whether object is of given type
+    CHECKCAST       ((byte) 0xC0, 3, 0),      //Check whether object is of given type
 
     /**
      * <b>Operation: </b>
@@ -3971,7 +4008,7 @@ public enum OpCodeType {
      * (checkcast throws an exception, instanceof pushes a result code), and its effect on
      * the operand stack.
      */
-    INSTANCEOF      ((byte) 0xC1, 3),      //Determine if object is of given type
+    INSTANCEOF      ((byte) 0xC1, 3, 0),      //Determine if object is of given type
 
     /**
      * <b>Operation: </b>
@@ -4003,7 +4040,7 @@ public enum OpCodeType {
      * Otherwise, execution proceeds at the address of the instruction following this
      * ifnull instruction.
      */
-    IFNULL          ((byte) 0xC6, 3),      //Branch if reference is null
+    IFNULL          ((byte) 0xC6, 3, -1, OpCode.FLAG_JUMP | OpCode.FLAG_IF),      //Branch if reference is null
 
     /**
      * <b>Operation: </b>
@@ -4035,7 +4072,7 @@ public enum OpCodeType {
      * Otherwise, execution proceeds at the address of the instruction following this
      * ifnonnull instruction.
      */
-    IFNONNULL       ((byte) 0xC7, 3),      //Branch if reference not null
+    IFNONNULL       ((byte) 0xC7, 3, -1, OpCode.FLAG_JUMP | OpCode.FLAG_IF),      //Branch if reference not null
 
     //########## Stack operation ##########//
     //pop
@@ -4063,7 +4100,7 @@ public enum OpCodeType {
      * The pop instruction must not be used unless value is a value of a category 1
      * computational type (§2.11.1).
      */
-    POP             ((byte) 0x57, 1),      //Pop the top operand stack value
+    POP             ((byte) 0x57, 1, -1),      //Pop the top operand stack value
 
     /**
      * <b>Operation: </b>
@@ -4092,7 +4129,7 @@ public enum OpCodeType {
      * <b>Description: </b><br>
      * Pop the top one or two values from the operand stack.
      */
-    POP2            ((byte) 0x58, 1),      //Pop the top one or two operand stack values
+    POP2            ((byte) 0x58, 1, -2),      //Pop the top one or two operand stack values
 
 
     //duplicate
@@ -4121,7 +4158,7 @@ public enum OpCodeType {
      * The dup instruction must not be used unless value is a value of a category 1
      * computational type (§2.11.1).
      */
-    DUP             ((byte) 0x59, 1),      //Duplicate the top operand stack value
+    DUP             ((byte) 0x59, 1, 1),      //Duplicate the top operand stack value
 
     /**
      * <b>Operation: </b>
@@ -4147,7 +4184,7 @@ public enum OpCodeType {
      * The dup_x1 instruction must not be used unless both value1 and value2 are values of
      * a category 1 computational type (§2.11.1).
      */
-    DUP_X1          ((byte) 0x5A, 1),      //Duplicate the top operand stack value and insert two values down
+    DUP_X1          ((byte) 0x5A, 1, 1),      //Duplicate the top operand stack value and insert two values down
 
     /**
      * <b>Operation: </b>
@@ -4178,7 +4215,7 @@ public enum OpCodeType {
      * Duplicate the top value on the operand stack and insert the duplicated value two or
      * three values down in the operand stack.
      */
-    DUP_X2          ((byte) 0x5B, 1),      //Duplicate the top operand stack value and insert two or three values down
+    DUP_X2          ((byte) 0x5B, 1, 1),      //Duplicate the top operand stack value and insert two or three values down
 
     /**
      * <b>Operation: </b>
@@ -4208,7 +4245,7 @@ public enum OpCodeType {
      * Duplicate the top one or two values on the operand stack and push the duplicated
      * value or values back onto the operand stack in the original order.
      */
-    DUP2            ((byte) 0x5C, 1),      //Duplicate the top one or two operand stack values
+    DUP2            ((byte) 0x5C, 1, 2),      //Duplicate the top one or two operand stack values
 
     /**
      * <b>Operation: </b>
@@ -4241,7 +4278,7 @@ public enum OpCodeType {
      * values, in the original order, one value beneath the original value or values in the
      * operand stack.
      */
-    DUP2_X1         ((byte) 0x5D, 1),      //Duplicate the top one or two operand stack values and insert two or three values down
+    DUP2_X1         ((byte) 0x5D, 1, 2),      //Duplicate the top one or two operand stack values and insert two or three values down
 
     /**
      * <b>Operation: </b>
@@ -4283,7 +4320,7 @@ public enum OpCodeType {
      * Duplicate the top one or two values on the operand stack and insert the duplicated
      * values, in the original order, into the operand stack.
      */
-    DUP2_X2         ((byte) 0x5E, 1),      //Duplicate the top one or two operand stack values and insert two, three, or four values down
+    DUP2_X2         ((byte) 0x5E, 1, 2),      //Duplicate the top one or two operand stack values and insert two, three, or four values down
 
     //swap
 
@@ -4314,7 +4351,7 @@ public enum OpCodeType {
      * The Java Virtual Machine does not provide an instruction implementing a swap on
      * operands of category 2 computational types.
      */
-    SWAP            ((byte) 0x5F, 1),      //Swap the top two operand stack values
+    SWAP            ((byte) 0x5F, 1, 0),      //Swap the top two operand stack values
 
 
     //########## Route control ##########//
@@ -4344,7 +4381,7 @@ public enum OpCodeType {
      * instruction. The target address must be that of an opcode of an instruction within
      * the method that contains this goto instruction.
      */
-    GOTO            ((byte) 0xA7, 3, OpCode.FLAG_JUMP),      //Branch always
+    GOTO            ((byte) 0xA7, 3, 0, OpCode.FLAG_JUMP),      //Branch always
 
     /**
      * <b>Operation: </b>
@@ -4379,7 +4416,7 @@ public enum OpCodeType {
      * the size of a method to 65535 bytes (§4.11). This limit may be raised in a future
      * release of the Java Virtual Machine.
      */
-    GOTO_W          ((byte) 0xC8, 5, OpCode.FLAG_JUMP),      //Branch always (wide index)
+    GOTO_W          ((byte) 0xC8, 5, 0, OpCode.FLAG_JUMP),      //Branch always (wide index)
 
     /**
      * <b>Operation: </b>
@@ -4417,7 +4454,7 @@ public enum OpCodeType {
      * Java SE 6, the jsr instruction was used with the ret instruction in the
      * implementation of the finally clause (§3.13, §4.10.2.5).
      */
-    JSR             ((byte) 0xA8, 3, OpCode.FLAG_JUMP),      //Jump subroutine
+    JSR             ((byte) 0xA8, 3, 1, OpCode.FLAG_JUMP),      //Jump subroutine
 
     /**
      * <b>Operation: </b>
@@ -4462,7 +4499,7 @@ public enum OpCodeType {
      * size of a method to 65535 bytes (§4.11). This limit may be raised in a future
      * release of the Java Virtual Machine.
      */
-    JSR_W           ((byte) 0xC9, 5, OpCode.FLAG_JUMP),      //Jump subroutine (wide index)
+    JSR_W           ((byte) 0xC9, 5, 1, OpCode.FLAG_JUMP),      //Jump subroutine (wide index)
 
 
     //########## Thread and synchronization ##########//
@@ -4527,7 +4564,7 @@ public enum OpCodeType {
      * supplied with the Java Virtual Machine. No explicit support for these operations
      * appears in the instruction set of the Java Virtual Machine.
      */
-    MONITORENTER    ((byte) 0xC2, 1),      //Enter monitor for object  (Object.wait()/Object.notify())
+    MONITORENTER    ((byte) 0xC2, 1, -1),      //Enter monitor for object  (Object.wait()/Object.notify())
 
     /**
      * <b>Operation: </b>
@@ -4587,7 +4624,7 @@ public enum OpCodeType {
      *     using the Java Virtual Machine's exception handling mechanism (§3.14).</li>
      * </ul>
      */
-    MONITOREXIT     ((byte) 0xC3, 1),      //Exit monitor for object   (synchronized)
+    MONITOREXIT     ((byte) 0xC3, 1, -1),      //Exit monitor for object   (synchronized)
 
 
     //########## Switch and return ##########//
@@ -4632,7 +4669,7 @@ public enum OpCodeType {
      * The ret opcode can be used in conjunction with the wide instruction (§wide) to
      * access a local variable using a two-byte unsigned index.
      */
-    RET             ((byte) 0xA9, 2),      //Return from subroutine
+    RET             ((byte) 0xA9, 2, 0),      //Return from subroutine
 
     /**
      * <b>Operation: </b>
@@ -4677,7 +4714,7 @@ public enum OpCodeType {
      * during invocation of the current method, then ireturn throws an
      * <code>IllegalMonitorStateException.</code>
      */
-    IRETURN         ((byte) 0xAC, 1),      //Return int from method
+    IRETURN         ((byte) 0xAC, 1, -1),      //Return int from method
 
     /**
      * <b>Operation: </b>
@@ -4722,7 +4759,7 @@ public enum OpCodeType {
      * during invocation of the current method, then lreturn throws an
      * <code>IllegalMonitorStateException.</code>
      */
-    LRETURN         ((byte) 0xAD, 1),      //Return long from method
+    LRETURN         ((byte) 0xAD, 1, -2),      //Return long from method
 
     /**
      * <b>Operation: </b>
@@ -4768,7 +4805,7 @@ public enum OpCodeType {
      * during invocation of the current method, then freturn throws an
      * <code>IllegalMonitorStateException.</code>
      */
-    FRETURN         ((byte) 0xAE, 1),      //Return float from method
+    FRETURN         ((byte) 0xAE, 1, -1),      //Return float from method
 
     /**
      * <b>Operation: </b>
@@ -4816,7 +4853,7 @@ public enum OpCodeType {
      *
      * dstore
      */
-    DRETURN         ((byte) 0xAF, 1),      //Return double from method
+    DRETURN         ((byte) 0xAF, 1, -2),      //Return double from method
 
     /**
      * <b>Operation: </b>
@@ -4863,7 +4900,7 @@ public enum OpCodeType {
      * during invocation of the current method, then areturn throws an
      * <code>IllegalMonitorStateException.</code>
      */
-    ARETURN         ((byte) 0xB0, 1),      //Return reference from method
+    ARETURN         ((byte) 0xB0, 1, -1),      //Return reference from method
 
     /**
      * <b>Operation: </b>
@@ -4906,7 +4943,7 @@ public enum OpCodeType {
      * during invocation of the current method, then return throws an
      * <code>IllegalMonitorStateException.</code>
      */
-    RETURN          ((byte) 0xB1, 1),      //Return void from method
+    RETURN          ((byte) 0xB1, 1, 0),      //Return void from method
 
     //switch
 
@@ -4969,7 +5006,7 @@ public enum OpCodeType {
      * guarantees 4-byte alignment of those operands if and only if the method that
      * contains the tableswitch starts on a 4-byte boundary.
      */
-    TABLESWITCH     ((byte) 0xAA, -1),      //Access jump table by index and jump (switch)
+    TABLESWITCH     ((byte) 0xAA, -1, -1),      //Access jump table by index and jump (switch)
 
     /**
      * <b>Operation: </b>
@@ -5032,7 +5069,7 @@ public enum OpCodeType {
      * The match-offset pairs are sorted to support lookup routines that are quicker than
      * linear search.
      */
-    LOOKUPSWITCH    ((byte) 0xAB, -1),      //Access jump table by key match and jump (switch)
+    LOOKUPSWITCH    ((byte) 0xAB, -1, -1),      //Access jump table by key match and jump (switch)
 
 
     //########## Class and Object field operation ##########//
@@ -5082,7 +5119,7 @@ public enum OpCodeType {
      * Otherwise, if execution of this getstatic instruction causes initialization of the
      * referenced class or interface, getstatic may throw an Error as detailed in §5.5.
      */
-    GETSTATIC       ((byte) 0xB2, 3),      //Get static field from class
+    GETSTATIC       ((byte) 0xB2, 3, 0 /* variable */ ),      //Get static field from class
 
     /**
      * <b>Operation: </b>
@@ -5149,7 +5186,7 @@ public enum OpCodeType {
      * execution of an interface variable initialization expression when the interface is
      * initialized (§5.5, JLS §9.3.1).
      */
-    PUTSTATIC       ((byte) 0xB3, 3),      //Set static field in class
+    PUTSTATIC       ((byte) 0xB3, 3, 0 /* variable */ ),      //Set static field in class
 
     /**
      * <b>Operation: </b>
@@ -5200,7 +5237,7 @@ public enum OpCodeType {
      * The getfield instruction cannot be used to access the length field of an array. The
      * arraylength instruction (§arraylength) is used instead.
      */
-    GETFIELD        ((byte) 0xB4, 3),      //Fetch field from object
+    GETFIELD        ((byte) 0xB4, 3, 0 /* variable */ ),      //Fetch field from object
 
     /**
      * <b>Operation: </b>
@@ -5261,7 +5298,7 @@ public enum OpCodeType {
      * Otherwise, if objectref is null, the putfield instruction throws a
      * <code>NullPointerException.</code>
      */
-    PUTFIELD        ((byte) 0xB5, 3),      //Set field in object
+    PUTFIELD        ((byte) 0xB5, 3, 0 /* variable */ ),      //Set field in object
 
 
     //########## Method invocation ##########//
@@ -5465,7 +5502,7 @@ public enum OpCodeType {
      * resolved method's descriptor. The selection logic matches such a method, using the
      * same rules as for invokeinterface.
      */
-    INVOKEVIRTUAL   ((byte) 0xB6, 3, OpCode.FLAG_INVOKE),      //Invoke instance method; dispatch based on class
+    INVOKEVIRTUAL   ((byte) 0xB6, 3, 0 /* variable */ , OpCode.FLAG_INVOKE),      //Invoke instance method; dispatch based on class
 
     /**
      * <b>Operation: </b>
@@ -5625,7 +5662,7 @@ public enum OpCodeType {
      * for selection are essentially the same as those for invokeinterface (except that the
      * search starts from a different class).
      */
-    INVOKESPECIAL   ((byte) 0xB7, 3, OpCode.FLAG_INVOKE),      //Invoke instance method; special handling for superclass, private, and instance initialization method invocations
+    INVOKESPECIAL   ((byte) 0xB7, 3, 0 /* variable */ , OpCode.FLAG_INVOKE),      //Invoke instance method; special handling for superclass, private, and instance initialization method invocations
 
     /**
      * <b>Operation: </b>
@@ -5720,7 +5757,7 @@ public enum OpCodeType {
      * variables, thus more than nargs local variables may be required to pass nargs
      * argument values to the invoked method.
      */
-    INVOKESTATIC    ((byte) 0xB8, 3, OpCode.FLAG_INVOKE),      //Invoke a class (static) method
+    INVOKESTATIC    ((byte) 0xB8, 3, 0 /* variable */ , OpCode.FLAG_INVOKE),      //Invoke a class (static) method
 
     /**
      * <b>Operation: </b>
@@ -5870,7 +5907,7 @@ public enum OpCodeType {
      * other hand, if there are many abstract methods but only one non-abstract method, the
      * non-abstract method is selected (unless an abstract method is more specific).
      */
-    INVOKEINTERFACE ((byte) 0xB9, 5, OpCode.FLAG_INVOKE),      //Invoke interface method
+    INVOKEINTERFACE ((byte) 0xB9, 5, 0 /* variable */ , OpCode.FLAG_INVOKE),      //Invoke interface method
 
     /**
      * <b>Operation: </b>
@@ -6042,7 +6079,7 @@ public enum OpCodeType {
      * <code>NullPointerException</code> or a
      * <code>java.lang.invoke.WrongMethodTypeException.</code>
      */
-    INVOKEDYNAMIC   ((byte) 0xBA, 5, OpCode.FLAG_INVOKE),      //Invoke dynamic method
+    INVOKEDYNAMIC   ((byte) 0xBA, 5, 0 /* variable */ , OpCode.FLAG_INVOKE),      //Invoke dynamic method
 
 
     //########## Array and instance creation ##########//
@@ -6099,7 +6136,7 @@ public enum OpCodeType {
      * not completed until an instance initialization method (§2.9) has been invoked on the
      * uninitialized instance.
      */
-    NEW             ((byte) 0xBB, 3),      //Create new object
+    NEW             ((byte) 0xBB, 3, 1),      //Create new object
 
 
     //new array
@@ -6157,7 +6194,7 @@ public enum OpCodeType {
      * Other implementations may implement packed boolean arrays; the baload and bastore
      * instructions must still be used to access those arrays.
      */
-    NEWARRAY        ((byte) 0xBC, 2),      //Create new array
+    NEWARRAY        ((byte) 0xBC, 2, 0),      //Create new array
 
     /**
      * <b>Operation: </b>
@@ -6202,7 +6239,7 @@ public enum OpCodeType {
      * The anewarray instruction is used to create a single dimension of an array of object
      * references or part of a multidimensional array.
      */
-    ANEWARRAY       ((byte) 0xBD, 3),      //Create new array of reference
+    ANEWARRAY       ((byte) 0xBD, 3, 0),      //Create new array of reference
 
     /**
      * <b>Operation: </b>
@@ -6268,7 +6305,7 @@ public enum OpCodeType {
      * than the dimensions operand of the multianewarray instruction. In that case, only
      * the first dimensions of the dimensions of the array are created.
      */
-    MULTIANEWARRAY  ((byte) 0xC5, 4),      //Create new multidimensional array
+    MULTIANEWARRAY  ((byte) 0xC5, 4, 0 /* variable */ ),      //Create new multidimensional array
 
 
     //array length
@@ -6299,7 +6336,7 @@ public enum OpCodeType {
      * If the arrayref is null, the arraylength instruction throws a
      * <code>NullPointerException.</code>
      */
-    ARRAYLENGTH     ((byte) 0xBE, 1),      //Get length of array
+    ARRAYLENGTH     ((byte) 0xBE, 1, 0),      //Get length of array
 
 
     //new Exception
@@ -6369,7 +6406,7 @@ public enum OpCodeType {
      * empty operand stack. All intervening frames from the method that threw the exception
      * up to, but not including, the method that handles the exception are discarded.
      */
-    ATHROW          ((byte) 0xBF, 1),      //Throw exception or error
+    ATHROW          ((byte) 0xBF, 1, -1 /* stack is cleared */ ),      //Throw exception or error
 
 
     //wide
@@ -6433,7 +6470,7 @@ public enum OpCodeType {
      * the normal offset from the opcode. The embedded instruction must never be executed
      * directly; its opcode must never be the target of any control transfer instruction.
      */
-    WIDE            ((byte) 0xC4, -1);      //Extend local variable index by additional bytes
+    WIDE            ((byte) 0xC4, -1, 0 /* depends the following */ );      //Extend local variable index by additional bytes
 
     private static final Map<Byte, OpCodeType> TYPE_MAP = new HashMap<>();
 
@@ -6445,17 +6482,20 @@ public enum OpCodeType {
 
     private final byte opCode;
     private final int byteSize;
+    private final int stackGrow;
     private final int flag;
 
-    OpCodeType(byte opCode, int byteSize) {
+    OpCodeType(byte opCode, int byteSize, int stackGrow) {
         this.opCode = opCode;
         this.byteSize = byteSize;
+        this.stackGrow = stackGrow;
         this.flag = 0;
     }
 
-    OpCodeType(byte opCode, int byteSize, int flag) {
+    OpCodeType(byte opCode, int byteSize, int stackGrow, int flag) {
         this.opCode = opCode;
         this.byteSize = byteSize;
+        this.stackGrow = stackGrow;
         this.flag = flag;
     }
 
@@ -6470,6 +6510,10 @@ public enum OpCodeType {
 
     public int getFlag() {
         return flag;
+    }
+
+    public int getStackGrow() {
+        return stackGrow;
     }
 
     public static OpCodeType fromCode(int code) {

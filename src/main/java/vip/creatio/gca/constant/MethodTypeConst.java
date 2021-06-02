@@ -3,14 +3,14 @@ package vip.creatio.gca.constant;
 import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.util.ClassUtil;
 import vip.creatio.gca.ConstPool;
-import vip.creatio.gca.DeclaredSignature;
+import vip.creatio.gca.Descriptor;
 import vip.creatio.gca.ClassFileParser;
 
 import vip.creatio.gca.util.ByteVector;
 
-public class MethodTypeConst extends Const implements DeclaredSignature {
+public class MethodTypeConst extends Const implements Descriptor {
     private String descriptor;
-    private String[] signatures;
+    private String[] descriptors;
 
     MethodTypeConst(ConstPool pool, String nameAndType) {
         super(pool, ConstType.METHOD_TYPE);
@@ -60,20 +60,22 @@ public class MethodTypeConst extends Const implements DeclaredSignature {
 
     @Override
     public void recache() {
-        this.signatures = ClassUtil.fromSignature(descriptor);
+        this.descriptors = ClassUtil.fromSignature(descriptor);
     }
 
     @Override
-    public @Nullable String[] getSignatures() {
-        return signatures;
+    public @Nullable String[] getDescriptors() {
+        return descriptors;
     }
 
-    public String getDescriptor() {
-        return descriptor;
+    @Override
+    public @Nullable String getDescriptor() {
+        return this.descriptor;
     }
 
-    public void setDescriptor(String descriptor) {
-        this.descriptor = descriptor;
+    @Override
+    public void setDescriptor(String str) {
+        this.descriptor = str;
     }
 
     @Override
