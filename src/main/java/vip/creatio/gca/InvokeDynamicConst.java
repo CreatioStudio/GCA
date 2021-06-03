@@ -1,9 +1,6 @@
-package vip.creatio.gca.constant;
+package vip.creatio.gca;
 
 import org.jetbrains.annotations.Nullable;
-import vip.creatio.gca.ConstPool;
-import vip.creatio.gca.ClassFileParser;
-import vip.creatio.gca.Descriptor;
 import vip.creatio.gca.attr.BootstrapMethods;
 
 import vip.creatio.gca.util.ByteVector;
@@ -12,14 +9,14 @@ public class InvokeDynamicConst extends Const implements Descriptor {
     private BootstrapMethods.Method method;
     private NameAndTypeConst pair;
 
-    public InvokeDynamicConst(ConstPool pool, BootstrapMethods.Method bootstrap, String mthName, String mthDescriptor) {
+    InvokeDynamicConst(ConstPool pool, BootstrapMethods.Method bootstrap, String mthName, String mthDescriptor) {
         super(pool, ConstType.INVOKE_DYNAMIC);
         this.method = bootstrap;
         this.pair = new NameAndTypeConst(pool, mthName, mthDescriptor);
         recache();
     }
 
-    public InvokeDynamicConst(ConstPool pool) {
+    InvokeDynamicConst(ConstPool pool) {
         super(pool, ConstType.INVOKE_DYNAMIC);
     }
 
@@ -29,7 +26,7 @@ public class InvokeDynamicConst extends Const implements Descriptor {
     }
 
     @Override
-    public int byteSize() {
+    int byteSize() {
         return 5;
     }
 

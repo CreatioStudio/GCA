@@ -1,7 +1,5 @@
-package vip.creatio.gca.constant;
+package vip.creatio.gca;
 
-import vip.creatio.gca.ConstPool;
-import vip.creatio.gca.ValueType;
 import vip.creatio.gca.util.Immutable;
 
 import vip.creatio.gca.util.ByteVector;
@@ -11,12 +9,12 @@ public class LongConst extends Const.Value implements Const.DualSlot {
 
     private final long data;
 
-    public LongConst(ConstPool pool, long data) {
+    LongConst(ConstPool pool, long data) {
         super(pool, ConstType.LONG);
         this.data = data;
     }
 
-    public LongConst(ConstPool pool, ByteVector buffer) {
+    LongConst(ConstPool pool, ByteVector buffer) {
         super(pool, ConstType.LONG);
         data = buffer.getLong();
     }
@@ -32,7 +30,7 @@ public class LongConst extends Const.Value implements Const.DualSlot {
     }
 
     @Override
-    public int byteSize() {
+    int byteSize() {
         return 9;
     }
 

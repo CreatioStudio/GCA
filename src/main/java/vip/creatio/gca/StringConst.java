@@ -1,8 +1,5 @@
-package vip.creatio.gca.constant;
+package vip.creatio.gca;
 
-import vip.creatio.gca.ConstPool;
-import vip.creatio.gca.ClassFileParser;
-import vip.creatio.gca.ValueType;
 import vip.creatio.gca.util.Immutable;
 
 import vip.creatio.gca.util.ByteVector;
@@ -11,12 +8,12 @@ import vip.creatio.gca.util.ByteVector;
 public class StringConst extends Const.Value {
     private String string;
 
-    public StringConst(ConstPool pool, String string) {
+    StringConst(ConstPool pool, String string) {
         super(pool, ConstType.STRING);
         this.string = string;
     }
 
-    public StringConst(ConstPool pool) {
+    StringConst(ConstPool pool) {
         super(pool, ConstType.STRING);
     }
 
@@ -31,7 +28,7 @@ public class StringConst extends Const.Value {
     }
 
     @Override
-    public int byteSize() {
+    int byteSize() {
         return 3;
     }
 
@@ -58,10 +55,6 @@ public class StringConst extends Const.Value {
 
     public String getString() {
         return string;
-    }
-
-    public void setString(String string) {
-        this.string = string;
     }
 
     @Override

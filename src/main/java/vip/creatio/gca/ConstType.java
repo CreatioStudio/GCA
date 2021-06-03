@@ -1,4 +1,4 @@
-package vip.creatio.gca.constant;
+package vip.creatio.gca;
 
 public enum ConstType {
     UTF8((byte) 0x01),

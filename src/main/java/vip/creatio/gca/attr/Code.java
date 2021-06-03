@@ -4,7 +4,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.*;
 import vip.creatio.gca.code.*;
-import vip.creatio.gca.constant.*;
 
 import vip.creatio.gca.util.ByteVector;
 import vip.creatio.gca.util.ClassUtil;
@@ -210,7 +209,7 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
                 } else if (v <= 0xFFFF && v >= -0xFFFF) {
                     c = new NumberOpCode(codes, OpCodeType.SIPUSH, v);
                 } else {
-                    c = new LoadConstOpCode(codes, new IntegerConst(constPool(), v));
+                    c = new LoadConstOpCode(codes, constPool().acquireInt(v));
                 }
         }
         codes.add(c);
@@ -228,7 +227,7 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
         } else if (v == 1L) {
             c = new UnaryOpCode(codes, OpCodeType.LCONST_1);
         } else {
-            c = new LoadConstOpCode(codes, new LongConst(constPool(), v));
+            c = new LoadConstOpCode(codes, constPool().acquireLong(v));
         }
         codes.add(c);
         return c;
@@ -243,7 +242,7 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
         } else if (v == 2F) {
             c = new UnaryOpCode(codes, OpCodeType.FCONST_2);
         } else {
-            c = new LoadConstOpCode(codes, new FloatConst(constPool(), v));
+            c = new LoadConstOpCode(codes, constPool().acquireFloat(v));
         }
         codes.add(c);
         return c;
@@ -256,14 +255,14 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
         } else if (v == 1F) {
             c = new UnaryOpCode(codes, OpCodeType.DCONST_1);
         } else {
-            c = new LoadConstOpCode(codes, new DoubleConst(constPool(), v));
+            c = new LoadConstOpCode(codes, constPool().acquireDouble(v));
         }
         codes.add(c);
         return c;
     }
 
     public OpCode emitConst(String s) {
-        OpCode c = new LoadConstOpCode(codes, new StringConst(constPool(), s));
+        OpCode c = new LoadConstOpCode(codes, constPool().acquireString(s));
         codes.add(c);
         return c;
     }

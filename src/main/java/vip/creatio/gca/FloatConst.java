@@ -1,7 +1,5 @@
-package vip.creatio.gca.constant;
+package vip.creatio.gca;
 
-import vip.creatio.gca.ConstPool;
-import vip.creatio.gca.ValueType;
 import vip.creatio.gca.util.Immutable;
 
 import vip.creatio.gca.util.ByteVector;
@@ -11,12 +9,12 @@ public class FloatConst extends Const.Value {
 
     private final float data;
 
-    public FloatConst(ConstPool pool, float data) {
+    FloatConst(ConstPool pool, float data) {
         super(pool, ConstType.FLOAT);
         this.data = data;
     }
 
-    public FloatConst(ConstPool pool, ByteVector buffer) {
+    FloatConst(ConstPool pool, ByteVector buffer) {
         super(pool, ConstType.FLOAT);
         data = buffer.getFloat();
     }
@@ -41,7 +39,7 @@ public class FloatConst extends Const.Value {
     }
 
     @Override
-    public int byteSize() {
+    int byteSize() {
         return 5;
     }
 

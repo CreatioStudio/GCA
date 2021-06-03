@@ -1,9 +1,6 @@
-package vip.creatio.gca.constant;
+package vip.creatio.gca;
 
 import org.jetbrains.annotations.Nullable;
-import vip.creatio.gca.ConstPool;
-import vip.creatio.gca.Descriptor;
-import vip.creatio.gca.ClassFileParser;
 
 import vip.creatio.gca.util.ByteVector;
 import vip.creatio.gca.util.ClassUtil;
@@ -12,14 +9,14 @@ public class RefConst extends Const implements Descriptor {
     private ClassConst clazz;
     private NameAndTypeConst pair;
 
-    public RefConst(ConstPool pool, ConstType type, ClassConst clazz, String name, String descriptor) {
+    RefConst(ConstPool pool, ConstType type, ClassConst clazz, String name, String descriptor) {
         super(pool, type);
         this.clazz = clazz;
         this.pair = new NameAndTypeConst(pool, name, ClassUtil.toBytecodeName(descriptor));
         recache();
     }
 
-    public RefConst(ConstPool pool, ConstType type) {
+    RefConst(ConstPool pool, ConstType type) {
         super(pool, type);
     }
 
@@ -34,7 +31,7 @@ public class RefConst extends Const implements Descriptor {
     }
 
     @Override
-    public int byteSize() {
+    int byteSize() {
         return 5;
     }
 

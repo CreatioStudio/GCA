@@ -3,14 +3,13 @@ package vip.creatio.gca.attr;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 
 import vip.creatio.gca.AttributeContainer;
 import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.ClassFileParser;
-import vip.creatio.gca.constant.Const;
-import vip.creatio.gca.constant.MethodHandleConst;
+import vip.creatio.gca.Const;
+import vip.creatio.gca.MethodHandleConst;
 import vip.creatio.gca.util.ByteVector;
 
 public class BootstrapMethods extends TableAttribute<BootstrapMethods.Method> {

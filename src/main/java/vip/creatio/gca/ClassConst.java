@@ -1,18 +1,12 @@
-package vip.creatio.gca.constant;
-
-import vip.creatio.gca.ConstPool;
-import vip.creatio.gca.ClassFileParser;
-
-import vip.creatio.gca.util.ByteVector;
-import vip.creatio.gca.util.ClassUtil;
+package vip.creatio.gca;
 
 public class ClassConst extends AbstractTypeConst {
 
-    public ClassConst(ConstPool pool, String name) {
+    ClassConst(ConstPool pool, String name) {
         super(pool, ConstType.CLASS, name);
     }
 
-    public ClassConst(ConstPool pool) {
+    ClassConst(ConstPool pool) {
         super(pool, ConstType.CLASS);
     }
 

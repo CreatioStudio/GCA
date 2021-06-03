@@ -1,7 +1,5 @@
-package vip.creatio.gca.constant;
+package vip.creatio.gca;
 
-import vip.creatio.gca.ConstPool;
-import vip.creatio.gca.ValueType;
 import vip.creatio.gca.util.Immutable;
 
 import vip.creatio.gca.util.ByteVector;
@@ -11,12 +9,12 @@ public class IntegerConst extends Const.Value {
 
     private final int data;
 
-    public IntegerConst(ConstPool pool, int data) {
+    IntegerConst(ConstPool pool, int data) {
         super(pool, ConstType.INTEGER);
         this.data = data;
     }
 
-    public IntegerConst(ConstPool pool, ByteVector buffer) {
+    IntegerConst(ConstPool pool, ByteVector buffer) {
         super(pool, ConstType.INTEGER);
         data = buffer.getInt();
     }
@@ -32,7 +30,7 @@ public class IntegerConst extends Const.Value {
     }
 
     @Override
-    public int byteSize() {
+    int byteSize() {
         return 5;
     }
 

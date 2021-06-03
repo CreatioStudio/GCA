@@ -1,9 +1,6 @@
 package vip.creatio.gca.util;
 
-import vip.creatio.gca.AccessFlag;
-import vip.creatio.gca.ClassFile;
-import vip.creatio.gca.ConstPool;
-import vip.creatio.gca.constant.*;
+import vip.creatio.gca.*;
 
 import java.io.PrintStream;
 import java.util.EnumSet;

@@ -4,7 +4,7 @@ import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.ClassFileParser;
 import vip.creatio.gca.ConstPool;
 import vip.creatio.gca.ValueType;
-import vip.creatio.gca.constant.Const;
+import vip.creatio.gca.Const;
 import vip.creatio.gca.util.ByteVector;
 
 import java.util.ArrayList;
@@ -14,11 +14,11 @@ import java.util.List;
 public class ElementValue {
 
     private final ConstPool cp;
-    final ValueType type;
+    private final ValueType type;
 
     /*
      * union ElementValue {
-     *     Const.Value        constant;     // when type.isValue() is true
+     *     Object             constant;     // when type.isValue() is true
      *     String             typeName;     // when type is CLASS and ENUM
      *     Annotation         nested;       // when type is ANNOTATION
      *     List<ElementValue> values;       // when type is ARRAY
@@ -36,7 +36,7 @@ public class ElementValue {
         this.cp = file.constPool();
         type = ValueType.fromTag(buffer.getByte());
         if (type.isValue()) {
-            union = (Const.Value) pool.get(buffer.getShort());
+            union = ((Const.Value) pool.get(buffer.getShort())).value();
         } else {
             if (type == ValueType.CLASS) {
                 union = pool.getString(buffer.getShort());
@@ -70,16 +70,18 @@ public class ElementValue {
         this.union = signature;
     }
 
-    public Const.Value getConstValue() {
+    public Object getConstValue() {
         if (!type.isValue())
             throw new IllegalArgumentException("Only element value with \"value type\" can do this action");
-        return (Const.Value) union;
+        return union;
     }
 
-    public void setConstValue(Const.Value c) {
+    public void setConstValue(Object v) {
         if (!type.isValue())
             throw new IllegalArgumentException("Only element value with \"value type\" can do this action");
-        this.union = c;
+        if (!Const.isValue(v))
+            throw new IllegalArgumentException("Invalid type of constant value: " + v.getClass().getName());
+        this.union = v;
     }
 
     public String getEnumType() {
@@ -126,7 +128,7 @@ public class ElementValue {
     @SuppressWarnings("unchecked")
     void collect() {
         if (type.isValue()) {
-            cp.acquire((Const) union);
+            cp.acquire(Const.Value.of(cp, union));
         } else {
             if (type == ValueType.CLASS) {
                 cp.acquireUtf((String) union);
@@ -147,7 +149,7 @@ public class ElementValue {
     void write(ByteVector buffer) {
         buffer.putByte(type.getTag());
         if (type.isValue()) {
-            buffer.putShort(((Const) union).index());
+            buffer.putShort(cp.acquireValue(union).index());
         } else {
             if (type == ValueType.CLASS) {
                 buffer.putShort(cp.acquireUtf((String) union).index());

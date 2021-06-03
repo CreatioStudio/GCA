@@ -2,16 +2,9 @@ package vip.creatio.gca.test;
 
 import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.ClassFileParser;
-import vip.creatio.gca.ConstPool;
-import vip.creatio.gca.constant.Const;
-import vip.creatio.gca.constant.ConstType;
-import vip.creatio.gca.util.ByteVector;
-import vip.creatio.gca.util.ClassUtil;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.nio.ByteBuffer;
-import java.util.*;
 
 public class Test {
 

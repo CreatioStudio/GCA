@@ -1,14 +1,12 @@
-package vip.creatio.gca.constant;
-
-import vip.creatio.gca.ConstPool;
+package vip.creatio.gca;
 
 public class ModuleConst extends AbstractTypeConst {
 
-    public ModuleConst(ConstPool pool, String name) {
+    ModuleConst(ConstPool pool, String name) {
         super(pool, ConstType.MODULE, name);
     }
 
-    public ModuleConst(ConstPool pool) {
+    ModuleConst(ConstPool pool) {
         super(pool, ConstType.MODULE);
     }
 

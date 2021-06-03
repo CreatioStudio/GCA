@@ -1,6 +1,6 @@
 package vip.creatio.gca;
 
-import vip.creatio.gca.constant.*;
+import org.jetbrains.annotations.NotNull;
 import vip.creatio.gca.util.ByteVector;
 import vip.creatio.gca.util.ClassUtil;
 
@@ -12,26 +12,67 @@ import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-public abstract class ConstPool implements Iterable<Const> {
+public final class ConstPool implements Iterable<Const> {
 
     protected final ClassFile classFile;
 
-    protected ConstPool(ClassFile classFile) {
+    private final HashSet<Const> constants = new HashSet<>();
+    private int size;
+
+    private final HashMap<Object, Const.Value> valueCache = new HashMap<>();
+    private final ArrayList<Const> constCache = new ArrayList<>();
+
+    boolean writing = false;
+
+    ConstPool(ClassFile classFile) {
         this.classFile = classFile;
     }
-
-    protected abstract void write(ByteVector buffer);
 
     /**
      * Parsing state: elements cannot be deleted
      */
-    public abstract boolean isWriting();
+    boolean isWriting() {
+        return writing;
+    }
 
-    public abstract void remove(Const c);
+    void setWriting(boolean flag) {
+        writing = flag;
+    }
 
-    public abstract void remove(String str);
+    public void remove(Const c) {
+        if (isWriting()) throw new IllegalStateException("constant cannot be removed in parsing period");
+        constants.remove(c);
+        size--;
+    }
 
-    public abstract boolean contains(Const c);
+    public void remove(String str) {
+        if (isWriting()) throw new IllegalStateException("constant cannot be removed in parsing period");
+        constants.removeIf(u -> u instanceof UTFConst && ((UTFConst) u).string().equals(str));
+        recalcSize();
+    }
+
+    private void recalcSize() {
+        size = 0;
+        for (Const c : this) {
+            size += c instanceof Const.DualSlot ? 2 : 1;
+        }
+    }
+
+    public boolean contains(Const c) {
+        return constants.contains(c);
+    }
+
+    protected final void write(ByteVector buffer) {
+        // size: count + 1
+        buffer.putShort((short) (this.size() + 1));
+        for (Const c : constants) {
+            c.write(buffer);
+        }
+    }
+
+    void recacheMap() {
+        //TODO
+    }
 
     public int indexOf(Const c) {
         int i = 1;
@@ -55,7 +96,14 @@ public abstract class ConstPool implements Iterable<Const> {
     }
 
 
-    public abstract <T extends Const> T acquire(T c);
+    public <T extends Const> T acquire(T c) {
+        if (c == null || c.pool != this) return null;
+        for (Const constant : constants) {
+            if (constant.equals(c)) return (T) constant;
+        }
+        add(c);
+        return c;
+    }
 
     public final <T extends Const> List<T> acquire(Collection<T> c) {
         return c.stream().map(this::acquire).collect(Collectors.toList());
@@ -70,9 +118,17 @@ public abstract class ConstPool implements Iterable<Const> {
         return copy;
     }
 
-    public abstract List<UTFConst> acquireUtf();
+    public List<UTFConst> acquireUtf() {
+        List<UTFConst> l = new ArrayList<>();
+        for (Const constant : constants) {
+            if (constant instanceof UTFConst) l.add((UTFConst) constant);
+        }
+        return l;
+    }
 
-    public abstract UTFConst acquireUtf(String data);
+    public UTFConst acquireUtf(String data) {
+        return acquire(new UTFConst(this, data.getBytes()));
+    }
 
     public UTFConst acquireUtf(byte[] data) {
         return acquireUtf(new String(data));
@@ -80,13 +136,21 @@ public abstract class ConstPool implements Iterable<Const> {
 
 
 
-    public abstract IntegerConst acquireInt(int data);
+    public IntegerConst acquireInt(int data) {
+        return acquire(new IntegerConst(this, data));
+    }
 
-    public abstract FloatConst acquireFloat(float data);
+    public FloatConst acquireFloat(float data) {
+        return acquire(new FloatConst(this, data));
+    }
 
-    public abstract LongConst acquireLong(long data);
+    public LongConst acquireLong(long data) {
+        return acquire(new LongConst(this, data));
+    }
 
-    public abstract DoubleConst acquireDouble(double data);
+    public DoubleConst acquireDouble(double data) {
+        return acquire(new DoubleConst(this, data));
+    }
 
     public Const.Value acquireValue(Object v) {
         if (v instanceof Number) {
@@ -108,7 +172,9 @@ public abstract class ConstPool implements Iterable<Const> {
 
 
     // class name formatted in some like java.lang.xxx$inner
-    public abstract ClassConst acquireClass(String name);
+    public ClassConst acquireClass(String name) {
+        return acquire(new ClassConst(this, name));
+    }
 
     public ClassConst acquireClass(Class<?> cls) {
         return acquireClass(cls.getName());
@@ -120,11 +186,15 @@ public abstract class ConstPool implements Iterable<Const> {
 
 
 
-    public abstract StringConst acquireString(String s);
+    public StringConst acquireString(String s) {
+        return acquire(new StringConst(this, s));
+    }
 
 
 
-    public abstract RefConst acquireFieldRef(ClassConst clazz, String name, String type);
+    public RefConst acquireFieldRef(ClassConst clazz, String name, String type) {
+        return acquire(new RefConst(this, ConstType.FIELDREF, clazz, name, ClassUtil.getSignature(type)));
+    }
 
     public RefConst acquireFieldRef(String clazzSig, String name, String type) {
         return acquireFieldRef(acquireClass(clazzSig), name, type);
@@ -144,7 +214,9 @@ public abstract class ConstPool implements Iterable<Const> {
 
 
 
-    public abstract RefConst acquireMethodRef(ClassConst clazz, String name, String signature);
+    public RefConst acquireMethodRef(ClassConst clazz, String name, String descriptor) {
+        return acquire(new RefConst(this, ConstType.METHODREF, clazz, name, descriptor));
+    }
 
     public RefConst acquireMethodRef(String clazz, String name, String signature) {
         return acquireMethodRef(acquireClass(clazz), name, signature);
@@ -164,7 +236,9 @@ public abstract class ConstPool implements Iterable<Const> {
 
 
 
-    public abstract RefConst acquireInterfaceMethodRef(ClassConst clazz, String name, String signature);
+    public RefConst acquireInterfaceMethodRef(ClassConst clazz, String name, String descriptor) {
+        return acquire(new RefConst(this, ConstType.INTERFACE_METHODREF, clazz, name, descriptor));
+    }
 
     public RefConst acquireInterfaceMethodRef(String clazz, String name, String signature) {
         return acquireInterfaceMethodRef(acquireClass(clazz), name, signature);
@@ -183,10 +257,14 @@ public abstract class ConstPool implements Iterable<Const> {
     }
 
 
-    public abstract NameAndTypeConst acquireNameAndType(String name, String descriptor);
+    public NameAndTypeConst acquireNameAndType(String name, String descriptor) {
+        return acquire(new NameAndTypeConst(this, name, descriptor));
+    }
 
 
-    public abstract MethodTypeConst acquireMethodType(String descriptor);
+    public MethodTypeConst acquireMethodType(String descriptor) {
+        return acquire(new MethodTypeConst(this, descriptor));
+    }
 
     public MethodTypeConst acquireMethodType(String... signatures) {
         return acquireMethodType(ClassUtil.getSignature(signatures));
@@ -210,12 +288,18 @@ public abstract class ConstPool implements Iterable<Const> {
 
 
 
-    public abstract void add(Const constant);
+    public void add(Const constant) {
+        constant.pool = this;
+        constants.add(constant);
+        if (isWriting()) {
+            //constMap.put(constants.size() - 1, constant);
+            constant.collect();
+        }
+        size += constant instanceof Const.DualSlot ? 2 : 1;
+    }
 
-    public abstract int size();
-
-    public static ConstPool create(ClassFile parent) {
-        return new ConstPoolImpl(parent);
+    public int size() {
+        return size;
     }
 
     static void parse(ClassFileParser pool, ByteVector buffer) throws ClassFormatError {
@@ -308,6 +392,45 @@ public abstract class ConstPool implements Iterable<Const> {
         return classFile;
     }
 
-    protected void collect() {}
+    protected void collect() {
+        for (Const c : new HashSet<>(constants)) {
+            c.collect();
+        }
+    }
 
+    @NotNull
+    @Override
+    public Iterator<Const> iterator() {
+        return new AccessItr(constants.iterator());
+    }
+
+    protected class AccessItr implements Iterator<Const> {
+        private final Iterator<Const> itr;
+
+        public AccessItr(Iterator<Const> itr) {
+            this.itr = itr;
+        }
+
+        @Override
+        public boolean hasNext() {
+            return itr.hasNext();
+        }
+
+        @Override
+        public Const next() {
+            return itr.next();
+        }
+
+        @Override
+        public void remove() {
+            if (isWriting()) throw new IllegalStateException("constant cannot be removed in parsing period");
+            itr.remove();
+            size--;
+        }
+
+        @Override
+        public void forEachRemaining(Consumer<? super Const> action) {
+            itr.forEachRemaining(action);
+        }
+    }
 }

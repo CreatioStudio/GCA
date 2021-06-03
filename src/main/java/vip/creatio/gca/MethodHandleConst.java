@@ -1,8 +1,4 @@
-package vip.creatio.gca.constant;
-
-import vip.creatio.gca.ConstPool;
-import vip.creatio.gca.ClassFileParser;
-import vip.creatio.gca.ReferenceKind;
+package vip.creatio.gca;
 
 import vip.creatio.gca.util.ByteVector;
 
@@ -22,13 +18,13 @@ public class MethodHandleConst extends Const {
     private ReferenceKind kind;
     private RefConst ref;
 
-    public MethodHandleConst(ConstPool pool, ReferenceKind kind, RefConst ref) {
+    MethodHandleConst(ConstPool pool, ReferenceKind kind, RefConst ref) {
         super(pool, ConstType.METHOD_HANDLE);
         this.kind = kind;
         this.ref = ref;
     }
 
-    public MethodHandleConst(ConstPool pool) {
+    MethodHandleConst(ConstPool pool) {
         super(pool, ConstType.METHOD_HANDLE);
     }
 
@@ -43,7 +39,7 @@ public class MethodHandleConst extends Const {
     }
 
     @Override
-    public int byteSize() {
+    int byteSize() {
         return 4;
     }
 

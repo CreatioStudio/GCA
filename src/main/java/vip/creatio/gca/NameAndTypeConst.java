@@ -1,10 +1,7 @@
-package vip.creatio.gca.constant;
+package vip.creatio.gca;
 
 import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.util.ClassUtil;
-import vip.creatio.gca.ConstPool;
-import vip.creatio.gca.Descriptor;
-import vip.creatio.gca.ClassFileParser;
 import vip.creatio.gca.util.Immutable;
 
 import vip.creatio.gca.util.ByteVector;
@@ -16,7 +13,7 @@ public class NameAndTypeConst extends Const implements Descriptor {
 
     private String[] descriptors;
 
-    public NameAndTypeConst(ConstPool pool) {
+    NameAndTypeConst(ConstPool pool) {
         super(pool, ConstType.NAME_AND_TYPE);
     }
 
@@ -38,7 +35,7 @@ public class NameAndTypeConst extends Const implements Descriptor {
     }
 
     @Override
-    public int byteSize() {
+    int byteSize() {
         return 5;
     }
 

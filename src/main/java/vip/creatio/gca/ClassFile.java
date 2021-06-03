@@ -3,7 +3,6 @@ package vip.creatio.gca;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.attr.*;
-import vip.creatio.gca.constant.*;
 import vip.creatio.gca.util.ClassUtil;
 
 import java.io.IOException;
@@ -71,7 +70,7 @@ public class ClassFile implements AttributeContainer, AccessFlagContainer {
         majorVer = buffer.getUShort();
 
         // read constants
-        constPool = new ConstPoolImpl(this);
+        constPool = new ConstPool(this);
         ClassFileParser pool = getParser(buffer, resolvers);
         ConstPool.parse(pool, buffer);
 
@@ -297,9 +296,8 @@ public class ClassFile implements AttributeContainer, AccessFlagContainer {
 
     public void write(ByteVector buffer) {
         // collect all used constants
-        ((ConstPoolImpl) constPool).setWriting(true);
-        collect();
-        ((ConstPoolImpl) constPool).recacheMap();
+        constPool.collect();
+        constPool.recacheMap();
 
         buffer.putInt(MAGIC);
 
@@ -323,12 +321,12 @@ public class ClassFile implements AttributeContainer, AccessFlagContainer {
         methods.forEach(m -> m.write(buffer));
 
         AttributeContainer.super.writeAttributes(buffer);
-        ((ConstPoolImpl) constPool).setWriting(false);
+        constPool.setWriting(false);
     }
 
     public void collect() {
         boolean previous = constPool.isWriting();
-        ((ConstPoolImpl) constPool).setWriting(true);
+        constPool.setWriting(true);
         constPool.collect();
         constPool.acquire(thisClass, superClass);
         constPool.acquire(interfaces);
@@ -339,7 +337,7 @@ public class ClassFile implements AttributeContainer, AccessFlagContainer {
             mth.collect();
         }
         AttributeContainer.super.collectConstants();
-        ((ConstPoolImpl) constPool).setWriting(previous);
+        constPool.setWriting(previous);
     }
 
     public ClassFile copy() {
@@ -347,7 +345,7 @@ public class ClassFile implements AttributeContainer, AccessFlagContainer {
         c.majorVer = majorVer;
         c.minorVer = minorVer;
         c.accessFlags = EnumSet.copyOf(accessFlags);
-        c.constPool = new ConstPoolImpl(this);
+        c.constPool = new ConstPool(this);
         for (Const constant : constPool) {
             c.constPool.add(constant.copy());
         }

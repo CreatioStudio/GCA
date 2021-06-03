@@ -1,7 +1,5 @@
 package vip.creatio.gca;
 
-import vip.creatio.gca.constant.ConstType;
-
 public enum ReferenceKind {
     REF_getField((byte) 1, ConstType.FIELDREF),
     REF_getStatic((byte) 2, ConstType.FIELDREF),

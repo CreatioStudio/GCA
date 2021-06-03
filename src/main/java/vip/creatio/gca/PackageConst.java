@@ -1,14 +1,12 @@
-package vip.creatio.gca.constant;
-
-import vip.creatio.gca.ConstPool;
+package vip.creatio.gca;
 
 public class PackageConst extends AbstractTypeConst {
 
-    public PackageConst(ConstPool pool, String name) {
+    PackageConst(ConstPool pool, String name) {
         super(pool, ConstType.PACKAGE, name);
     }
 
-    public PackageConst(ConstPool pool) {
+    PackageConst(ConstPool pool) {
         super(pool, ConstType.PACKAGE);
     }
 

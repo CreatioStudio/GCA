@@ -2,7 +2,7 @@ package vip.creatio.gca.code;
 
 import org.jetbrains.annotations.NotNull;
 import vip.creatio.gca.ClassFileParser;
-import vip.creatio.gca.constant.Const;
+import vip.creatio.gca.Const;
 
 import vip.creatio.gca.util.ByteVector;
 

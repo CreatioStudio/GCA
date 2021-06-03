@@ -6,9 +6,8 @@ import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.ClassFileParser;
 import vip.creatio.gca.ConstPool;
 import vip.creatio.gca.DeclaredMethod;
-import vip.creatio.gca.attr.Code;
-import vip.creatio.gca.constant.InvokeDynamicConst;
-import vip.creatio.gca.constant.RefConst;
+import vip.creatio.gca.InvokeDynamicConst;
+import vip.creatio.gca.RefConst;
 import vip.creatio.gca.type.Types;
 import vip.creatio.gca.util.BiHashMap;
 

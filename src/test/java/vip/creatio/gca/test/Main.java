@@ -4,17 +4,11 @@ import org.junit.Test;
 import vip.creatio.gca.*;
 import vip.creatio.gca.attr.Code;
 import vip.creatio.gca.code.Label;
-import vip.creatio.gca.code.OpCode;
-import vip.creatio.gca.code.OpCodeType;
-import vip.creatio.gca.constant.ClassConst;
-import vip.creatio.gca.constant.RefConst;
+import vip.creatio.gca.RefConst;
 import vip.creatio.gca.util.ByteVector;
-import vip.creatio.gca.util.ClassFilePrinter;
 import vip.creatio.gca.util.Util;
 
 import java.io.*;
-import java.math.BigInteger;
-import java.util.Iterator;
 import java.util.Random;
 
 import static vip.creatio.gca.ValueType.*;

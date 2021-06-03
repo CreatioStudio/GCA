@@ -4,7 +4,6 @@ import org.jetbrains.annotations.NotNull;
 import vip.creatio.gca.attr.AnnotationDefault;
 import vip.creatio.gca.attr.Code;
 import vip.creatio.gca.attr.Exceptions;
-import vip.creatio.gca.constant.ClassConst;
 
 import vip.creatio.gca.util.ByteVector;
 import java.util.EnumSet;

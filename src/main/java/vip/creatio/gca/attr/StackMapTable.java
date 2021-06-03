@@ -5,7 +5,7 @@ import vip.creatio.gca.ClassFileParser;
 import vip.creatio.gca.code.Label;
 import vip.creatio.gca.code.OpCode;
 import vip.creatio.gca.code.OpCodeType;
-import vip.creatio.gca.constant.Const;
+import vip.creatio.gca.Const;
 import vip.creatio.gca.util.ByteVector;
 
 import java.util.ArrayList;

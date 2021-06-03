@@ -1,10 +1,7 @@
-package vip.creatio.gca.constant;
+package vip.creatio.gca;
 
 import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.util.ClassUtil;
-import vip.creatio.gca.ConstPool;
-import vip.creatio.gca.Descriptor;
-import vip.creatio.gca.ClassFileParser;
 
 import vip.creatio.gca.util.ByteVector;
 
@@ -18,7 +15,7 @@ public class MethodTypeConst extends Const implements Descriptor {
         recache();
     }
 
-    public MethodTypeConst(ConstPool pool) {
+    MethodTypeConst(ConstPool pool) {
         super(pool, ConstType.METHOD_TYPE);
     }
 
@@ -33,7 +30,7 @@ public class MethodTypeConst extends Const implements Descriptor {
     }
 
     @Override
-    public int byteSize() {
+    int byteSize() {
         return 3;
     }
 

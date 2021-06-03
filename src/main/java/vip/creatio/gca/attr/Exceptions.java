@@ -1,10 +1,9 @@
 package vip.creatio.gca.attr;
 
 import vip.creatio.gca.AttributeContainer;
-import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.ClassFileParser;
 import vip.creatio.gca.DeclaredMethod;
-import vip.creatio.gca.constant.ClassConst;
+import vip.creatio.gca.ClassConst;
 
 import vip.creatio.gca.util.ByteVector;
 

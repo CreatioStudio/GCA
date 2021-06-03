@@ -1,9 +1,7 @@
-package vip.creatio.gca.constant;
+package vip.creatio.gca;
 
-import org.jetbrains.annotations.NotNull;
 import vip.creatio.gca.util.ByteVector;
 import vip.creatio.gca.util.Cacheable;
-import vip.creatio.gca.ConstPool;
 import vip.creatio.gca.util.Immutable;
 
 @Immutable
@@ -18,7 +16,7 @@ public class UTFConst extends Const implements Cacheable {
         recache();
     }
 
-    public UTFConst(ConstPool pool, final ByteVector buffer) {
+    UTFConst(ConstPool pool, final ByteVector buffer) {
         super(pool, ConstType.UTF8);
         int size = buffer.getUShort();
         data = new byte[size];
@@ -37,7 +35,7 @@ public class UTFConst extends Const implements Cacheable {
     }
 
     @Override
-    public int byteSize() {
+    int byteSize() {
         return data.length + 3;
     }
 

@@ -1,7 +1,5 @@
-package vip.creatio.gca.constant;
+package vip.creatio.gca;
 
-import vip.creatio.gca.ConstPool;
-import vip.creatio.gca.ValueType;
 import vip.creatio.gca.util.Immutable;
 
 import vip.creatio.gca.util.ByteVector;
@@ -11,18 +9,18 @@ public class DoubleConst extends Const.Value implements Const.DualSlot {
 
     private final double data;
 
-    public DoubleConst(ConstPool pool, double data) {
+    DoubleConst(ConstPool pool, double data) {
         super(pool, ConstType.DOUBLE);
         this.data = data;
     }
 
-    public DoubleConst(ConstPool pool, ByteVector buffer) {
+    DoubleConst(ConstPool pool, ByteVector buffer) {
         super(pool, ConstType.DOUBLE);
         data = buffer.getDouble();
     }
 
     @Override
-    public int byteSize() {
+    int byteSize() {
         return 9;
     }
 

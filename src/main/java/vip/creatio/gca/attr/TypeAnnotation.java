@@ -2,8 +2,8 @@ package vip.creatio.gca.attr;
 
 import vip.creatio.gca.*;
 import vip.creatio.gca.code.OpCode;
-import vip.creatio.gca.constant.ClassConst;
-import vip.creatio.gca.constant.Const;
+import vip.creatio.gca.ClassConst;
+import vip.creatio.gca.Const;
 import vip.creatio.gca.util.ByteVector;
 import vip.creatio.gca.util.Pair;
 

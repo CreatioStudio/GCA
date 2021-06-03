@@ -1,6 +1,6 @@
 package vip.creatio.gca.type;
 
-public interface ClassInfo extends Info {
+public abstract class ClassInfo implements Type {
 
     boolean isLoaded();
 

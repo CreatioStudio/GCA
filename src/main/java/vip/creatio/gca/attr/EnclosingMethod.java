@@ -2,8 +2,8 @@ package vip.creatio.gca.attr;
 
 import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.*;
-import vip.creatio.gca.constant.ClassConst;
-import vip.creatio.gca.constant.NameAndTypeConst;
+import vip.creatio.gca.ClassConst;
+import vip.creatio.gca.NameAndTypeConst;
 
 import vip.creatio.gca.util.ByteVector;
 import vip.creatio.gca.util.ClassUtil;

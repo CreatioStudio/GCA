@@ -1,7 +1,7 @@
 package vip.creatio.gca.code;
 
 import vip.creatio.gca.ClassFileParser;
-import vip.creatio.gca.constant.InvokeDynamicConst;
+import vip.creatio.gca.InvokeDynamicConst;
 
 import vip.creatio.gca.util.ByteVector;
 

@@ -2,8 +2,7 @@ package vip.creatio.gca.code;
 
 import vip.creatio.gca.ClassFileParser;
 import vip.creatio.gca.ValueType;
-import vip.creatio.gca.constant.ClassConst;
-import vip.creatio.gca.constant.Const;
+import vip.creatio.gca.ClassConst;
 
 import vip.creatio.gca.util.ByteVector;
 import java.util.HashMap;

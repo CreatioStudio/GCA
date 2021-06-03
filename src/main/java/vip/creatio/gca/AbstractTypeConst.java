@@ -1,7 +1,5 @@
-package vip.creatio.gca.constant;
+package vip.creatio.gca;
 
-import vip.creatio.gca.ClassFileParser;
-import vip.creatio.gca.ConstPool;
 import vip.creatio.gca.util.ByteVector;
 import vip.creatio.gca.util.ClassUtil;
 
@@ -20,7 +18,7 @@ abstract class AbstractTypeConst extends Const {
     }
 
     @Override
-    public int byteSize() {
+    int byteSize() {
         return 3;
     }
 

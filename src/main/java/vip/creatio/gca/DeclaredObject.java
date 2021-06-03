@@ -3,9 +3,6 @@ package vip.creatio.gca;
 import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.attr.Signature;
 import vip.creatio.gca.code.BytecodeException;
-import vip.creatio.gca.constant.Const;
-import vip.creatio.gca.constant.RefConst;
-import vip.creatio.gca.constant.UTFConst;
 import vip.creatio.gca.util.ClassUtil;
 
 import vip.creatio.gca.util.ByteVector;

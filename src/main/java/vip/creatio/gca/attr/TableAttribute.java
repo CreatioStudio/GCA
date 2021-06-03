@@ -2,9 +2,6 @@ package vip.creatio.gca.attr;
 
 import vip.creatio.gca.Attribute;
 import vip.creatio.gca.AttributeContainer;
-import vip.creatio.gca.ClassFile;
-import vip.creatio.gca.Serializer;
-import vip.creatio.gca.constant.UTFConst;
 
 import java.util.ArrayList;
 import java.util.List;
