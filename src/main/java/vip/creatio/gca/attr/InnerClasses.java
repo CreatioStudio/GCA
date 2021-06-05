@@ -55,7 +55,7 @@ public class InnerClasses extends TableAttribute<InnerClasses.Class> {
 
     public void add(ClassFile classFile) {
         ClassConst c = this.constPool().acquireClass(classFile.getThisClass());
-        String name = c.getName();
+        String name = c.getTypeName();
         name = name.substring(name.lastIndexOf('/') + 1);
         add(c, name, classFile.getAccessFlags());
     }

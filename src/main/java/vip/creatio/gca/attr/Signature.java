@@ -3,6 +3,8 @@ package vip.creatio.gca.attr;
 import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.*;
 
+import vip.creatio.gca.type.Type;
+import vip.creatio.gca.type.Types;
 import vip.creatio.gca.util.ByteVector;
 import vip.creatio.gca.util.ClassUtil;
 
@@ -12,12 +14,9 @@ import vip.creatio.gca.util.ClassUtil;
  * in the Java programming language would include references to type
  * variables or parameterized types.
  */
-//TODO: make signatures into something like GenericType[]
-public class Signature extends Attribute implements GenericSignature {
+public class Signature extends Attribute {
 
-    private String signature;
-
-    private @Nullable String[] signatures;
+    private Type signature;
 
     public Signature(AttributeContainer container) {
         super(container);
@@ -25,12 +24,12 @@ public class Signature extends Attribute implements GenericSignature {
 
     public Signature(AttributeContainer container, String signature) {
         this(container);
-        this.signature = signature;
+        this.signature = Types.resolve(signature);
     }
 
     public static Signature parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer) {
         Signature inst = new Signature(container);
-        inst.signature = pool.getString(buffer.getUShort());
+        inst.signature = Types.resolve(pool.getString(buffer.getUShort()));
         return inst;
     }
 
@@ -39,35 +38,27 @@ public class Signature extends Attribute implements GenericSignature {
         return "Signature";
     }
 
-    public String getGenericSignature() {
+    public Type getGenericType() {
         return signature;
     }
 
-    public void setGenericSignature(String signature) {
+    public void setGenericType(String signature) {
+        this.signature = Types.resolve(signature);
+    }
+
+    public void setGenericType(Type signature) {
         this.signature = signature;
-    }
-
-    @Override
-    public @Nullable String[] getGenericSignatures() {
-        return signatures;
-    }
-
-    @Override
-    public void recache() {
-        if (signature != null) {
-            signatures = ClassUtil.fromSignature(signature);
-        }
     }
 
     @Override
     protected void collect() {
         super.collect();
-        constPool().acquireUtf(signature);
+        constPool().acquireUtf(signature.getInternalSignature());
     }
 
     @Override
     protected void writeData(ByteVector buffer) {
-        buffer.putShort(constPool().acquireUtf(signature).index());
+        buffer.putShort(constPool().acquireUtf(signature.getInternalSignature()).index());
     }
 
     @Override

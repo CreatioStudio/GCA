@@ -5,30 +5,30 @@ import vip.creatio.gca.attr.AnnotationDefault;
 import vip.creatio.gca.attr.Code;
 import vip.creatio.gca.attr.Exceptions;
 
+import vip.creatio.gca.type.MethodInfo;
+import vip.creatio.gca.type.TypeInfo;
 import vip.creatio.gca.util.ByteVector;
 import java.util.EnumSet;
 import java.util.List;
 
-public class DeclaredMethod extends DeclaredObject {
+public class DeclaredMethod extends DeclaredObject implements MethodInfo {
 
     DeclaredMethod(ClassFile bc, ClassFileParser pool, ByteVector buffer) {
         super(bc, pool, buffer);
-        recache();
     }
 
     DeclaredMethod(ClassFile bc,
                    EnumSet<AccessFlag> flags,
                    String name,
-                   String descriptor,
+                   TypeInfo descriptor,
                    Attribute... attributes) {
         super(bc, flags, name, descriptor, attributes);
-        recache();
     }
 
     DeclaredMethod(ClassFile bc,
                    EnumSet<AccessFlag> flags,
                    String name,
-                   String descriptor,
+                   TypeInfo descriptor,
                    String[] signatures,
                    Attribute... attributes) {
         super(bc, flags, name, descriptor, attributes);

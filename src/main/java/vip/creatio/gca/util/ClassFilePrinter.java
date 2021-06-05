@@ -39,7 +39,7 @@ public final class ClassFilePrinter {
                 ", Attributes: " + f.attributes().size());
         out.println("\nConstant pool:");
         for (Const constant : f.constPool()) {
-            out.println(getConstant(constant));
+            out.println(getConstant(f.constPool(), constant));
         }
         out.println("\nFields:");
         out.println("\nMethods:");
@@ -58,7 +58,7 @@ public final class ClassFilePrinter {
                 sb.append(" extends ");
                 Iterator<ClassConst> iter = f.getInterfaces().iterator();
                 while (iter.hasNext()) {
-                    sb.append(iter.next().getName());
+                    sb.append(iter.next().getTypeName());
                     if (iter.hasNext()) sb.append(", ");
                 }
             }
@@ -69,15 +69,15 @@ public final class ClassFilePrinter {
                 sb.append(" class ");
             }
             sb.append(f.getClassName());
-            if (!f.getSuperClass().getName().equals("java.lang.Object")) {
+            if (!f.getSuperClass().getTypeName().equals("java.lang.Object")) {
                 sb.append(" extends ");
-                sb.append(f.getSuperClass().getName());
+                sb.append(f.getSuperClass().getTypeName());
             }
             if (f.getInterfaces().size() != 0) {
                 sb.append(" implements ");
                 Iterator<ClassConst> iter = f.getInterfaces().iterator();
                 while (iter.hasNext()) {
-                    sb.append(iter.next().getName());
+                    sb.append(iter.next().getTypeName());
                     if (iter.hasNext()) sb.append(", ");
                 }
             }
@@ -96,12 +96,11 @@ public final class ClassFilePrinter {
         return sb.toString();
     }
 
-    private static String getConstant(Const c) {
+    private static String getConstant(ConstPool pool, Const c) {
         StringBuilder sb = new StringBuilder();
         sb.append("#").append(c.index());
         sb.append(" ".repeat(6 - sb.length())).append(" = ").append(c.type());
         sb.append(" ".repeat(28 - sb.length()));
-        ConstPool pool = c.constPool();
         switch (c.type()) {
             case UTF8:
                 sb.append("'").append(((UTFConst) c).string()).append("'");

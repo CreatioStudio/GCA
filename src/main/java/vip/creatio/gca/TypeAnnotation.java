@@ -1,18 +1,18 @@
-package vip.creatio.gca.attr;
+package vip.creatio.gca;
 
-import vip.creatio.gca.*;
+import vip.creatio.gca.attr.Code;
+import vip.creatio.gca.attr.Exceptions;
+import vip.creatio.gca.attr.TargetType;
 import vip.creatio.gca.code.OpCode;
-import vip.creatio.gca.ClassConst;
-import vip.creatio.gca.Const;
+import vip.creatio.gca.type.Type;
+import vip.creatio.gca.type.Types;
 import vip.creatio.gca.util.ByteVector;
 import vip.creatio.gca.util.Pair;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
-public class TypeAnnotation extends AbstractAnnotation {
+public class TypeAnnotation extends AnnotationInfo {
 
     private TargetType target;
 
@@ -45,11 +45,11 @@ public class TypeAnnotation extends AbstractAnnotation {
     private int boundIndex;
 
     // supertype(ClassFile::interfaces.index)
-    private ClassConst superType;
+    private Type superType;
 
     // throws(Exceptions)
     private Exceptions exceptions;
-    private ClassConst throwsType;
+    private Type throwsType;
 
     // catch(Code::ExceptionTable)
     private Code.ExceptionTable catchTarget;
@@ -65,17 +65,12 @@ public class TypeAnnotation extends AbstractAnnotation {
 
     private final List<Pair<PathKind, Integer>> path = new ArrayList<>();
 
-    private String type;
-
-    private final List<Pair<String, ElementValue>> nameValuePairs = new ArrayList<>();
-
     TypeAnnotation(ConstPool pool) {
         super(pool);
     }
 
-    public TypeAnnotation(ConstPool pool, String type) {
-        this(pool);
-        this.type = type;
+    public TypeAnnotation(ConstPool pool, Type type) {
+        super(pool, type);
     }
 
     static TypeAnnotation parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer) {
@@ -138,79 +133,17 @@ public class TypeAnnotation extends AbstractAnnotation {
             }
         }
 
-        anno.type = pool.getString(buffer.getUShort());
+        anno.type = Types.toType(pool.getString(buffer.getUShort()));
 
         {
             int num = buffer.getUShort();
             for (int i = 0; i < num; i++) {
                 String name = pool.getString(buffer.getUShort());
-                anno.nameValuePairs.add(new Pair<>(name, new ElementValue(container.classFile(), pool, buffer)));
+                anno.values.put(name, ElementValue.parse(container.classFile(), pool, buffer));
             }
         }
         return anno;
     }
-
-    public String getClassName() {
-        return type;
-    }
-
-    public ElementValue addValue(String name, ValueType type) {
-        ElementValue value = new ElementValue(constPool(), type);
-        nameValuePairs.add(new Pair<>(name, value));
-        return value;
-    }
-
-    public ElementValue getValue(String name) {
-        for (Pair<String, ElementValue> p : nameValuePairs) {
-            if (p.getKey().equals(name)) return p.getValue();
-        }
-        return null;
-    }
-
-    public boolean removeValue(String name) {
-        return nameValuePairs.removeIf(p -> p.getKey().equals(name));
-    }
-
-    public ElementValue addConstValue(String name, Const.Value value) {
-        ElementValue v = new ElementValue(constPool(), value.valueType());
-        v.union = value;
-        nameValuePairs.add(new Pair<>(name, v));
-        return v;
-    }
-
-    public ElementValue addClassValue(String name, String clsName) {
-        ElementValue v = new ElementValue(constPool(), ValueType.CLASS);
-        v.union = clsName;
-        nameValuePairs.add(new Pair<>(name, v));
-        return v;
-    }
-
-    public ElementValue addEnumValue(String name, String enumClass, String enumName) {
-        ElementValue v = new ElementValue(constPool(), ValueType.ENUM);
-        v.union = enumClass;
-        v.enumName = enumName;
-        nameValuePairs.add(new Pair<>(name, v));
-        return v;
-    }
-
-    public ElementValue addAnnotationValue(String name, TypeAnnotation anno) {
-        ElementValue v = new ElementValue(constPool(), ValueType.ANNOTATION);
-        v.union = anno;
-        nameValuePairs.add(new Pair<>(name, v));
-        return v;
-    }
-
-    public ElementValue addArrayValue(String name, Collection<ElementValue> values) {
-        ElementValue v = new ElementValue(constPool(), ValueType.ARRAY);
-        v.union = new ArrayList<>(values);
-        nameValuePairs.add(new Pair<>(name, v));
-        return v;
-    }
-
-    public ElementValue addArrayValue(String name, ElementValue... values) {
-        return addArrayValue(name, Arrays.asList(values));
-    }
-
 
     public int getTypeParameterIndex() {
         checkType(TargetType.TARGET_TYPE_PARAMETER, TargetType.TARGET_TYPE_PARAMETER_BOUND);
@@ -222,7 +155,7 @@ public class TypeAnnotation extends AbstractAnnotation {
         this.index = index;
     }
 
-    public ClassConst getSuperType() {
+    public Type getSuperType() {
         checkType(TargetType.TARGET_SUPERTYPE);
         return superType;
     }
@@ -252,7 +185,7 @@ public class TypeAnnotation extends AbstractAnnotation {
         this.index = index;
     }
 
-    public ClassConst getThrowsType() {
+    public Type getThrowsType() {
         checkType(TargetType.TARGET_THROWS);
         return throwsType;
     }
@@ -310,14 +243,14 @@ public class TypeAnnotation extends AbstractAnnotation {
         }
     }
 
-    void write(ByteVector buffer) {
+    protected void write(ByteVector buffer) {
         buffer.putByte(target.getTag());
         switch (target.getType()) {
             case TargetType.TARGET_TYPE_PARAMETER:
                 buffer.putByte(index);
                 break;
             case TargetType.TARGET_SUPERTYPE:
-                buffer.putShort(superType.index());
+                buffer.putShort(constPool().acquire(superType).index());
                 break;
             case TargetType.TARGET_TYPE_PARAMETER_BOUND:
                 buffer.putByte(index);
@@ -330,7 +263,7 @@ public class TypeAnnotation extends AbstractAnnotation {
                 buffer.putByte(index);
                 break;
             case TargetType.TARGET_THROWS:
-                buffer.putShort(throwsType.index());
+                buffer.putShort(constPool().acquire(throwsType).index());   //TODO: make this!
                 break;
             case TargetType.TARGET_LOCALVAR:
                 buffer.putShort(localVar.size());
@@ -359,15 +292,15 @@ public class TypeAnnotation extends AbstractAnnotation {
             buffer.putByte(pair.getValue());
         }
 
-        buffer.putShort(constPool().acquireUtf(type).index());
-        buffer.putShort(nameValuePairs.size());
-        for (Pair<String, ElementValue> p : nameValuePairs) {
+        buffer.putShort(constPool().acquireUtf(type.getInternalName()).index());
+        buffer.putShort(values.size());
+        for (Pair<String, ElementValue> p : values) {
             buffer.putShort(constPool().acquireUtf(p.getKey()).index());
-            p.getValue().write(buffer);
+            p.getValue().write(pool, buffer);
         }
     }
 
-    void collect() {
+    protected void collect() {
         switch (target.getType()) {
             case TargetType.TARGET_SUPERTYPE:
             case TargetType.TARGET_TYPE_PARAMETER_BOUND:
@@ -377,16 +310,16 @@ public class TypeAnnotation extends AbstractAnnotation {
                 constPool().acquire(throwsType);
                 break;
         }
-        constPool().acquireUtf(type);
-        for (Pair<String, ElementValue> p : nameValuePairs) {
+        constPool().acquireUtf(type.getInternalName());
+        for (Pair<String, ElementValue> p : values) {
             constPool().acquireUtf(p.getKey());
-            p.getValue().collect();
+            p.getValue().collect(pool);
         }
     }
 
     @Override
-    AbstractAnnotation copy() {
-        return null;
+    protected AnnotationInfo copy() {
+        return null;//TODO
     }
 
     public static class VarTable {

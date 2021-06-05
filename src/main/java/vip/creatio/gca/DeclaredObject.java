@@ -1,25 +1,25 @@
 package vip.creatio.gca;
 
-import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.attr.Signature;
 import vip.creatio.gca.code.BytecodeException;
-import vip.creatio.gca.util.ClassUtil;
+import vip.creatio.gca.type.Type;
+import vip.creatio.gca.type.TypeInfo;
+import vip.creatio.gca.type.Types;
 
 import vip.creatio.gca.util.ByteVector;
 
 import java.util.*;
 
 abstract class DeclaredObject
-implements AttributeContainer, AccessFlagContainer, Descriptor, GenericSignature {
+implements AttributeContainer, AccessFlagContainer {
 
     protected final ClassFile classFile;
     protected EnumSet<AccessFlag> accessFlags;
 
     protected String name;
-    protected String descriptor;
+    protected TypeInfo descriptor;
     protected List<Attribute> attributes = new ArrayList<>();
 
-    protected String[] descriptors;
     protected RefConst constRef;
 
     DeclaredObject(ClassFile bc, ClassFileParser pool, ByteVector buffer) {
@@ -27,14 +27,14 @@ implements AttributeContainer, AccessFlagContainer, Descriptor, GenericSignature
         this.accessFlags = resolveFlags(buffer.getShort());
         int s = buffer.getUShort();
         this.name = pool.getString(s);
-        this.descriptor = pool.getString(buffer.getShort());
-        int attrCount = buffer.getShort() & 0xFFFF;
+        this.descriptor = Types.toType(pool.getString(buffer.getShort()));
+        int attrCount = buffer.getUShort();
 
         for (int i = 0; i < attrCount; i++) {
             try {
                 attributes.add(pool.resolveAttribute(this, buffer));
             } catch (BytecodeException e) {
-                e.setLocation(name + descriptor);
+                e.setLocation(name + descriptor.getCanonicalName());
                 throw e;
             } catch (Exception e) {
                 System.err.println("Exception while parsing attributes in "
@@ -42,27 +42,25 @@ implements AttributeContainer, AccessFlagContainer, Descriptor, GenericSignature
                 throw e;
             }
         }
-        recache();
     }
 
     DeclaredObject(ClassFile bc,
                    EnumSet<AccessFlag> flags,
                    String name,
-                   String descriptor,
+                   TypeInfo descriptor,
                    Attribute... attributes) {
         this.classFile = bc;
         this.accessFlags = flags;
         this.name = name;
         this.descriptor = descriptor;
         this.attributes = new ArrayList<>(Arrays.asList(attributes));
-        recache();
     }
 
     public String getName() {
         return name;
     }
 
-    public String getDescriptor() {
+    public TypeInfo getDescriptor() {
         return descriptor;
     }
 
@@ -70,30 +68,28 @@ implements AttributeContainer, AccessFlagContainer, Descriptor, GenericSignature
         this.name = name;
     }
 
-    public void setDescriptor(String descriptor) {
+    public void setType(TypeInfo descriptor) {
         this.descriptor = descriptor;
-        recache();
     }
 
-    @Override
-    public String[] getDescriptors() {
-        return descriptors;
-    }
-
-    public @Nullable String getGenericSignature() {
+    public void setType(String descriptor) {
+        this.descriptor = Types.toType(descriptor);
         Signature sig = getAttribute("Signature");
-        return sig == null ? null : sig.getGenericSignature() == null ? null : sig.getGenericSignature();
+        if (sig != null) sig.setGenericType((Type) null);
     }
 
-    public void setGenericSignature(@Nullable String s) {
+    public void setGenericType(Type s) {
         getOrAddAttribute("Signature",
                 () -> new Signature(classFile))
-                .setGenericSignature(s);
+                .setGenericType(s);
+        descriptor = Types.toType(s);
     }
 
-    @Override
-    public int getParameterCount() {
-        return Descriptor.super.getParameterCount();
+    public void setGenericType(String s) {
+        getOrAddAttribute("Signature",
+                () -> new Signature(classFile))
+                .setGenericType(s);
+        descriptor = Types.toType(s);
     }
 
     @Override //TODO
@@ -101,10 +97,9 @@ implements AttributeContainer, AccessFlagContainer, Descriptor, GenericSignature
         return null;
     }
 
-    @Override
-    public @Nullable String[] getGenericSignatures() {
+    public Type getGenericType() {
         Signature sig = getAttribute("Signature");
-        return sig == null ? null : sig.getGenericSignatures();
+        return sig == null ? null : sig.getGenericType();
     }
 
     public ClassFile classFile() {
@@ -163,10 +158,12 @@ implements AttributeContainer, AccessFlagContainer, Descriptor, GenericSignature
         }
     }
 
+
+
     public void write(ByteVector buffer) {
         buffer.putShort(AccessFlag.serialize(accessFlags));
         buffer.putShort(constPool().acquireUtf(this.name).index());
-        buffer.putShort(constPool().acquireUtf(descriptor).index());
+        buffer.putShort(constPool().acquireUtf(descriptor.getInternalName()).index());
 
         try {
             AttributeContainer.super.writeAttributes(buffer);
@@ -178,14 +175,7 @@ implements AttributeContainer, AccessFlagContainer, Descriptor, GenericSignature
 
     protected void collect() {
         constPool().acquireUtf(this.name);
-        constPool().acquireUtf(descriptor);
+        constPool().acquireUtf(descriptor.getInternalName());
         collectConstants();
-    }
-
-    @Override
-    public void recache() {
-        this.descriptors = ClassUtil.fromSignature(descriptor);
-        //Signature sig = getAttribute("Signature");//TODO
-        //if (sig != null) sig.recache();
     }
 }

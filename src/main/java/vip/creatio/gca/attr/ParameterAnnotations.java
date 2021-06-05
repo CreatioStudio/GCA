@@ -1,10 +1,9 @@
 package vip.creatio.gca.attr;
 
+import vip.creatio.gca.Annotation;
 import vip.creatio.gca.AttributeContainer;
-import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.ClassFileParser;
 import vip.creatio.gca.util.ByteVector;
-import vip.creatio.gca.util.Util;
 
 import java.util.ArrayList;
 import java.util.Collection;

@@ -1,6 +1,7 @@
 package vip.creatio.gca;
 
 import org.jetbrains.annotations.NotNull;
+import vip.creatio.gca.type.Type;
 import vip.creatio.gca.util.ByteVector;
 import vip.creatio.gca.util.ClassUtil;
 
@@ -105,6 +106,12 @@ public final class ConstPool implements Iterable<Const> {
         return c;
     }
 
+    public ClassConst acquire(Type t) {
+        if (t instanceof ClassConst)
+            return (ClassConst) acquire((Const) t);
+
+    }
+
     public final <T extends Const> List<T> acquire(Collection<T> c) {
         return c.stream().map(this::acquire).collect(Collectors.toList());
     }
@@ -181,7 +188,7 @@ public final class ConstPool implements Iterable<Const> {
     }
 
     public ClassConst acquireClass(ClassConst c) {
-        return acquireClass(c.getName());
+        return acquireClass(c.getTypeName());
     }
 
 
@@ -201,7 +208,7 @@ public final class ConstPool implements Iterable<Const> {
     }
 
     public RefConst acquireFieldRef(ClassConst clazz, String name, ClassConst typeClass) {
-        return acquireFieldRef(clazz, name, typeClass.getName());
+        return acquireFieldRef(clazz, name, typeClass.getTypeName());
     }
 
     public RefConst acquireFieldRef(Class<?> clazz, String name, Class<?> typeClass) {

@@ -3,6 +3,7 @@ package vip.creatio.gca;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.attr.*;
+import vip.creatio.gca.type.ClassInfo;
 import vip.creatio.gca.util.ClassUtil;
 
 import java.io.IOException;
@@ -12,7 +13,7 @@ import vip.creatio.gca.util.ByteVector;
 import java.util.*;
 
 @SuppressWarnings("unused")
-public class ClassFile implements AttributeContainer, AccessFlagContainer {
+public class ClassFile extends ClassInfo implements AttributeContainer, AccessFlagContainer {
 
     public static final int MAGIC = 0xCAFE_BABE;
 
@@ -228,7 +229,7 @@ public class ClassFile implements AttributeContainer, AccessFlagContainer {
 
     public ClassConst getInterface(String clsName) {
         for (ClassConst c : interfaces) {
-            if (c.getName().equals(clsName)) return c;
+            if (c.getTypeName().equals(clsName)) return c;
         }
         return null;
     }
@@ -272,13 +273,13 @@ public class ClassFile implements AttributeContainer, AccessFlagContainer {
 
     public @Nullable String getSignature() {
         Signature sig = getAttribute("Signature");
-        return sig == null ? null : sig.getGenericSignature() == null ? null : sig.getGenericSignature();
+        return sig == null ? null : sig.getGenericType() == null ? null : sig.getGenericType();
     }
 
     public void setSignature(@Nullable String s) {
         getOrAddAttribute("Signature",
                 () -> new Signature(this))
-                .setGenericSignature(s);
+                .setGenericType(s);
     }
 
     public boolean isDeprecated() {
@@ -291,7 +292,7 @@ public class ClassFile implements AttributeContainer, AccessFlagContainer {
     }
 
     public String getClassName() {
-        return thisClass.getName();
+        return thisClass.getTypeName();
     }
 
     public void write(ByteVector buffer) {

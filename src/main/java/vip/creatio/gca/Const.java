@@ -63,31 +63,30 @@ public abstract class Const {
         public abstract ValueType valueType();
 
         public static Value of(ConstPool pool, Object v) {
-            if (v == null) throw new NullPointerException();
-            if (v instanceof String)
-                return new StringConst(pool, (String) v);
-            if (v instanceof Integer)
-                return new IntegerConst(pool, (Integer) v);
-            if (v instanceof Long)
-                return new LongConst(pool, (Long) v);
-            if (v instanceof Double)
-                return new DoubleConst(pool, (Double) v);
-            if (v instanceof Float)
-                return new FloatConst(pool, (Float) v);
-            if (v instanceof Short)
-                return new IntegerConst(pool, (Short) v);
-            if (v instanceof Byte)
-                return new IntegerConst(pool, (Byte) v);
-            if (v instanceof Character)
-                return new IntegerConst(pool, (Character) v);
-            throw new UnsupportedOperationException(v.getClass().getName());
+            ValueType type = ValueType.getValueType(v);
+            switch (type) {
+                case BYTE:
+                    return new IntegerConst(pool, (Byte) v);
+                case CHAR:
+                    return new IntegerConst(pool, (Character) v);
+                case DOUBLE:
+                    return new DoubleConst(pool, (Double) v);
+                case FLOAT:
+                    return new FloatConst(pool, (Float) v);
+                case INT:
+                    return new IntegerConst(pool, (Integer) v);
+                case LONG:
+                    return new LongConst(pool, (Long) v);
+                case SHORT:
+                    return new IntegerConst(pool, (Short) v);
+                case BOOLEAN:
+                    return new IntegerConst(pool, ((boolean) v) ? 1 : 0);
+                case STRING:
+                    return new StringConst(pool, (String) v);
+                default:
+                    throw new UnsupportedOperationException(v.getClass().getName());
+            }
         }
-    }
-
-    public static boolean isValue(Object obj) {
-        return obj instanceof String || obj instanceof Integer || obj instanceof Long
-                || obj instanceof Double || obj instanceof Float || obj instanceof Short
-                || obj instanceof Byte || obj instanceof Character;
     }
 
     // marker interface which indicates this constant takes 2 slots

@@ -3,23 +3,24 @@ package vip.creatio.gca;
 import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.attr.ConstantValue;
 
+import vip.creatio.gca.type.ClassInfo;
+import vip.creatio.gca.type.FieldInfo;
+import vip.creatio.gca.type.TypeInfo;
 import vip.creatio.gca.util.ByteVector;
 import java.util.EnumSet;
 
-public class DeclaredField extends DeclaredObject {
+public class DeclaredField extends DeclaredObject implements FieldInfo {
 
     DeclaredField(ClassFile bc, ClassFileParser pool, ByteVector buffer) {
         super(bc, pool, buffer);
-        recache();
     }
 
     DeclaredField(ClassFile bc,
                   EnumSet<AccessFlag> flags,
                   String name,
-                  String descriptor,
+                  TypeInfo descriptor,
                   Attribute... attributes) {
         super(bc, flags, name, descriptor, attributes);
-        recache();
     }
 
     @Override
@@ -41,5 +42,15 @@ public class DeclaredField extends DeclaredObject {
     @Override
     public String toString() {
         return "Field{name=" + getName() + ",descriptor=" + getDescriptor() + '}';
+    }
+
+    @Override
+    public ClassFile getDeclaringClass() {
+        return classFile;
+    }
+
+    @Override
+    public TypeInfo getType() {
+        return descriptor;
     }
 }

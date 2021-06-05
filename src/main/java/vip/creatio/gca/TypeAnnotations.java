@@ -1,8 +1,6 @@
-package vip.creatio.gca.attr;
+package vip.creatio.gca;
 
-import vip.creatio.gca.AttributeContainer;
-import vip.creatio.gca.ClassFile;
-import vip.creatio.gca.ClassFileParser;
+import vip.creatio.gca.attr.TableAttribute;
 import vip.creatio.gca.util.ByteVector;
 
 public class TypeAnnotations extends TableAttribute<TypeAnnotation> {
@@ -13,7 +11,7 @@ public class TypeAnnotations extends TableAttribute<TypeAnnotation> {
         super(container);
     }
 
-    public static TypeAnnotations parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer, boolean visible) {
+    static TypeAnnotations parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer, boolean visible) {
         TypeAnnotations inst = new TypeAnnotations(container);
         inst.runtimeVisible = visible;
         int len = buffer.getUShort();
@@ -24,7 +22,7 @@ public class TypeAnnotations extends TableAttribute<TypeAnnotation> {
     }
 
     public void add(TypeAnnotation anno) {
-        remove(anno.getClassName());
+        remove(anno.annotationType());
         items.add(anno);
     }
 
@@ -35,7 +33,7 @@ public class TypeAnnotations extends TableAttribute<TypeAnnotation> {
     }
 
     public boolean remove(String className) {
-        return items.removeIf(annotation -> annotation.getClassName().equals(className));
+        return items.removeIf(annotation -> annotation.annotationType().equals(className));
     }
 
     @Override

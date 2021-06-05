@@ -215,7 +215,7 @@ public class ClassUtil {
         return item.toArray(new String[0]);
     }
 
-    private static String toSignature(String binaryName) {
+    public static String toSignature(String binaryName) {
         if (binaryName.startsWith("[")) return binaryName;
         char c = toBasicChar(binaryName);
         if (c == 'L') return c + binaryName + ';';
