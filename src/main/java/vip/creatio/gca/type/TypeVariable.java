@@ -1,12 +1,12 @@
 package vip.creatio.gca.type;
 
-import vip.creatio.gca.AnnotationInfo;
+import vip.creatio.gca.DeclaredAnnotation;
 
 public class TypeVariable implements Type, AnnotatedInfo {
 
     @Override
-    public AnnotationInfo[] getAnnotations() {
-        return new AnnotationInfo[0];
+    public DeclaredAnnotation[] getAnnotations() {
+        return new DeclaredAnnotation[0];
     }
 
     @Override

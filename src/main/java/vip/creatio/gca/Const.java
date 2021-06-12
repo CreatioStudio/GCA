@@ -36,6 +36,7 @@ public abstract class Const {
     }
 
 
+     /* internals */
 
     void parse(ClassFileParser pool, ByteVector buffer) {}
 

@@ -106,12 +106,6 @@ public final class ConstPool implements Iterable<Const> {
         return c;
     }
 
-    public ClassConst acquire(Type t) {
-        if (t instanceof ClassConst)
-            return (ClassConst) acquire((Const) t);
-
-    }
-
     public final <T extends Const> List<T> acquire(Collection<T> c) {
         return c.stream().map(this::acquire).collect(Collectors.toList());
     }
@@ -181,6 +175,10 @@ public final class ConstPool implements Iterable<Const> {
     // class name formatted in some like java.lang.xxx$inner
     public ClassConst acquireClass(String name) {
         return acquire(new ClassConst(this, name));
+    }
+
+    public ClassConst acquireClass(Type name) {
+        return acquire(new ClassConst(this, name.getTypeName()));
     }
 
     public ClassConst acquireClass(Class<?> cls) {

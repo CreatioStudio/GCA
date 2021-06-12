@@ -50,6 +50,10 @@ public class Pair<K, V> implements Map.Entry<K, V> {
         return false;
     }
 
+    public Pair<K, V> copy() {
+        return new Pair<>(key, value);
+    }
+
     @Override
     public String toString() {
         return key.toString() + "=" + value.toString();

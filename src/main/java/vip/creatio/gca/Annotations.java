@@ -1,6 +1,7 @@
 package vip.creatio.gca;
 
 import vip.creatio.gca.attr.TableAttribute;
+import vip.creatio.gca.type.TypeInfo;
 import vip.creatio.gca.type.Types;
 import vip.creatio.gca.util.ByteVector;
 
@@ -12,15 +13,10 @@ public class Annotations extends TableAttribute<Annotation> {
         super(container);
     }
 
-    static Annotations
-    parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer, boolean visible) {
-        Annotations inst = new Annotations(container);
-        inst.runtimeVisible = visible;
-        int len = buffer.getUShort();
-        for (int i = 0; i < len; i++) {
-            inst.items.add(Annotation.parse(container.classFile(), pool, buffer));
-        }
-        return inst;
+    Annotations(Annotations pair) {
+        super(pair.container);
+        super.items = pair.items;
+        this.runtimeVisible = !pair.runtimeVisible;
     }
 
     public void add(Annotation anno) {
@@ -29,23 +25,55 @@ public class Annotations extends TableAttribute<Annotation> {
     }
 
     public Annotation add(String className) {
-        Annotation anno = new Annotation(container.classFile().constPool(), Types.toType(className));
+        return add(classFile().toType(className));
+    }
+
+    public Annotation add(TypeInfo type) {
+        Annotation anno = new Annotation(constPool(), runtimeVisible, type);
         add(anno);
         return anno;
     }
 
-    public boolean remove(String className) {
-        return items.removeIf(annotation -> annotation.annotationType().equals(className));
+    public boolean remove(TypeInfo type) {
+        return items.removeIf(annotation -> annotation.annotationType().equals(type));
     }
 
-    //@Override
-    public Attribute copy() {
+    public boolean remove(String className) {
+        return items.removeIf(annotation -> annotation.annotationType().getTypeName().equals(className));
+    }
+
+    public Annotation get(String typeName) {
+        for (Annotation item : items) {
+            if (item.annotationType().getTypeName().equals(typeName)) return item;
+        }
+        return null;
+    }
+    
+    public Annotation get(TypeInfo type) {
+        for (Annotation item : items) {
+            if (item.annotationType().equals(type)) return item;
+        }
         return null;
     }
 
     @Override
     public String name() {
         return runtimeVisible ? "RuntimeVisibleAnnotations" : "RuntimeInvisibleAnnotations";
+    }
+
+
+
+    /* internals */
+
+    static Annotations
+    parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer, boolean visible) {
+        Annotations inst = new Annotations(container);
+        inst.runtimeVisible = visible;
+        int len = buffer.getUShort();
+        for (int i = 0; i < len; i++) {
+            inst.items.add(Annotation.parse(container.classFile(), pool, buffer, visible));
+        }
+        return inst;
     }
 
     @Override

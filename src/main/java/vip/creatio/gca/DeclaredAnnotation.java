@@ -1,30 +1,22 @@
 package vip.creatio.gca;
 
+import vip.creatio.gca.type.AnnotationInfo;
 import vip.creatio.gca.type.Type;
+import vip.creatio.gca.type.TypeInfo;
 import vip.creatio.gca.util.ByteVector;
 import vip.creatio.gca.util.PairMap;
 
 import java.util.Collection;
+import java.util.Map;
 
-public abstract class AnnotationInfo {
+public abstract class DeclaredAnnotation implements AnnotationInfo {
 
-    protected final ConstPool pool;
-
-    protected final PairMap<String, ElementValue> values = new PairMap<>();
-
-    protected Type type;
-
-    protected AnnotationInfo(ConstPool pool) {
-        this.pool = pool;
-    }
-
-    protected AnnotationInfo(ConstPool pool, Type type) {
-        this.pool = pool;
-        this.type = type;
-    }
-
-    public Type annotationType() {
+    public TypeInfo annotationType() {
         return type;
+    }
+
+    public boolean visible() {
+        return visible;
     }
 
     /**
@@ -68,24 +60,12 @@ public abstract class AnnotationInfo {
         return putValue(name, ElementValue.of(v));
     }
 
-    public ElementValue putValue(String name, String v) {
-        return putValue(name, ElementValue.of(v));
-    }
-
-    public ElementValue putValue(String name, Type clazz) {
+    public ElementValue putValue(String name, TypeInfo clazz) {
         return putValue(name, ElementValue.of(clazz));
     }
 
-    public ElementValue putValue(String name, Class<?> clazz) {
-        return putValue(name, ElementValue.of(clazz));
-    }
-
-    public ElementValue putValue(String name, Type enumClass, String enumName) {
+    public ElementValue putValue(String name, TypeInfo enumClass, String enumName) {
         return putValue(name, ElementValue.of(enumClass, enumName));
-    }
-
-    public ElementValue putValue(String name, Enum<?> enumConstant) {
-        return putValue(name, ElementValue.of(enumConstant));
     }
 
     public ElementValue putValue(String name, Annotation anno) {
@@ -116,17 +96,32 @@ public abstract class AnnotationInfo {
         return values.remove(index);
     }
 
+    public abstract DeclaredAnnotation copy();
+
 
     /* internals */
+    protected final PairMap<String, ElementValue> values = new PairMap<>();
+    protected final boolean visible;
 
-    protected final ConstPool constPool() {
-        return pool;
+    protected TypeInfo type;
+
+    protected DeclaredAnnotation(boolean visible) {
+        this.visible = visible;
     }
 
-    protected abstract void write(ByteVector buffer);
+    protected DeclaredAnnotation(boolean visible, TypeInfo type) {
+        this.visible = visible;
+        this.type = type;
+    }
 
-    protected abstract void collect();
+    protected abstract void write(ConstPool pool, ByteVector buffer);
 
-    protected abstract AnnotationInfo copy();
+    protected abstract void collect(ConstPool pool);
+
+    protected final void copyValues(DeclaredAnnotation copy) {
+        for (Map.Entry<String, ElementValue> entry : values.entrySet()) {
+            copy.values.put(entry.getKey(), entry.getValue().copy());
+        }
+    }
 
 }

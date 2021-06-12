@@ -29,14 +29,14 @@ public final class ClassFilePrinter {
             String s = "#" + f.getThisClass().index();
             out.println("  This    class: " + s + " ".repeat(40 - 15 - s.length())
                     + "// " + f.getThisClass().getBytecodeName());
-            s = "#" + f.getSuperClass().index();
+            s = "#" + f.getSuperclass().index();
             out.println("  Super   class: " + s + " ".repeat(40 - 15 - s.length())
-                    + "// " + f.getSuperClass().getBytecodeName());
+                    + "// " + f.getSuperclass().getBytecodeName());
         }
         out.println("  Interfaces: " + f.getInterfaces().size() +
                 ", Fields: " + f.getFields().size() +
                 ", Methods: " + f.getMethods().size() +
-                ", Attributes: " + f.attributes().size());
+                ", Attributes: " + f.getAttributes().size());
         out.println("\nConstant pool:");
         for (Const constant : f.constPool()) {
             out.println(getConstant(f.constPool(), constant));
@@ -50,10 +50,10 @@ public final class ClassFilePrinter {
         sb.append(AccessFlag.toString(f.getAccessFlags()));
         if (f.flaggedAnnotation()) {
             sb.append(" @interface ");
-            sb.append(f.getClassName());
+            sb.append(f.getTypeName());
         } else if (f.flaggedInterface()) {
             sb.append(" interface ");
-            sb.append(f.getClassName());
+            sb.append(f.getTypeName());
             if (f.getInterfaces().size() != 0) {
                 sb.append(" extends ");
                 Iterator<ClassConst> iter = f.getInterfaces().iterator();
@@ -68,10 +68,10 @@ public final class ClassFilePrinter {
             } else {
                 sb.append(" class ");
             }
-            sb.append(f.getClassName());
-            if (!f.getSuperClass().getTypeName().equals("java.lang.Object")) {
+            sb.append(f.getTypeName());
+            if (!f.getSuperclass().getTypeName().equals("java.lang.Object")) {
                 sb.append(" extends ");
-                sb.append(f.getSuperClass().getTypeName());
+                sb.append(f.getSuperclass().getTypeName());
             }
             if (f.getInterfaces().size() != 0) {
                 sb.append(" implements ");

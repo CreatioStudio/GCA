@@ -8,9 +8,7 @@ import vip.creatio.gca.code.*;
 import vip.creatio.gca.util.ByteVector;
 import vip.creatio.gca.util.ClassUtil;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 /**
@@ -26,7 +24,7 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
 
     private final CodeContainer codes = new CodeContainer(method());
     private final List<ExceptionTable> tables = new ArrayList<>();
-    private final List<Attribute> attributes = new ArrayList<>();
+    private final Map<String, Attribute> attributes = new HashMap<>();
 
     private Code(AttributeContainer container) {
         super(container);
@@ -51,7 +49,10 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
         {
             int attrSize = buffer.getShort();
             for (int i = 0; i < attrSize; i++) {
-                c.attributes.add(pool.resolveAttribute(c, buffer));
+                Attribute attr = pool.resolveAttribute(c, buffer);
+                if (attr != null) {
+                    c.attributes.put(attr.name(), attr);
+                }
             }
         }
 
@@ -71,7 +72,7 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
         return tables;
     }
 
-    public List<Attribute> attributes() {
+    public Map<String, Attribute> getAttributes() {
         return attributes;
     }
 

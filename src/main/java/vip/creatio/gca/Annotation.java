@@ -1,51 +1,54 @@
 package vip.creatio.gca;
 
-import vip.creatio.gca.type.Type;
-import vip.creatio.gca.type.Types;
+import vip.creatio.gca.type.TypeInfo;
 import vip.creatio.gca.util.ByteVector;
 import vip.creatio.gca.util.Pair;
 
-public class Annotation extends AnnotationInfo {
+public class Annotation extends DeclaredAnnotation {
 
-    Annotation(ConstPool pool) {
-        super(pool);
+    Annotation(boolean visible) {
+        super(visible);
     }
 
-    public Annotation(ConstPool pool, Type type) {
-        this(pool);
+    public Annotation(TypeInfo type, boolean visible) {
+        this(visible);
         this.type = type;
     }
 
-    public static Annotation parse(ClassFile file, ClassFileParser pool, ByteVector buffer) {
-        Annotation anno = new Annotation(file.constPool());
-        anno.type = Types.toType(pool.getString(buffer.getUShort()));
+    static Annotation parse(ClassFile file, ClassFileParser pool, ByteVector buffer, boolean visible) {
+        Annotation anno = new Annotation(visible);
+        anno.type = file.toType(pool.getString(buffer.getUShort()));
         int num = buffer.getUShort();
         for (int i = 0; i < num; i++) {
             String name = pool.getString(buffer.getUShort());
-            anno.values.put(name, ElementValue.parse(file, pool, buffer));
+            anno.values.put(name, ElementValue.parse(file, pool, buffer, visible));
         }
         return anno;
     }
 
-    protected void write(ByteVector buffer) {
-        buffer.putShort(constPool().acquireUtf(type.getInternalName()).index());
+    @Override
+    protected void write(ConstPool pool, ByteVector buffer) {
+        buffer.putShort(pool.acquireUtf(type.getInternalName()).index());
         buffer.putShort(values.size());
         for (Pair<String, ElementValue> p : values) {
-            buffer.putShort(constPool().acquireUtf(p.getKey()).index());
+            buffer.putShort(pool.acquireUtf(p.getKey()).index());
             p.getValue().write(pool, buffer);
         }
     }
 
-    protected void collect() {
-        constPool().acquireUtf(type.getInternalName());
+    @Override
+    protected void collect(ConstPool pool) {
+        pool.acquireUtf(type.getInternalName());
         for (Pair<String, ElementValue> p : values) {
-            constPool().acquireUtf(p.getKey());
+            pool.acquireUtf(p.getKey());
             p.getValue().collect(pool);
         }
     }
 
     @Override
-    protected AnnotationInfo copy() {
-        return new Annotation(pool, type);
+    public Annotation copy() {
+        Annotation copy = new Annotation(type, visible);
+        copyValues(copy);
+        return copy;
     }
 }

@@ -6,8 +6,11 @@ public interface MethodInfo {
 
     TypeInfo getReturnType();
 
-    TypeInfo[] getParametersType();
+    TypeInfo[] getParameterTypes();
 
     String getName();
 
+    default int getParameterCount() {
+        return getParameterTypes().length;
+    }
 }

@@ -3,17 +3,19 @@ package vip.creatio.gca;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.attr.*;
-import vip.creatio.gca.type.ClassInfo;
+import vip.creatio.gca.type.*;
 import vip.creatio.gca.util.ClassUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
 import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.Util;
+
 import java.util.*;
 
 @SuppressWarnings("unused")
-public class ClassFile extends ClassInfo implements AttributeContainer, AccessFlagContainer {
+public class ClassFile extends ClassInfo implements AttributeContainer, AccessFlagContainer, TypeFactory {
 
     public static final int MAGIC = 0xCAFE_BABE;
 
@@ -23,15 +25,9 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
     ConstPool constPool;
     EnumSet<AccessFlag> accessFlags;
 
-    ClassConst thisClass;
-    ClassConst superClass;
+    Map<String, Attribute> attributes = new HashMap<>();
 
-    List<ClassConst> interfaces = new ArrayList<>();
-
-    List<DeclaredField> fields = new ArrayList<>();
-    List<DeclaredMethod> methods = new ArrayList<>();
-
-    List<Attribute> attributes = new ArrayList<>();
+    Map<TypeInfo, DeclaredAnnotation> annotations = new HashMap<>();
 
     private ClassFile() {}
 
@@ -79,14 +75,14 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
         accessFlags = AccessFlag.resolveClass(buffer.getShort());
 
         // read this class and super class object
-        thisClass = (ClassConst) pool.get(buffer.getUShort());
-        superClass = (ClassConst) pool.get(buffer.getUShort());
+        name = ((ClassConst) pool.get(buffer.getUShort())).getTypeName();
+        superType = ((ClassConst) pool.get(buffer.getUShort())).getTypeInfo();
 
         // read interfaces
         {
             int iCount = buffer.getUShort();
             for (int i = 0; i < iCount; i++) {
-                interfaces.add((ClassConst) pool.get(buffer.getUShort()));
+                interfaces.add(((ClassConst) pool.get(buffer.getUShort())).getTypeInfo());
             }
         }
 
@@ -110,7 +106,10 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
         {
             int attrCount = buffer.getUShort();
             for (int i = 0; i < attrCount; i++) {
-                attributes.add(pool.resolveAttribute(buffer));
+                Attribute attr = pool.resolveAttribute(buffer);
+                if (attr != null) {
+                    attributes.put(attr.name(), attr);
+                }
             }
         }
 
@@ -149,68 +148,41 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
         accessFlags.addAll(flags);
     }
 
-    public ClassConst getThisClass() {
-        return thisClass;
+    public void setName(String binName) {
+        name = binName;
     }
 
-    public void setThisClass(ClassConst thisClass) {
-        this.thisClass = thisClass;
-    }
-
-    public ClassConst getSuperClass() {
-        return superClass;
-    }
-
-    public void setSuperClass(ClassConst superClass) {
-        this.superClass = superClass;
+    public void setSuperClass(TypeInfo superClass) {
+        this.superType = superClass;
     }
 
     public ConstPool constPool() {
         return constPool;
     }
 
-    public List<DeclaredField> getFields() {
-        return fields;
-    }
-
-    public List<DeclaredMethod> getMethods() {
-        return methods;
-    }
-
-    public List<ClassConst> getInterfaces() {
-        return interfaces;
-    }
-
-    public DeclaredField getField(String name) {
-        for (DeclaredField f : fields) {
-            if (f.getName().equals(name)) return f;
-        }
-        return null;
-    }
-
     // Get ot create field
     public @NotNull DeclaredField visitField(String name, String type) {
-        DeclaredField field = getField(name);
+        DeclaredField field = (DeclaredField) getField(name);
         if (field != null) return field;
 
         EnumSet<AccessFlag> flags = EnumSet.of(AccessFlag.PRIVATE);
-        field = new DeclaredField(this, flags, name, type);
+        field = new DeclaredField(this, flags, name, toType(type));
         fields.add(field);
         return field;
     }
 
     public DeclaredMethod getMethod(String name, String... signatures) {
-        for (DeclaredMethod method : methods) {
-            if (method.getName().equals(name) && Arrays.equals(method.getDescriptors(), signatures))
-                return method;
+        for (MethodInfo method : methods) {
+            if (method.getName().equals(name) && Arrays.equals(method.getSignatu, signatures))
+                return (DeclaredMethod) method;
         }
         return null;
     }
 
     public @NotNull List<DeclaredMethod> getMethods(String name) {
         List<DeclaredMethod> mths = new ArrayList<>();
-        for (DeclaredMethod mth : methods) {
-            if (mth.getName().equals(name)) mths.add(mth);
+        for (MethodInfo mth : methods) {
+            if (mth.getName().equals(name)) mths.add((DeclaredMethod) mth);
         }
         return mths;
     }
@@ -220,30 +192,32 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
         DeclaredMethod method = getMethod(name, signatures);
         if (method != null) return method;
 
+        //TODO
         String signature = ClassUtil.getSignature(signatures);
         EnumSet<AccessFlag> flags = EnumSet.of(AccessFlag.PUBLIC);
-        method = new DeclaredMethod(this, flags, name, signature, signatures);
+        method = new DeclaredMethod(this, flags, name, toType(signature), toType(signatures));
         methods.add(method);
         return method;
     }
 
-    public ClassConst getInterface(String clsName) {
-        for (ClassConst c : interfaces) {
+    public Type getInterface(String clsName) {
+        for (Type c : interfaces) {
             if (c.getTypeName().equals(clsName)) return c;
         }
         return null;
     }
 
-    public @NotNull ClassConst visitInterface(String clsName) {
-        ClassConst c = getInterface(clsName);
+    public @NotNull Type visitInterface(String clsName) {
+        Type c = getInterface(clsName);
         if (c != null) return c;
 
-        c = constPool.acquireClass(clsName);
+        c = toType(clsName);
+        interfaces.add((TypeInfo) c);
         return c;
     }
 
     @Override
-    public List<Attribute> attributes() {
+    public Map<String, Attribute> getAttributes() {
         return attributes;
     }
 
@@ -291,14 +265,9 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
                 () -> new BootstrapMethods(this));
     }
 
-    public String getClassName() {
-        return thisClass.getTypeName();
-    }
-
     public void write(ByteVector buffer) {
         // collect all used constants
-        constPool.collect();
-        constPool.recacheMap();
+        collect(constPool);
 
         buffer.putInt(MAGIC);
 
@@ -309,35 +278,37 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
 
         buffer.putShort(AccessFlag.serialize(accessFlags));
 
-        buffer.putShort(thisClass.index());
-        buffer.putShort(superClass.index());
+        buffer.putShort(constPool.acquireClass(name).index());
+        buffer.putShort(constPool.acquireClass(superType).index());
 
         buffer.putShort((short) interfaces.size());
-        interfaces.forEach(i -> buffer.putShort(i.index()));
+        interfaces.forEach(i -> buffer.putShort(constPool.acquireClass(i).index()));
 
         buffer.putShort((short) fields.size());
-        fields.forEach(f -> f.write(buffer));
+        fields.forEach(f -> ((DeclaredField) f).write(buffer));
 
         buffer.putShort((short) methods.size());
-        methods.forEach(m -> m.write(buffer));
+        methods.forEach(m -> ((DeclaredMethod) m).write(buffer));
 
         AttributeContainer.super.writeAttributes(buffer);
         constPool.setWriting(false);
     }
 
-    public void collect() {
+    private void collect(ConstPool constPool) {
         boolean previous = constPool.isWriting();
         constPool.setWriting(true);
         constPool.collect();
-        constPool.acquire(thisClass, superClass);
-        constPool.acquire(interfaces);
-        for (DeclaredField f : fields) {
-            f.collect();
+        constPool.acquireClass(name);
+        constPool.acquireClass(superType);
+        interfaces.forEach(constPool::acquireClass);
+        for (FieldInfo f : fields) {
+            ((DeclaredField) f).collect();
         }
-        for (DeclaredMethod mth : methods) {
-            mth.collect();
+        for (MethodInfo mth : methods) {
+            ((DeclaredMethod) mth).collect();
         }
         AttributeContainer.super.collectConstants();
+        constPool.recacheMap();
         constPool.setWriting(previous);
     }
 
@@ -359,5 +330,34 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
         ByteVector buffer = new ByteVector();
         write(buffer);
         return buffer.array();
+    }
+
+    @Override
+    public DeclaredAnnotation[] getAnnotations() {
+        return annotations.values().toArray(new DeclaredAnnotation[0]);
+    }
+
+    public void removeAnnotation(TypeInfo type) {
+        annotations.remove(type);
+    }
+
+    public void removeAnnotation(String type) {
+        removeAnnotation(toType(type));
+    }
+
+    public void addAnnotation(DeclaredAnnotation anno) {
+        annotations.put(anno.annotationType(), anno);
+    }
+
+    public DeclaredAnnotation getAnnotation(TypeInfo type) {
+        return annotations.get(type);
+    }
+
+    public DeclaredAnnotation getAnnotation(String type) {
+        return getAnnotation(toType(type));
+    }
+
+    public Annotation addAnnotation(TypeInfo type, boolean visible) {
+        Annotation anno = new Annotation()
     }
 }

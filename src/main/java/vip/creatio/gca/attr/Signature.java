@@ -1,12 +1,13 @@
 package vip.creatio.gca.attr;
 
-import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.*;
 
+import vip.creatio.gca.type.DeclaredMethodInfo;
 import vip.creatio.gca.type.Type;
 import vip.creatio.gca.type.Types;
 import vip.creatio.gca.util.ByteVector;
-import vip.creatio.gca.util.ClassUtil;
+
+import java.lang.ref.SoftReference;
 
 /**
  * The Signature attribute records generic signature information for
@@ -16,7 +17,9 @@ import vip.creatio.gca.util.ClassUtil;
  */
 public class Signature extends Attribute {
 
-    private Type signature;
+    private String signature;
+
+    private Type[] cachedType;
 
     public Signature(AttributeContainer container) {
         super(container);
@@ -24,12 +27,12 @@ public class Signature extends Attribute {
 
     public Signature(AttributeContainer container, String signature) {
         this(container);
-        this.signature = Types.resolve(signature);
+        this.signature = signature;
     }
 
     public static Signature parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer) {
         Signature inst = new Signature(container);
-        inst.signature = Types.resolve(pool.getString(buffer.getUShort()));
+        inst.signature = pool.getString(buffer.getUShort());
         return inst;
     }
 
@@ -38,27 +41,45 @@ public class Signature extends Attribute {
         return "Signature";
     }
 
-    public Type getGenericType() {
+    public String getGenericType() {
         return signature;
     }
 
     public void setGenericType(String signature) {
-        this.signature = Types.resolve(signature);
+        this.signature = signature;
     }
 
-    public void setGenericType(Type signature) {
-        this.signature = signature;
+    public void setCachedGenericType(Type[] signature) {
+        this.cachedType = signature;
+        this.signature = null;
+    }
+
+    public Type[] getCachedGenericType() {
+        return cachedType;
+    }
+
+    private void ensureSignatureNotNull() {
+        if (signature == null) {
+            if (container instanceof DeclaredMethod) {
+                signature = Types.toMethodSignature(cachedType);
+            } else {
+                signature = cachedType[0].getInternalSignature();
+            }
+
+        }
     }
 
     @Override
     protected void collect() {
         super.collect();
-        constPool().acquireUtf(signature.getInternalSignature());
+        ensureSignatureNotNull();
+        constPool().acquireUtf(signature);
     }
 
     @Override
     protected void writeData(ByteVector buffer) {
-        buffer.putShort(constPool().acquireUtf(signature.getInternalSignature()).index());
+        ensureSignatureNotNull();
+        buffer.putShort(constPool().acquireUtf(signature).index());
     }
 
     @Override
@@ -68,6 +89,6 @@ public class Signature extends Attribute {
 
     @Override
     public boolean isEmpty() {
-        return signature == null;
+        return signature == null && cachedType == null;
     }
 }

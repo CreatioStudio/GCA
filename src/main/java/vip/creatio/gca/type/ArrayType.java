@@ -2,7 +2,7 @@ package vip.creatio.gca.type;
 
 import java.lang.reflect.MalformedParameterizedTypeException;
 
-public class ArrayType implements Type {
+public class ArrayType extends TypeInfo {
 
     private Type type;
 

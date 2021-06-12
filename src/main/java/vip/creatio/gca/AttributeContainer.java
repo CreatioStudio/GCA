@@ -1,12 +1,12 @@
 package vip.creatio.gca;
 
-import javassist.bytecode.Bytecode;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import vip.creatio.gca.code.BytecodeException;
+import vip.creatio.gca.type.TypeInfo;
 import vip.creatio.gca.util.ByteVector;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -17,43 +17,28 @@ public interface AttributeContainer {
 
     AttributeContainer copy();
 
-    List<Attribute> attributes();
+    // 2021.6.8 Use Map instead of a List for performance consideration
+    Map<String, Attribute> getAttributes();
 
     default void addAttribute(Attribute att) {
         att.checkContainerType(this);
-        attributes().add(att);
+        getAttributes().put(att.name(), att);
     }
 
     default void removeAttribute(Attribute att) {
-        attributes().remove(att);
+        getAttributes().remove(att.name());
     }
 
     default void removeAttribute(String name) {
-        attributes().removeIf(c -> c.name().equals(name));
-    }
-
-    default void removeAttribute(int index) {
-        attributes().remove(index);
-    }
-
-    default <T extends Attribute> T getAttribute(int index) {
-        return (T) attributes().get(index);
+        getAttributes().remove(name);
     }
 
     default <T extends Attribute> @Nullable T getAttribute(String name) {
-        for (Attribute att : attributes()) {
-            if (att.name().equals(name)) return (T) att;
-        }
-        return null;
+        return (T) getAttributes().get(name);
     }
 
     default <T extends Attribute> @NotNull T getOrAddAttribute(String name, Supplier<T> add) {
-        T attr = getAttribute(name);
-        if (attr == null) {
-            attr = add.get();
-            addAttribute(attr);
-        }
-        return attr;
+        return (T) getAttributes().computeIfAbsent(name, s -> add.get());
     }
 
     default boolean hasAttribute(String name) {
@@ -61,7 +46,7 @@ public interface AttributeContainer {
     }
 
     default void writeAttributes(ByteVector buffer) {
-        List<Attribute> usable = attributes().stream().filter(a -> !a.isEmpty()).collect(Collectors.toList());
+        List<Attribute> usable = getAttributes().values().stream().filter(a -> !a.isEmpty()).collect(Collectors.toList());
         buffer.putShort((short) usable.size());
         for (Attribute attr : usable) {
             attr.write(buffer);
@@ -69,7 +54,7 @@ public interface AttributeContainer {
     }
 
     default void collectConstants() {
-        List<Attribute> usable = attributes().stream().filter(a -> !a.isEmpty()).collect(Collectors.toList());
+        List<Attribute> usable = getAttributes().values().stream().filter(a -> !a.isEmpty()).collect(Collectors.toList());
         for (Attribute attr : usable) {
             attr.collect();
         }

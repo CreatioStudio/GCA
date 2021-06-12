@@ -43,7 +43,7 @@ public class ClassFileParser implements Iterable<Const> {
         return constants.length;
     }
 
-    public AttributeResolver getResolver(String name) {
+    private AttributeResolver getResolver(String name) {
         for (Map.Entry<String, AttributeResolver> entry : resolvers.entrySet()) {
             if (entry.getKey().equals(name)) return entry.getValue();
         }
@@ -54,6 +54,7 @@ public class ClassFileParser implements Iterable<Const> {
         return resolveAttribute(file, buffer);
     }
 
+    // @Nullable
     public Attribute resolveAttribute(AttributeContainer contaner, ByteVector buffer) {
         String name = getString(buffer.getShort());
         AttributeResolver resolver = getResolver(name);
@@ -145,7 +146,7 @@ public class ClassFileParser implements Iterable<Const> {
 
         private void parse(ByteVector buf) {
             buf.position(pos);
-            ConstPoolImpl.parseConstant(ClassFileParser.this, constant, buf);
+            constant.parse(ClassFileParser.this, buf);
         }
     }
 }

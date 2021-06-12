@@ -8,7 +8,6 @@ import java.util.List;
 // representing a Class object or a ClassFile
 public abstract class ClassInfo extends TypeInfo implements GenericInfo {
 
-    protected String name;
     protected Type superType;
     protected List<Type> interfaces;
     protected EnumSet<AccessFlag> accessFlags;

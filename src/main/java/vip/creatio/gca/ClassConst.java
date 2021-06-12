@@ -1,5 +1,6 @@
 package vip.creatio.gca;
 
+import vip.creatio.gca.type.Type;
 import vip.creatio.gca.type.TypeInfo;
 import vip.creatio.gca.type.Types;
 import vip.creatio.gca.util.ByteVector;
@@ -10,12 +11,12 @@ public class ClassConst extends Const {
 
     ClassConst(ConstPool pool, String name) {
         super(pool, ConstType.CLASS);
-        this.type = Types.toType(name);
+        this.type = pool.classFile().toType(name);
     }
 
-    ClassConst(ConstPool pool, TypeInfo type) {
+    ClassConst(ConstPool pool, Type type) {
         super(pool, ConstType.CLASS);
-        this.type = type;
+        this.type = pool.classFile().toType(type);
     }
 
     ClassConst(ConstPool pool) {

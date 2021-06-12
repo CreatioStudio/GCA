@@ -1,6 +1,6 @@
 package vip.creatio.gca.type;
 
-import vip.creatio.gca.AnnotationInfo;
+import vip.creatio.gca.DeclaredAnnotation;
 
 import java.util.Objects;
 

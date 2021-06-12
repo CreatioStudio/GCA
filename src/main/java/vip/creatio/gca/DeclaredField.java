@@ -3,13 +3,14 @@ package vip.creatio.gca;
 import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.attr.ConstantValue;
 
-import vip.creatio.gca.type.ClassInfo;
-import vip.creatio.gca.type.FieldInfo;
-import vip.creatio.gca.type.TypeInfo;
+import vip.creatio.gca.attr.Signature;
+import vip.creatio.gca.type.*;
 import vip.creatio.gca.util.ByteVector;
 import java.util.EnumSet;
 
-public class DeclaredField extends DeclaredObject implements FieldInfo {
+public class DeclaredField extends DeclaredObject implements DeclaredFieldInfo {
+
+    private TypeInfo type;
 
     DeclaredField(ClassFile bc, ClassFileParser pool, ByteVector buffer) {
         super(bc, pool, buffer);
@@ -18,9 +19,10 @@ public class DeclaredField extends DeclaredObject implements FieldInfo {
     DeclaredField(ClassFile bc,
                   EnumSet<AccessFlag> flags,
                   String name,
-                  TypeInfo descriptor,
+                  TypeInfo type,
                   Attribute... attributes) {
-        super(bc, flags, name, descriptor, attributes);
+        super(bc, flags, name, attributes);
+        this.type = type;
     }
 
     @Override
@@ -41,7 +43,7 @@ public class DeclaredField extends DeclaredObject implements FieldInfo {
 
     @Override
     public String toString() {
-        return "Field{name=" + getName() + ",descriptor=" + getDescriptor() + '}';
+        return "Field{name=" + getName() + ",descriptor=" + type + '}';
     }
 
     @Override
@@ -51,6 +53,43 @@ public class DeclaredField extends DeclaredObject implements FieldInfo {
 
     @Override
     public TypeInfo getType() {
-        return descriptor;
+        return type;
+    }
+
+    public Type getGenericType() {
+        Signature sig = getAttribute("Signature");
+        if (sig == null) return getType();
+        Type[] types = sig.getCachedGenericType();
+        if (types == null) {
+            String unresolved = sig.getGenericType();
+            types = classFile().resolveGeneric(unresolved);
+        }
+        return types[0];
+    }
+
+    public void setType(Type type) {
+        if (type instanceof TypeInfo) {
+            this.type = (TypeInfo) type;
+            removeAttribute("Signature");
+        } else {
+            this.type = classFile().toType(type);
+            Signature sig = getOrAddAttribute("Signature", () -> new Signature(this));
+            sig.setCachedGenericType(new Type[]{type});
+        }
+    }
+
+    public void setType(String type) {
+        Type t = classFile().resolveGeneric(type)[0];
+        setType(t);
+    }
+
+    @Override
+    String getDescriptor() {
+        return type.getInternalName();
+    }
+
+    @Override
+    void setDescriptor(String s) {
+        this.type = classFile().toType(s);
     }
 }

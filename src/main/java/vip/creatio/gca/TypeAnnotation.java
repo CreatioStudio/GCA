@@ -5,6 +5,7 @@ import vip.creatio.gca.attr.Exceptions;
 import vip.creatio.gca.attr.TargetType;
 import vip.creatio.gca.code.OpCode;
 import vip.creatio.gca.type.Type;
+import vip.creatio.gca.type.TypeInfo;
 import vip.creatio.gca.type.Types;
 import vip.creatio.gca.util.ByteVector;
 import vip.creatio.gca.util.Pair;
@@ -12,7 +13,7 @@ import vip.creatio.gca.util.Pair;
 import java.util.ArrayList;
 import java.util.List;
 
-public class TypeAnnotation extends AnnotationInfo {
+public class TypeAnnotation extends DeclaredAnnotation {
 
     private TargetType target;
 
@@ -38,6 +39,8 @@ public class TypeAnnotation extends AnnotationInfo {
      *
      */
 
+    //TODO: make these fields into a union
+
     // type_parameter(index), type_parameter_bound(index), formal_parameter(index)
     private int index;
 
@@ -45,11 +48,11 @@ public class TypeAnnotation extends AnnotationInfo {
     private int boundIndex;
 
     // supertype(ClassFile::interfaces.index)
-    private Type superType;
+    private TypeInfo superType;
 
     // throws(Exceptions)
     private Exceptions exceptions;
-    private Type throwsType;
+    private TypeInfo throwsType;
 
     // catch(Code::ExceptionTable)
     private Code.ExceptionTable catchTarget;
@@ -65,17 +68,18 @@ public class TypeAnnotation extends AnnotationInfo {
 
     private final List<Pair<PathKind, Integer>> path = new ArrayList<>();
 
-    TypeAnnotation(ConstPool pool) {
-        super(pool);
+    TypeAnnotation(boolean visible) {
+        super(visible);
     }
 
-    public TypeAnnotation(ConstPool pool, Type type) {
-        super(pool, type);
+    public TypeAnnotation(TypeInfo type, boolean visible) {
+        super(visible, type);
     }
 
-    static TypeAnnotation parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer) {
+    static TypeAnnotation
+    parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer, boolean visible) {
         //assert container instanceof Code;
-        TypeAnnotation anno = new TypeAnnotation(container.classFile().constPool());
+        TypeAnnotation anno = new TypeAnnotation(visible);
         anno.target = TargetType.fromTag(buffer.getByte());
 
         // read union "target_info"
@@ -85,7 +89,7 @@ public class TypeAnnotation extends AnnotationInfo {
                 break;
             case TargetType.TARGET_SUPERTYPE:
                 assert container instanceof ClassFile;
-                anno.superType = ((ClassFile) container).getInterfaces().get(buffer.getUShort());
+                anno.superType = (TypeInfo) ((ClassFile) container).getInterfaces()[buffer.getUShort()];
                 break;
             case TargetType.TARGET_TYPE_PARAMETER_BOUND:
                 anno.index = buffer.getUByte();
@@ -99,7 +103,7 @@ public class TypeAnnotation extends AnnotationInfo {
                 break;
             case TargetType.TARGET_THROWS:
                 assert container instanceof DeclaredMethod;
-                anno.throwsType = ((DeclaredMethod) container).exceptions().get(buffer.getUShort());
+                anno.throwsType = ((DeclaredMethod) container).getExceptionTypes()[buffer.getUShort()];
                 break;
             case TargetType.TARGET_LOCALVAR:
                 assert container instanceof Code;
@@ -133,13 +137,13 @@ public class TypeAnnotation extends AnnotationInfo {
             }
         }
 
-        anno.type = Types.toType(pool.getString(buffer.getUShort()));
+        anno.type = container.classFile().toType(pool.getString(buffer.getUShort()));
 
         {
             int num = buffer.getUShort();
             for (int i = 0; i < num; i++) {
                 String name = pool.getString(buffer.getUShort());
-                anno.values.put(name, ElementValue.parse(container.classFile(), pool, buffer));
+                anno.values.put(name, ElementValue.parse(container.classFile(), pool, buffer, visible));
             }
         }
         return anno;
@@ -155,12 +159,12 @@ public class TypeAnnotation extends AnnotationInfo {
         this.index = index;
     }
 
-    public Type getSuperType() {
+    public TypeInfo getSuperType() {
         checkType(TargetType.TARGET_SUPERTYPE);
         return superType;
     }
 
-    public void setSuperType(ClassConst type) {
+    public void setSuperType(TypeInfo type) {
         checkType(TargetType.TARGET_SUPERTYPE);
         this.superType = type;
     }
@@ -185,12 +189,12 @@ public class TypeAnnotation extends AnnotationInfo {
         this.index = index;
     }
 
-    public Type getThrowsType() {
+    public TypeInfo getThrowsType() {
         checkType(TargetType.TARGET_THROWS);
         return throwsType;
     }
 
-    public void setThrowsType(ClassConst type) {
+    public void setThrowsType(TypeInfo type) {
         checkType(TargetType.TARGET_THROWS);
         this.throwsType = type;
     }
@@ -243,14 +247,15 @@ public class TypeAnnotation extends AnnotationInfo {
         }
     }
 
-    protected void write(ByteVector buffer) {
+    @Override
+    protected void write(ConstPool pool, ByteVector buffer) {
         buffer.putByte(target.getTag());
         switch (target.getType()) {
             case TargetType.TARGET_TYPE_PARAMETER:
                 buffer.putByte(index);
                 break;
             case TargetType.TARGET_SUPERTYPE:
-                buffer.putShort(constPool().acquire(superType).index());
+                buffer.putShort(pool.acquireClass(superType).index());
                 break;
             case TargetType.TARGET_TYPE_PARAMETER_BOUND:
                 buffer.putByte(index);
@@ -263,7 +268,7 @@ public class TypeAnnotation extends AnnotationInfo {
                 buffer.putByte(index);
                 break;
             case TargetType.TARGET_THROWS:
-                buffer.putShort(constPool().acquire(throwsType).index());   //TODO: make this!
+                buffer.putShort(pool.acquireClass(throwsType).index());   //TODO: make this!
                 break;
             case TargetType.TARGET_LOCALVAR:
                 buffer.putShort(localVar.size());
@@ -292,36 +297,54 @@ public class TypeAnnotation extends AnnotationInfo {
             buffer.putByte(pair.getValue());
         }
 
-        buffer.putShort(constPool().acquireUtf(type.getInternalName()).index());
+        buffer.putShort(pool.acquireUtf(type.getInternalName()).index());
         buffer.putShort(values.size());
         for (Pair<String, ElementValue> p : values) {
-            buffer.putShort(constPool().acquireUtf(p.getKey()).index());
+            buffer.putShort(pool.acquireUtf(p.getKey()).index());
             p.getValue().write(pool, buffer);
         }
     }
 
-    protected void collect() {
+    @Override
+    protected void collect(ConstPool pool) {
         switch (target.getType()) {
             case TargetType.TARGET_SUPERTYPE:
             case TargetType.TARGET_TYPE_PARAMETER_BOUND:
-                constPool().acquire(superType);
+                pool.acquireClass(superType);
                 break;
             case TargetType.TARGET_THROWS:
-                constPool().acquire(throwsType);
+                pool.acquireClass(throwsType);
                 break;
         }
-        constPool().acquireUtf(type.getInternalName());
+        pool.acquireUtf(type.getInternalName());
         for (Pair<String, ElementValue> p : values) {
-            constPool().acquireUtf(p.getKey());
+            pool.acquireUtf(p.getKey());
             p.getValue().collect(pool);
         }
     }
 
     @Override
-    protected AnnotationInfo copy() {
-        return null;//TODO
+    public TypeAnnotation copy() {
+        TypeAnnotation copy = new TypeAnnotation(type, visible);
+        copyValues(copy);
+        //TODO: enhancement!
+        copy.index = index;
+        copy.boundIndex = boundIndex;
+        copy.target = target;
+        copy.catchTarget = catchTarget;
+        copy.exceptions = exceptions;
+        copy.localVar = new ArrayList<>(localVar);
+        copy.offset = offset;
+        for (Pair<PathKind, Integer> pair : path) {
+            copy.path.add(pair.copy());
+        }
+        copy.typeArgumentIndex = typeArgumentIndex;
+        copy.throwsType = throwsType;
+        copy.superType = superType;
+        return copy;
     }
 
+    //TODO
     public static class VarTable {
         private OpCode startPc;
         private int length;

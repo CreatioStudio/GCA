@@ -38,6 +38,10 @@ public abstract class TableAttribute<T> extends Attribute {
         return items.size();
     }
 
+    public void clear() {
+        items.clear();
+    }
+
     @Override
     public String toString() {
         return name() + "{" + items + "}";

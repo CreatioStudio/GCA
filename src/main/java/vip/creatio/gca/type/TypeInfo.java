@@ -9,6 +9,8 @@ public class TypeInfo implements Type {
         this.name = name;
     }
 
+    protected TypeInfo() {}
+
     protected void setName(String name) {
         this.name = name;
     }
@@ -16,5 +18,21 @@ public class TypeInfo implements Type {
     @Override
     public String getTypeName() {
         return name;
+    }
+
+    public static class Mutable extends TypeInfo {
+
+        public Mutable(String name) {
+            super(name);
+        }
+
+        public void setName(String name) {
+            super.name = name;
+        }
+
+        @Override
+        public boolean mutable() {
+            return true;
+        }
     }
 }
