@@ -1,10 +1,11 @@
 package vip.creatio.gca.attr;
 
 import vip.creatio.gca.AttributeContainer;
-import vip.creatio.gca.ClassFile;
 import vip.creatio.gca.ClassFileParser;
 
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.ConstPool;
+import vip.creatio.gca.util.common.ByteVector;
+import vip.creatio.gca.Code;
 import vip.creatio.gca.util.Pair;
 
 /**
@@ -55,7 +56,7 @@ public class LineNumberTable extends TableAttribute<Pair<Integer, Integer>> {
     }
 
     @Override
-    protected void writeData(ByteVector buffer) {
+    protected void writeData(ConstPool pool, ByteVector buffer) {
         buffer.putShort((short) items.size());
         for (Pair<Integer, Integer> i : items) {
             buffer.putShort(i.getKey());

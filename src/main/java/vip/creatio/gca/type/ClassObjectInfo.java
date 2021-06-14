@@ -1,8 +1,8 @@
 package vip.creatio.gca.type;
 
-
 import java.lang.annotation.Annotation;
 
+//TODO
 public class ClassObjectInfo extends ClassInfo {
 
     private final Class<?> clazz;
@@ -57,6 +57,7 @@ public class ClassObjectInfo extends ClassInfo {
         if (fields == null) {
 
         }
+        return null;
     }
 
     @Override
@@ -66,7 +67,8 @@ public class ClassObjectInfo extends ClassInfo {
 
     @Override
     public MethodInfo getEnclosingMethod() {
-        if (methods == null)
+        if (methods == null);
+        return null;
     }
 
     @Override

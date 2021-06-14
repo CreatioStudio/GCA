@@ -1,12 +1,10 @@
 package vip.creatio.gca.attr;
 
-import vip.creatio.gca.AttributeContainer;
-import vip.creatio.gca.ClassFileParser;
+import vip.creatio.gca.*;
 import vip.creatio.gca.code.Label;
 import vip.creatio.gca.code.OpCode;
 import vip.creatio.gca.code.OpCodeType;
-import vip.creatio.gca.Const;
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.common.ByteVector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -98,19 +96,19 @@ public class StackMapTable extends TableAttribute<StackMapTable.Frame> {
     }
 
     @Override
-    protected void collect() {
-        super.collect();
+    protected void collect(ConstPool pool) {
+        super.collect(pool);
         for (Frame item : items) {
-            item.collect();
+            item.collect(pool);
         }
     }
 
     @Override
-    protected void writeData(ByteVector buffer) {
+    protected void writeData(ConstPool pool, ByteVector buffer) {
         buffer.putShort((short) items.size());
         int[] lastIndex = new int[1];
         for (Frame i : items) {
-            i.write(buffer, lastIndex);
+            i.write(pool, buffer, lastIndex);
         }
     }
 
@@ -234,7 +232,7 @@ public class StackMapTable extends TableAttribute<StackMapTable.Frame> {
             stack.set(0, v);
         }
 
-        private void write(ByteVector buffer, int[] lastIndex /* int ptr */ ) {
+        private void write(ConstPool pool, ByteVector buffer, int[] lastIndex /* int ptr */ ) {
             int offset = label.offset();
             int offsetDelta = label.offset() - lastIndex[0];
             lastIndex[0] = offset + 1;
@@ -252,13 +250,13 @@ public class StackMapTable extends TableAttribute<StackMapTable.Frame> {
                 case SAME_LOCAL_1_STACK_ITEM:
                     if (offsetDelta < 64) {
                         buffer.putByte(type.getTagLow() + offsetDelta);
-                        stack.get(0).write(buffer);
+                        stack.get(0).write(pool, buffer);
                         break;
                     }
                 case SAME_LOCAL_1_STACK_ITEM_EX:
                     buffer.putByte(type.getTagLow());
                     buffer.putShort(offsetDelta);
-                    stack.get(0).write(buffer);
+                    stack.get(0).write(pool, buffer);
                     break;
                 case CHOP:
                     buffer.putByte(251 - k);
@@ -268,7 +266,7 @@ public class StackMapTable extends TableAttribute<StackMapTable.Frame> {
                     buffer.putByte(251 + k);
                     buffer.putShort(offsetDelta);
                     for (int i = 0; i < k; i++) {
-                        locals.get(i).write(buffer);
+                        locals.get(i).write(pool, buffer);
                     }
                     break;
                 case FULL:
@@ -276,25 +274,25 @@ public class StackMapTable extends TableAttribute<StackMapTable.Frame> {
                     buffer.putShort(offsetDelta);
                     buffer.putShort(locals.size());
                     for (VerificationInfo l : locals) {
-                        l.write(buffer);
+                        l.write(pool, buffer);
                     }
                     buffer.putShort(stack.size());
                     for (VerificationInfo s : stack) {
-                        s.write(buffer);
+                        s.write(pool, buffer);
                     }
                     break;
             }
         }
 
-        private void collect() {
+        private void collect(ConstPool pool) {
             if (locals != null) {
                 for (VerificationInfo l : locals) {
-                    l.collect();
+                    l.collect(pool);
                 }
             }
             if (stack != null) {
                 for (VerificationInfo s : stack) {
-                    s.collect();
+                    s.collect(pool);
                 }
             }
         }
@@ -380,18 +378,18 @@ public class StackMapTable extends TableAttribute<StackMapTable.Frame> {
             data = c;
         }
 
-        private void write(ByteVector buffer) {
+        private void write(ConstPool pool, ByteVector buffer) {
             buffer.putByte(type.getTag());
             if (type == VarInfo.OBJECT) {
-                buffer.putShort(((Const) data).index());
+                buffer.putShort(pool.indexOf((Const) data));
             } else if (type == VarInfo.UNINIT_VAR) {
                 buffer.putShort(((OpCode) data).offset());
             }
         }
 
-        private void collect() {
+        private void collect(ConstPool pool) {
             if (type == VarInfo.OBJECT) {
-                constPool().acquire((Const) data);
+                pool.acquire((Const) data);
             }
         }
     }

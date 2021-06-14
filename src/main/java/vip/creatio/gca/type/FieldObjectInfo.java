@@ -1,5 +1,8 @@
 package vip.creatio.gca.type;
 
+import vip.creatio.gca.ConstType;
+import vip.creatio.gca.TypeInfo;
+
 import java.lang.annotation.Annotation;
 import java.lang.ref.SoftReference;
 import java.lang.reflect.Field;

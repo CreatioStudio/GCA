@@ -1,41 +1,21 @@
 package vip.creatio.gca;
 
-import vip.creatio.gca.util.Immutable;
+import vip.creatio.gca.util.common.ByteVector;
 
-import vip.creatio.gca.util.ByteVector;
-
-@Immutable
 public class StringConst extends Const.Value {
-    private String string;
+    private final String string;
 
-    StringConst(ConstPool pool, String string) {
-        super(pool, ConstType.STRING);
+    StringConst(String string) {
         this.string = string;
     }
 
-    StringConst(ConstPool pool) {
-        super(pool, ConstType.STRING);
+    void write(ConstPool pool, ByteVector buffer) {
+        buffer.putShort(pool.indexOf(string));
     }
 
     @Override
-    public boolean isImmutable() {
-        return true;
-    }
-
-    @Override
-    public Const copy() {
-        return new StringConst(pool, string);
-    }
-
-    @Override
-    int byteSize() {
-        return 3;
-    }
-
-    @Override
-    public void write(ByteVector buffer) {
-        buffer.putByte(tag());
-        buffer.putShort(pool.acquireUtf(string).index());
+    public ConstType constantType() {
+        return ConstType.STRING;
     }
 
     @Override
@@ -43,13 +23,7 @@ public class StringConst extends Const.Value {
         return ValueType.STRING;
     }
 
-    @Override
-    public void parse(ClassFileParser pool, ByteVector buffer) {
-        this.string = pool.getString(buffer.getShort());
-    }
-
-    @Override
-    void collect() {
+    void collect(ConstPool pool) {
         pool.acquireUtf(string);
     }
 
@@ -74,8 +48,7 @@ public class StringConst extends Const.Value {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof StringConst) {
-            return ((StringConst) obj).pool == pool
-                    && ((StringConst) obj).string.equals(string);
+            return ((StringConst) obj).string.equals(string);
         }
         return super.equals(obj);
     }

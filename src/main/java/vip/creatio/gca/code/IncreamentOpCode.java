@@ -1,6 +1,7 @@
 package vip.creatio.gca.code;
 
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.ConstPool;
+import vip.creatio.gca.util.common.ByteVector;
 
 //iinc
 public class IncreamentOpCode extends OpCode {
@@ -42,15 +43,15 @@ public class IncreamentOpCode extends OpCode {
     }
 
     @Override
-    public void serialize(ByteVector buffer) {
+    void write(ConstPool pool, ByteVector buffer) {
         if (index > 0xFF || value > 0xFF || value < -0xFF) {
             buffer.putByte(OpCodeType.WIDE.getTag());
-            super.serialize(buffer);
+            super.write(pool, buffer);
 
             buffer.putShort((short) index);
             buffer.putShort((short) value);
         } else {
-            super.serialize(buffer);
+            super.write(pool, buffer);
 
             buffer.putByte((byte) index);
             buffer.putByte((byte) value);

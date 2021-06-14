@@ -1,11 +1,13 @@
 package vip.creatio.gca.type;
 
+import vip.creatio.gca.TypeInfo;
+
 import java.util.*;
 
 // util class
 public final class Types {
     
-    private static class Primitive extends ClassObjectInfo {
+    public static class Primitive extends ClassObjectInfo {
         
         private final String sigName;
         
@@ -116,7 +118,7 @@ public final class Types {
         return type;
     }
 
-    static TypeInfo get(String typeName) {
+    public static TypeInfo get(String typeName) {
         if (typeName.startsWith("java") || typeName.startsWith("jdk")) {
             TypeInfo type = BASIC_CLASS_MAP.get(typeName);
             if (type == null) {
@@ -141,6 +143,12 @@ public final class Types {
         return 1;
     }
 
+    public static int operandSize(TypeInfo t) {
+        if (t.equals(DOUBLE) || t.equals(LONG)) return 2;
+        else if (t.equals(VOID)) return 0;
+        return 1;
+    }
+
     public static String toMethodSignature(Type[] signatures) {
         StringBuilder sb = new StringBuilder();
         sb.append("(");
@@ -150,5 +158,38 @@ public final class Types {
         sb.append(")");
         sb.append(signatures[0].getInternalSignature());
         return sb.toString();
+    }
+
+    public static String toMethodSignature(Type rtype, Type... ptype) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("(");
+        for (Type type : ptype) {
+            sb.append(type.getInternalSignature());
+        }
+        sb.append(")");
+        sb.append(rtype.getInternalSignature());
+        return sb.toString();
+    }
+
+    public static boolean equals(TypeInfo t1, TypeInfo t2) {
+        return t1.equals(t2);
+    }
+
+    public static boolean equals(MethodInfo m1, MethodInfo m2) {
+        return m1.getName().equals(m2.getName())
+                && m1.getParameterCount() == m2.getParameterCount()
+                && m1.getDescriptor().equals(m2.getDescriptor());
+    }
+
+    public static boolean withSignature(MethodInfo mth, TypeInfo rtype, TypeInfo... ptype) {
+        return mth.getReturnType().equals(rtype) && Arrays.equals(mth.getParameterTypes(), ptype);
+    }
+
+    public static boolean equals(FieldInfo f1, FieldInfo f2) {
+        return f1.getName().equals(f2.getName()) && f1.getDescriptor().equals(f2.getDescriptor());
+    }
+
+    public static boolean withSignature(FieldInfo field, TypeInfo type) {
+        return field.getType().equals(type);
     }
 }

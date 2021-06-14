@@ -1,12 +1,13 @@
 package vip.creatio.gca.type;
 
+import vip.creatio.gca.ConstType;
+import vip.creatio.gca.TypeInfo;
+
 import java.lang.annotation.Annotation;
 import java.lang.ref.SoftReference;
-import java.lang.ref.WeakReference;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Executable;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 
 public class MethodObjectInfo implements DeclaredMethodInfo {
 
@@ -142,5 +143,16 @@ public class MethodObjectInfo implements DeclaredMethodInfo {
         return result;
     }
 
+    @Override
+    public String getDescriptor() {
+        return Types.toMethodSignature(getReturnType(), getParameterTypes());
+    }
+
     // access flags
+
+
+    @Override
+    public ConstType constantType() {
+        return Modifier.isInterface(method.getModifiers()) ? ConstType.INTERFACE_METHODREF : ConstType.METHODREF;
+    }
 }

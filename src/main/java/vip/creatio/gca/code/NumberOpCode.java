@@ -1,6 +1,7 @@
 package vip.creatio.gca.code;
 
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.ConstPool;
+import vip.creatio.gca.util.common.ByteVector;
 
 // operator with a const number value follow
 public class NumberOpCode extends OpCode {
@@ -38,22 +39,22 @@ public class NumberOpCode extends OpCode {
     }
 
     @Override
-    public void serialize(ByteVector buffer) {
+    public void write(ConstPool pool, ByteVector buffer) {
         int size = type.byteSize();
         if (size == 2) {
             if (type != OpCodeType.BIPUSH && (data > 255 || data < -256)) {
                 buffer.putByte(OpCodeType.WIDE.getTag());
-                super.serialize(buffer);
+                super.write(pool, buffer);
                 buffer.putShort((short) data);
             } else {
-                super.serialize(buffer);
+                super.write(pool, buffer);
                 buffer.putByte((byte) data);
             }
         } else if (size == 3) {
-            super.serialize(buffer);
+            super.write(pool, buffer);
             buffer.putShort((short) data);
         } else {
-            super.serialize(buffer);
+            super.write(pool, buffer);
             buffer.putInt(data);
         }
     }

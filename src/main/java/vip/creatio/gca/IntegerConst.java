@@ -1,43 +1,22 @@
 package vip.creatio.gca;
 
-import vip.creatio.gca.util.Immutable;
+import vip.creatio.gca.util.common.ByteVector;
 
-import vip.creatio.gca.util.ByteVector;
-
-@Immutable
 public class IntegerConst extends Const.Value {
 
     private final int data;
 
-    IntegerConst(ConstPool pool, int data) {
-        super(pool, ConstType.INTEGER);
+    public IntegerConst(int data) {
         this.data = data;
     }
 
-    IntegerConst(ConstPool pool, ByteVector buffer) {
-        super(pool, ConstType.INTEGER);
+    IntegerConst(ByteVector buffer) {
         data = buffer.getInt();
     }
 
     @Override
-    public boolean isImmutable() {
-        return true;
-    }
-
-    @Override
-    public Const copy() {
-        return new IntegerConst(pool, data);
-    }
-
-    @Override
-    int byteSize() {
-        return 5;
-    }
-
-    @Override
-    public void write(ByteVector buffer) {
-        buffer.putByte(tag());
-        buffer.putInt(data);
+    public ConstType constantType() {
+        return ConstType.INTEGER;
     }
 
     @Override
@@ -47,6 +26,10 @@ public class IntegerConst extends Const.Value {
 
     public int getInt() {
         return data;
+    }
+
+    void write(ByteVector buffer) {
+        buffer.putInt(data);
     }
 
     @Override
@@ -67,7 +50,7 @@ public class IntegerConst extends Const.Value {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof IntegerConst) {
-            return ((IntegerConst) obj).pool == pool && ((IntegerConst) obj).data == data;
+            return ((IntegerConst) obj).data == data;
         }
         return false;
     }

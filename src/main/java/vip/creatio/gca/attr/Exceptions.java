@@ -1,23 +1,17 @@
 package vip.creatio.gca.attr;
 
-import vip.creatio.gca.AttributeContainer;
-import vip.creatio.gca.ClassFileParser;
-import vip.creatio.gca.DeclaredMethod;
-import vip.creatio.gca.ClassConst;
+import vip.creatio.gca.*;
 
 import vip.creatio.gca.type.Type;
-import vip.creatio.gca.type.TypeInfo;
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.common.ByteVector;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
-import java.util.List;
 
 /**
  * The Exceptions attribute indicates which checked exceptions a method may throw.
  */
-public class Exceptions extends TableAttribute<Type> {
+public class Exceptions extends TableAttribute<TypeInfo> {
 
     private Exceptions(AttributeContainer container) {
         super(container);
@@ -33,16 +27,16 @@ public class Exceptions extends TableAttribute<Type> {
 
         int len = buffer.getUShort();
         for (int i = 0; i < len; i++) {
-            inst.items.add(((ClassConst) pool.get(buffer.getShort())).getTypeInfo());
+            inst.items.add((TypeInfo) pool.get(buffer.getShort()));
         }
         return inst;
     }
 
     @Override
-    protected void collect() {
-        super.collect();
-        for (Type item : items) {
-            constPool().acquireClass(item);
+    protected void collect(ConstPool pool) {
+        super.collect(pool);
+        for (TypeInfo item : items) {
+            pool.acquireClass(item);
         }
     }
 
@@ -57,17 +51,17 @@ public class Exceptions extends TableAttribute<Type> {
     }
 
     @Override
-    protected void writeData(ByteVector buffer) {
+    protected void writeData(ConstPool pool, ByteVector buffer) {
         buffer.putShort((short) items.size());
-        for (Type i : items) {
-            buffer.putShort(constPool().acquireClass(i).index());
+        for (TypeInfo i : items) {
+            buffer.putShort(pool.indexOf(i));
         }
     }
 
     // exception: set to null to create a 'finally' block
     public void add(TypeInfo exception) {
         // anti duplication
-        for (Type table : items) {
+        for (TypeInfo table : items) {
             if (exception.equals(table)) {
                 return;
             }
@@ -75,14 +69,14 @@ public class Exceptions extends TableAttribute<Type> {
         items.add(exception);
     }
 
-    public void addAll(Collection<Type> types) {
+    public void addAll(Collection<TypeInfo> types) {
         items.addAll(types);
     }
 
-    public void removeAll(Collection<Type> types) {
-        Iterator<Type> iter = items.iterator();
+    public void removeAll(Collection<TypeInfo> types) {
+        Iterator<TypeInfo> iter = items.iterator();
         while (iter.hasNext()) {
-            for (Type type : types) {
+            for (TypeInfo type : types) {
                 if (type.getTypeName().equals(iter.next().getTypeName()))
                     iter.remove();
             }

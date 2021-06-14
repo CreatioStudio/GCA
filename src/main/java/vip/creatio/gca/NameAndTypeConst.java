@@ -1,104 +1,46 @@
 package vip.creatio.gca;
 
-import org.jetbrains.annotations.Nullable;
-import vip.creatio.gca.util.ClassUtil;
-import vip.creatio.gca.util.Immutable;
+import vip.creatio.gca.util.common.ByteVector;
+import vip.creatio.gca.util.Pair;
 
-import vip.creatio.gca.util.ByteVector;
+public class NameAndTypeConst extends Pair<String, String> implements Const {
 
-@Immutable
-public class NameAndTypeConst extends Const implements Descriptor {
-    private /* final */ String name;
-    private String descriptor;
-
-    private String[] descriptors;
-
-    NameAndTypeConst(ConstPool pool) {
-        super(pool, ConstType.NAME_AND_TYPE);
-    }
-
-    public NameAndTypeConst(ConstPool pool, String name, String descriptor) {
-        super(pool, ConstType.NAME_AND_TYPE);
-        this.name = name;
-        this.descriptor = descriptor;
-        recache();
-    }
-
-    @Override
-    public boolean isImmutable() {
-        return true;
-    }
-
-    @Override
-    public Const copy() {
-        return new NameAndTypeConst(pool, name, descriptor);
-    }
-
-    @Override
-    int byteSize() {
-        return 5;
+    public NameAndTypeConst(String name, String descriptor) {
+        super(name, descriptor);
     }
 
     public String toString() {
-        return "NameAndType{name=" + getName() + ",discriptor=" + getDescriptor() + '}';
+        return "NameAndType{name=" + getName() + ",descriptor=" + getDescriptor() + '}';
     }
 
-    @Override
-    public void write(ByteVector buffer) {
-        buffer.putByte(tag());
-        buffer.putShort(pool.acquireUtf(name).index());
-        buffer.putShort(pool.acquireUtf(descriptor).index());
+    void write(ConstPool pool, ByteVector buffer) {
+        buffer.putShort(pool.indexOf(getKey()));
+        buffer.putShort(pool.indexOf(getValue()));
     }
 
-    @Override
-    public void parse(ClassFileParser pool, ByteVector buffer) {
-        name = pool.getString(buffer.getShort());
-        descriptor = pool.getString(buffer.getShort());
-        recache();
-    }
-
-    @Override
-    void collect() {
-        pool.acquireUtf(name);
-        pool.acquireUtf(descriptor);
+    void collect(ConstPool pool) {
+        pool.acquireUtf(getKey());
+        pool.acquireUtf(getValue());
     }
 
     public String getName() {
-        return name;
+        return getKey();
     }
 
-    @Override
-    public @Nullable String getDescriptor() {
-        return descriptor;
+    public void setName(String name) {
+        setKey(name);
     }
 
-    @Override
+    public String getDescriptor() {
+        return getValue();
+    }
+
     public void setDescriptor(String str) {
-        this.descriptor = str;
+        setValue(str);
     }
 
     @Override
-    public int hashCode() {
-        return name.hashCode() + descriptor.hashCode() * 31;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj instanceof NameAndTypeConst) {
-            return ((NameAndTypeConst) obj).pool == pool
-                    && ((NameAndTypeConst) obj).name.equals(name)
-                    && ((NameAndTypeConst) obj).descriptor.equals(descriptor);
-        }
-        return false;
-    }
-
-    @Override
-    public void recache() {
-        this.descriptors = ClassUtil.fromSignature(descriptor);
-    }
-
-    @Override
-    public @Nullable String[] getDescriptors() {
-        return descriptors;
+    public ConstType constantType() {
+        return ConstType.NAME_AND_TYPE;
     }
 }

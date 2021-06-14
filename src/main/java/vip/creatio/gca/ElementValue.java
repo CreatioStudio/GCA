@@ -1,7 +1,6 @@
 package vip.creatio.gca;
 
-import vip.creatio.gca.type.TypeInfo;
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.common.ByteVector;
 import vip.creatio.gca.util.Union;
 
 import java.util.ArrayList;
@@ -36,9 +35,9 @@ public class ElementValue {
             e.union.set(((Const.Value) pool.get(buffer.getShort())).value());
         } else {
             if (t == ValueType.CLASS) {
-                e.union.set(file.toType(pool.getString(buffer.getShort())));
+                e.union.set(file.repository().toType(pool.getString(buffer.getShort())));
             } else if (t == ValueType.ENUM) {
-                e.union.set(file.toType(pool.getString(buffer.getShort())));
+                e.union.set(file.repository().toType(pool.getString(buffer.getShort())));
                 e.enumName = pool.getString(buffer.getShort());
             } else if (t == ValueType.ANNOTATION) {
                 e.union.set(Annotation.parse(file, pool, buffer, inheritedVisibility));
@@ -225,7 +224,7 @@ public class ElementValue {
     @SuppressWarnings("unchecked")
     void collect(ConstPool pool) {
         if (type.isValue()) {
-            pool.acquire(Const.Value.of(pool, union));
+            pool.acquireValue(union.get());
         } else {
             if (type == ValueType.CLASS) {
                 pool.acquireUtf(union.get(TypeInfo.class).getTypeName());
@@ -246,13 +245,13 @@ public class ElementValue {
     void write(ConstPool pool, ByteVector buffer) {
         buffer.putByte(type.getTag());
         if (type.isValue()) {
-            buffer.putShort(pool.acquireValue(union).index());
+            buffer.putShort(pool.indexOfValue(union.get()));
         } else {
             if (type == ValueType.CLASS) {
-                buffer.putShort(pool.acquireUtf(union.get(TypeInfo.class).getTypeName()).index());
+                buffer.putShort(pool.indexOf(union.get(TypeInfo.class).getTypeName()));
             } else if (type == ValueType.ENUM) {
-                buffer.putShort(pool.acquireUtf(union.get(TypeInfo.class).getTypeName()).index());
-                buffer.putShort(pool.acquireUtf(enumName).index());
+                buffer.putShort(pool.indexOf(union.get(TypeInfo.class).getTypeName()));
+                buffer.putShort(pool.indexOf(enumName));
             } else if (type == ValueType.ANNOTATION) {
                 union.get(DeclaredAnnotation.class).write(pool, buffer);
             } else {

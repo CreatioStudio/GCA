@@ -1,89 +1,41 @@
 package vip.creatio.gca;
 
-import vip.creatio.gca.util.ByteVector;
-import vip.creatio.gca.util.Immutable;
-
 @SuppressWarnings("unused")
-public abstract class Const {
+public interface Const {
 
-    protected ConstPool pool;
-    protected final ConstType type;
-    
-    Const(ConstPool pool, ConstType type) {
-        this.pool = pool;
-        this.type = type;
-    }
-
-    public final ConstType type() {
-        return type;
-    }
-
-    public final ConstPool constPool() {
-        return pool;
-    }
-
-    public abstract Const copy();
-
-    public abstract boolean isImmutable();
-
-    // starts from 1, might be a negative, use index() & 0xFFFF to get positive
-    public final int index() {
-        return pool.indexOf(this);
-    }
-
-    public final ClassFile classFile() {
-        return pool.classFile();
-    }
-
-
-     /* internals */
-
-    void parse(ClassFileParser pool, ByteVector buffer) {}
-
-    void collect() {}
-
-    final byte tag() {
-        return type().tag;
-    }
-
-    abstract int byteSize();
-
-    abstract void write(ByteVector buffer);
-
-
+    ConstType constantType();
 
     // marker class which indicates this constant can be accepted in ConstantValue
-    @Immutable
-    public static abstract class Value extends Const {
-        Value(ConstPool pool, ConstType type) {
-            super(pool, type);
-        }
+    abstract class Value implements Const {
 
         public abstract Object value();
 
         public abstract ValueType valueType();
 
-        public static Value of(ConstPool pool, Object v) {
+        @Override
+        public abstract ConstType constantType();
+
+        public static Value of(Object v) {
             ValueType type = ValueType.getValueType(v);
             switch (type) {
                 case BYTE:
-                    return new IntegerConst(pool, (Byte) v);
+                    return new IntegerConst((Byte) v);
                 case CHAR:
-                    return new IntegerConst(pool, (Character) v);
+                    return new IntegerConst((Character) v);
                 case DOUBLE:
-                    return new DoubleConst(pool, (Double) v);
+                    return new DoubleConst((Double) v);
                 case FLOAT:
-                    return new FloatConst(pool, (Float) v);
+                    return new FloatConst((Float) v);
                 case INT:
-                    return new IntegerConst(pool, (Integer) v);
+                    return new IntegerConst((Integer) v);
                 case LONG:
-                    return new LongConst(pool, (Long) v);
+                    return new LongConst((Long) v);
                 case SHORT:
-                    return new IntegerConst(pool, (Short) v);
+                    return new IntegerConst((Short) v);
                 case BOOLEAN:
-                    return new IntegerConst(pool, ((boolean) v) ? 1 : 0);
+                    return new IntegerConst(((boolean) v) ? 1 : 0);
                 case STRING:
-                    return new StringConst(pool, (String) v);
+                    return new StringConst((String) v);
                 default:
                     throw new UnsupportedOperationException(v.getClass().getName());
             }
@@ -91,5 +43,5 @@ public abstract class Const {
     }
 
     // marker interface which indicates this constant takes 2 slots
-    public interface DualSlot {}
+    interface DualSlot {}
 }

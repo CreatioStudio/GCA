@@ -1,13 +1,9 @@
 package vip.creatio.gca;
 
-import vip.creatio.gca.attr.Code;
 import vip.creatio.gca.attr.Exceptions;
 import vip.creatio.gca.attr.TargetType;
 import vip.creatio.gca.code.OpCode;
-import vip.creatio.gca.type.Type;
-import vip.creatio.gca.type.TypeInfo;
-import vip.creatio.gca.type.Types;
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.common.ByteVector;
 import vip.creatio.gca.util.Pair;
 
 import java.util.ArrayList;
@@ -68,18 +64,18 @@ public class TypeAnnotation extends DeclaredAnnotation {
 
     private final List<Pair<PathKind, Integer>> path = new ArrayList<>();
 
-    TypeAnnotation(boolean visible) {
-        super(visible);
+    TypeAnnotation(AttributeContainer container, boolean visible) {
+        super(container, visible);
     }
 
-    public TypeAnnotation(TypeInfo type, boolean visible) {
-        super(visible, type);
+    public TypeAnnotation(AttributeContainer container, TypeInfo type, boolean visible) {
+        super(container, visible, type);
     }
 
     static TypeAnnotation
     parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer, boolean visible) {
         //assert container instanceof Code;
-        TypeAnnotation anno = new TypeAnnotation(visible);
+        TypeAnnotation anno = new TypeAnnotation(container, visible);
         anno.target = TargetType.fromTag(buffer.getByte());
 
         // read union "target_info"
@@ -137,7 +133,7 @@ public class TypeAnnotation extends DeclaredAnnotation {
             }
         }
 
-        anno.type = container.classFile().toType(pool.getString(buffer.getUShort()));
+        anno.type = container.classFile().repository().toType(pool.getString(buffer.getUShort()));
 
         {
             int num = buffer.getUShort();
@@ -255,7 +251,7 @@ public class TypeAnnotation extends DeclaredAnnotation {
                 buffer.putByte(index);
                 break;
             case TargetType.TARGET_SUPERTYPE:
-                buffer.putShort(pool.acquireClass(superType).index());
+                buffer.putShort(pool.indexOf(superType));
                 break;
             case TargetType.TARGET_TYPE_PARAMETER_BOUND:
                 buffer.putByte(index);
@@ -268,7 +264,7 @@ public class TypeAnnotation extends DeclaredAnnotation {
                 buffer.putByte(index);
                 break;
             case TargetType.TARGET_THROWS:
-                buffer.putShort(pool.acquireClass(throwsType).index());   //TODO: make this!
+                buffer.putShort(pool.indexOf(throwsType));   //TODO: make this!
                 break;
             case TargetType.TARGET_LOCALVAR:
                 buffer.putShort(localVar.size());
@@ -277,8 +273,11 @@ public class TypeAnnotation extends DeclaredAnnotation {
                 }
                 break;
             case TargetType.TARGET_CATCH:
+            {
+
                 buffer.putShort(catchTarget.getIndex());
                 break;
+            }
             case TargetType.TARGET_OFFSET:
                 buffer.putShort(offset.offset());
                 break;
@@ -297,10 +296,10 @@ public class TypeAnnotation extends DeclaredAnnotation {
             buffer.putByte(pair.getValue());
         }
 
-        buffer.putShort(pool.acquireUtf(type.getInternalName()).index());
+        buffer.putShort(pool.indexOf(type.getInternalName()));
         buffer.putShort(values.size());
         for (Pair<String, ElementValue> p : values) {
-            buffer.putShort(pool.acquireUtf(p.getKey()).index());
+            buffer.putShort(pool.indexOf(p.getKey()));
             p.getValue().write(pool, buffer);
         }
     }
@@ -324,8 +323,8 @@ public class TypeAnnotation extends DeclaredAnnotation {
     }
 
     @Override
-    public TypeAnnotation copy() {
-        TypeAnnotation copy = new TypeAnnotation(type, visible);
+    public TypeAnnotation copy(AttributeContainer container) {
+        TypeAnnotation copy = new TypeAnnotation(container, type, visible);
         copyValues(copy);
         //TODO: enhancement!
         copy.index = index;
@@ -342,6 +341,11 @@ public class TypeAnnotation extends DeclaredAnnotation {
         copy.throwsType = throwsType;
         copy.superType = superType;
         return copy;
+    }
+
+    @Override
+    public TypeAnnotation copy() {
+        return (TypeAnnotation) super.copy();
     }
 
     //TODO

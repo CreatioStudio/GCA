@@ -3,8 +3,7 @@ package vip.creatio.gca;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import vip.creatio.gca.type.TypeInfo;
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.common.ByteVector;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
@@ -45,18 +44,18 @@ public interface AttributeContainer {
         return getAttribute(name) != null;
     }
 
-    default void writeAttributes(ByteVector buffer) {
+    default void writeAttributes(ConstPool pool, ByteVector buffer) {
         List<Attribute> usable = getAttributes().values().stream().filter(a -> !a.isEmpty()).collect(Collectors.toList());
         buffer.putShort((short) usable.size());
         for (Attribute attr : usable) {
-            attr.write(buffer);
+            attr.write(pool, buffer);
         }
     }
 
-    default void collectConstants() {
+    default void collectConstants(ConstPool pool) {
         List<Attribute> usable = getAttributes().values().stream().filter(a -> !a.isEmpty()).collect(Collectors.toList());
         for (Attribute attr : usable) {
-            attr.collect();
+            attr.collect(pool);
         }
     }
 

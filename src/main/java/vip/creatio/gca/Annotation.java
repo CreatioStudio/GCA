@@ -1,23 +1,23 @@
 package vip.creatio.gca;
 
-import vip.creatio.gca.type.TypeInfo;
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.common.ByteVector;
 import vip.creatio.gca.util.Pair;
 
 public class Annotation extends DeclaredAnnotation {
 
-    Annotation(boolean visible) {
-        super(visible);
+    Annotation(AttributeContainer container, boolean visible) {
+        super(container, visible);
     }
 
-    public Annotation(TypeInfo type, boolean visible) {
-        this(visible);
+    public Annotation(AttributeContainer container, TypeInfo type, boolean visible) {
+        this(container, visible);
         this.type = type;
     }
 
-    static Annotation parse(ClassFile file, ClassFileParser pool, ByteVector buffer, boolean visible) {
-        Annotation anno = new Annotation(visible);
-        anno.type = file.toType(pool.getString(buffer.getUShort()));
+    static Annotation parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer, boolean visible) {
+        ClassFile file = container.classFile();
+        Annotation anno = new Annotation(container, visible);
+        anno.type = file.repository().toType(pool.getString(buffer.getUShort()));
         int num = buffer.getUShort();
         for (int i = 0; i < num; i++) {
             String name = pool.getString(buffer.getUShort());
@@ -28,10 +28,10 @@ public class Annotation extends DeclaredAnnotation {
 
     @Override
     protected void write(ConstPool pool, ByteVector buffer) {
-        buffer.putShort(pool.acquireUtf(type.getInternalName()).index());
+        buffer.putShort(pool.indexOf(type.getInternalName()));
         buffer.putShort(values.size());
         for (Pair<String, ElementValue> p : values) {
-            buffer.putShort(pool.acquireUtf(p.getKey()).index());
+            buffer.putShort(pool.indexOf(p.getKey()));
             p.getValue().write(pool, buffer);
         }
     }
@@ -46,9 +46,14 @@ public class Annotation extends DeclaredAnnotation {
     }
 
     @Override
-    public Annotation copy() {
-        Annotation copy = new Annotation(type, visible);
+    public Annotation copy(AttributeContainer container) {
+        Annotation copy = new Annotation(container, type, visible);
         copyValues(copy);
         return copy;
+    }
+
+    @Override
+    public Annotation copy() {
+        return (Annotation) super.copy();
     }
 }

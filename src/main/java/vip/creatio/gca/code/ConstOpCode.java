@@ -2,7 +2,8 @@ package vip.creatio.gca.code;
 
 import vip.creatio.gca.ClassFileParser;
 import vip.creatio.gca.Const;
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.ConstPool;
+import vip.creatio.gca.util.common.ByteVector;
 
 // this will always read a short index
 public class ConstOpCode extends OpCode {
@@ -13,7 +14,8 @@ public class ConstOpCode extends OpCode {
     ConstOpCode(CodeContainer codes, OpCodeType type, ClassFileParser pool, ByteVector buffer) {
         super(codes);
         this.type = type;
-        this.constant = pool.get(buffer.getShort());
+        int index = buffer.getUShort();
+        this.constant = pool.get(index);
     }
 
     public ConstOpCode(CodeContainer codes, OpCodeType type, Const constant) {
@@ -36,14 +38,14 @@ public class ConstOpCode extends OpCode {
     }
 
     @Override
-    void collect() {
-        constPool().acquire(constant);
+    void collect(ConstPool pool) {
+        pool.acquire(constant);
     }
 
     @Override
-    public void serialize(ByteVector buffer) {
-        super.serialize(buffer);
-        buffer.putShort(constant.index());
+    void write(ConstPool pool, ByteVector buffer) {
+        super.write(pool, buffer);
+        buffer.putShort(pool.indexOf(constant));
     }
 
     @Override

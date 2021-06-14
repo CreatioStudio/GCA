@@ -1,9 +1,10 @@
 package vip.creatio.gca.code;
 
 import vip.creatio.gca.ClassFileParser;
+import vip.creatio.gca.ConstPool;
 import vip.creatio.gca.InvokeDynamicConst;
 
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.common.ByteVector;
 
 public class InvokeDynamicOpCode extends OpCode {
 
@@ -39,9 +40,9 @@ public class InvokeDynamicOpCode extends OpCode {
     }
 
     @Override
-    public void serialize(ByteVector buffer) {
-        super.serialize(buffer);
-        buffer.putShort(ref.index());
+    void write(ConstPool pool, ByteVector buffer) {
+        super.write(pool, buffer);
+        buffer.putShort(pool.indexOf(ref));
         buffer.putShort((short) 0x0000);
     }
 }

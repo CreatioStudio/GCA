@@ -1,33 +1,21 @@
 package vip.creatio.gca;
 
-import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.attr.BootstrapMethods;
 
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.common.ByteVector;
 
-public class InvokeDynamicConst extends Const implements Descriptor {
+public class InvokeDynamicConst implements Const {
     private BootstrapMethods.Method method;
-    private NameAndTypeConst pair;
+    private NameAndTypeConst pair;      //TODO: wtf this pair actually used for, confusing
 
-    InvokeDynamicConst(ConstPool pool, BootstrapMethods.Method bootstrap, String mthName, String mthDescriptor) {
-        super(pool, ConstType.INVOKE_DYNAMIC);
+    InvokeDynamicConst(BootstrapMethods.Method bootstrap, String mthName, String mthDescriptor) {
         this.method = bootstrap;
-        this.pair = new NameAndTypeConst(pool, mthName, mthDescriptor);
-        recache();
+        this.pair = new NameAndTypeConst(mthName, mthDescriptor);
     }
 
-    InvokeDynamicConst(ConstPool pool) {
-        super(pool, ConstType.INVOKE_DYNAMIC);
-    }
-
-    @Override
-    public Const copy() {
-        return new InvokeDynamicConst(pool, method, pair.getName(), pair.getDescriptor());
-    }
-
-    @Override
-    int byteSize() {
-        return 5;
+    // temporary
+    InvokeDynamicConst(NameAndTypeConst pair) {
+        this.pair = pair;
     }
 
     public String toString() {
@@ -36,21 +24,17 @@ public class InvokeDynamicConst extends Const implements Descriptor {
     }
 
     @Override
-    public void write(ByteVector buffer) {
-        buffer.putByte(tag());
+    public ConstType constantType() {
+        return ConstType.INVOKE_DYNAMIC;
+    }
+
+    void write(ConstPool pool, ByteVector buffer) {
         buffer.putShort(method.index());
-        buffer.putShort(pool.acquire(pair).index());
+        buffer.putShort(pool.indexOf(pair));
     }
 
-    @Override
-    void collect() {
+    void collect(ConstPool pool) {
         pool.acquire(pair);
-    }
-
-    @Override
-    void parse(ClassFileParser pool, ByteVector buffer) {
-        this.method = classFile().bootstrapMethods().get(buffer.getUShort());
-        this.pair = (NameAndTypeConst) pool.get(buffer.getShort());
     }
 
     public BootstrapMethods.Method getMethod() {
@@ -66,7 +50,7 @@ public class InvokeDynamicConst extends Const implements Descriptor {
     }
 
     public void setMethodName(String methodName) {
-        this.pair = new NameAndTypeConst(pool,methodName, pair.getDescriptor());
+        this.pair = new NameAndTypeConst(methodName, pair.getDescriptor());
     }
 
     public String getMethodDescriptor() {
@@ -74,12 +58,7 @@ public class InvokeDynamicConst extends Const implements Descriptor {
     }
 
     public void setMethodDescriptor(String methodDescriptor) {
-        this.pair = new NameAndTypeConst(pool, pair.getName(), methodDescriptor);
-    }
-
-    @Override
-    public boolean isImmutable() {
-        return false;
+        this.pair = new NameAndTypeConst(pair.getName(), methodDescriptor);
     }
 
     @Override
@@ -91,30 +70,9 @@ public class InvokeDynamicConst extends Const implements Descriptor {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof InvokeDynamicConst) {
-            return ((InvokeDynamicConst) obj).pool == pool
-                    && ((InvokeDynamicConst) obj).method.equals(method)
+            return ((InvokeDynamicConst) obj).method.equals(method)
                     && ((InvokeDynamicConst) obj).pair.equals(pair);
         }
         return false;
-    }
-
-    @Override
-    public @Nullable String[] getDescriptors() {
-        return pair.getDescriptors();
-    }
-
-    @Override
-    public @Nullable String getDescriptor() {
-        return pair.getDescriptor();
-    }
-
-    @Override
-    public void setDescriptor(String str) {
-        pair.setDescriptor(str);
-    }
-
-    @Override
-    public void recache() {
-        pair.recache();
     }
 }

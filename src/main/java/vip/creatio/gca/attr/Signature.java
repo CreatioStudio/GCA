@@ -2,12 +2,9 @@ package vip.creatio.gca.attr;
 
 import vip.creatio.gca.*;
 
-import vip.creatio.gca.type.DeclaredMethodInfo;
 import vip.creatio.gca.type.Type;
 import vip.creatio.gca.type.Types;
-import vip.creatio.gca.util.ByteVector;
-
-import java.lang.ref.SoftReference;
+import vip.creatio.gca.util.common.ByteVector;
 
 /**
  * The Signature attribute records generic signature information for
@@ -70,16 +67,16 @@ public class Signature extends Attribute {
     }
 
     @Override
-    protected void collect() {
-        super.collect();
+    protected void collect(ConstPool pool) {
+        super.collect(pool);
         ensureSignatureNotNull();
-        constPool().acquireUtf(signature);
+        pool.acquireUtf(signature);
     }
 
     @Override
-    protected void writeData(ByteVector buffer) {
+    protected void writeData(ConstPool pool, ByteVector buffer) {
         ensureSignatureNotNull();
-        buffer.putShort(constPool().acquireUtf(signature).index());
+        buffer.putShort(pool.indexOf(signature));
     }
 
     @Override

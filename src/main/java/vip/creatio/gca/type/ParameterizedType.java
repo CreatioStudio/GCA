@@ -1,11 +1,13 @@
 package vip.creatio.gca.type;
 
+import vip.creatio.gca.TypeInfo;
+
 import java.lang.reflect.MalformedParameterizedTypeException;
 import java.util.*;
 
 public class ParameterizedType implements Type {
     private List<Type> typeArguments;
-    private TypeInfo   rawType;
+    private TypeInfo rawType;
     private Type       ownerType;
 
     private ParameterizedType(TypeInfo rawType,
@@ -152,11 +154,6 @@ public class ParameterizedType implements Type {
 
         public void setOwnerType(Type t) {
             super.ownerType = t;
-        }
-
-        @Override
-        public boolean mutable() {
-            return true;
         }
     }
 }

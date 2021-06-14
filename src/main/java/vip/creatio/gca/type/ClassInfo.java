@@ -1,6 +1,7 @@
 package vip.creatio.gca.type;
 
 import vip.creatio.gca.AccessFlag;
+import vip.creatio.gca.TypeInfo;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -8,8 +9,8 @@ import java.util.List;
 // representing a Class object or a ClassFile
 public abstract class ClassInfo extends TypeInfo implements GenericInfo {
 
-    protected Type superType;
-    protected List<Type> interfaces;
+    protected TypeInfo superType;
+    protected List<TypeInfo> interfaces;
     protected EnumSet<AccessFlag> accessFlags;
 
     protected List<FieldInfo> fields;

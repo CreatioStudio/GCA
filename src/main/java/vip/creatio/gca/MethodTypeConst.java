@@ -1,89 +1,59 @@
 package vip.creatio.gca;
 
-import org.jetbrains.annotations.Nullable;
-import vip.creatio.gca.util.ClassUtil;
+import vip.creatio.gca.type.Types;
 
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.common.ByteVector;
 
-public class MethodTypeConst extends Const implements Descriptor {
-    private String descriptor;
-    private String[] descriptors;
+import java.util.Arrays;
 
-    MethodTypeConst(ConstPool pool, String nameAndType) {
-        super(pool, ConstType.METHOD_TYPE);
-        this.descriptor = nameAndType;
-        recache();
+public class MethodTypeConst implements Const {
+    private final TypeInfo rtype;
+    private final TypeInfo[] ptype;
+
+    private String cachedSig;
+
+    MethodTypeConst(TypeInfo rtype, TypeInfo... ptype) {
+        this.rtype = rtype;
+        this.ptype = ptype;
     }
 
-    MethodTypeConst(ConstPool pool) {
-        super(pool, ConstType.METHOD_TYPE);
-    }
-
-    @Override
-    public boolean isImmutable() {
-        return false;
-    }
-
-    @Override
-    public Const copy() {
-        return new MethodTypeConst(pool, descriptor);
+    MethodTypeConst(TypeInfo[] sigs) {
+        this.rtype = sigs[0];
+        this.ptype = Arrays.copyOfRange(sigs, 1, sigs.length);
     }
 
     @Override
-    int byteSize() {
-        return 3;
+    public ConstType constantType() {
+        return ConstType.METHOD_TYPE;
     }
 
-    @Override
-    public void write(ByteVector buffer) {
-        buffer.putByte(tag());
-        buffer.putShort(pool.acquireUtf(descriptor).index());
+    void write(ConstPool pool, ByteVector buffer) {
+        buffer.putShort(pool.indexOf(getDescriptor()));
     }
 
-    @Override
-    void collect() {
-        pool.acquireUtf(descriptor);
-    }
-
-    @Override
-    public void parse(ClassFileParser pool, ByteVector buffer) {
-        descriptor = pool.getString(buffer.getShort());
-        recache();
+    void collect(ConstPool pool) {
+        pool.acquireUtf(getDescriptor());
     }
 
     public String toString() {
-        return "MethodType{discriptor=" + descriptor + '}';
+        return "MethodType{discriptor=" + getDescriptor() + '}';
     }
 
-    @Override
-    public void recache() {
-        this.descriptors = ClassUtil.fromSignature(descriptor);
-    }
-
-    @Override
-    public @Nullable String[] getDescriptors() {
-        return descriptors;
-    }
-
-    @Override
-    public @Nullable String getDescriptor() {
-        return this.descriptor;
-    }
-
-    @Override
-    public void setDescriptor(String str) {
-        this.descriptor = str;
+    public String getDescriptor() {
+        if (cachedSig == null) cachedSig = Types.toMethodSignature(rtype, ptype);
+        return this.cachedSig;
     }
 
     @Override
     public int hashCode() {
-        return descriptor.hashCode() * 31;
+        return rtype.hashCode() + Arrays.hashCode(ptype) * 31;
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof MethodTypeConst) {
-            return ((MethodTypeConst) obj).pool == pool && ((MethodTypeConst) obj).descriptor.equals(descriptor);
+            return ((MethodTypeConst) obj).rtype.equals(rtype)
+                    && Arrays.equals(((MethodTypeConst) obj).ptype, ptype);
         }
         return false;
     }

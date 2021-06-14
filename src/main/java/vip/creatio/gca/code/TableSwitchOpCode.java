@@ -1,6 +1,7 @@
 package vip.creatio.gca.code;
 
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.ConstPool;
+import vip.creatio.gca.util.common.ByteVector;
 import vip.creatio.gca.util.Util;
 
 import java.util.ArrayList;
@@ -93,8 +94,8 @@ public class TableSwitchOpCode extends OpCode {
     }
 
     @Override
-    public void serialize(ByteVector buffer) {
-        super.serialize(buffer);
+    public void write(ConstPool pool, ByteVector buffer) {
+        super.write(pool, buffer);
         int offset = offset();
         int padding = Util.align(offset + 1) - offset - 1;
         buffer.skip(padding);

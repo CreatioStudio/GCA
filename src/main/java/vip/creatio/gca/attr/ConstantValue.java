@@ -3,7 +3,7 @@ package vip.creatio.gca.attr;
 import vip.creatio.gca.*;
 import vip.creatio.gca.Const;
 
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.common.ByteVector;
 
 /**
  * A ConstantValue attribute represents the value of a constant field.
@@ -57,14 +57,14 @@ public class ConstantValue extends Attribute {
     }
 
     @Override
-    public void writeData(ByteVector buffer) {
-        buffer.putShort(constPool().acquireValue(constantValue).index());
+    public void writeData(ConstPool pool, ByteVector buffer) {
+        buffer.putShort(pool.indexOfValue(constantValue));
     }
 
     @Override
-    protected void collect() {
-        super.collect();
-        constPool().acquireValue(constantValue);
+    protected void collect(ConstPool pool) {
+        super.collect(pool);
+        pool.acquireValue(constantValue);
     }
 
     public Object getValue() {

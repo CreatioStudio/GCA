@@ -4,32 +4,42 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.attr.*;
 import vip.creatio.gca.type.*;
-import vip.creatio.gca.util.ClassUtil;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
-import vip.creatio.gca.util.ByteVector;
-import vip.creatio.gca.util.Util;
+import vip.creatio.gca.util.common.ByteVector;
 
 import java.util.*;
 
 @SuppressWarnings("unused")
-public class ClassFile extends ClassInfo implements AttributeContainer, AccessFlagContainer, TypeFactory {
+public class ClassFile extends ClassInfo implements AttributeContainer, AccessFlagContainer, TypeInfo.Mutable {
 
     public static final int MAGIC = 0xCAFE_BABE;
 
-    int minorVer;
-    int majorVer;
+    private int minorVer;
+    private int majorVer;
 
-    ConstPool constPool;
-    EnumSet<AccessFlag> accessFlags;
+    private EnumSet<AccessFlag> accessFlags;
 
-    Map<String, Attribute> attributes = new HashMap<>();
+    private Map<String, Attribute> attributes = new HashMap<>();
 
-    Map<TypeInfo, DeclaredAnnotation> annotations = new HashMap<>();
+    private Map<TypeInfo, DeclaredAnnotation> annotations = new HashMap<>();
 
-    private ClassFile() {}
+    private Repository repository;
+
+    ClassFile() {
+        // private class map, no need to synchronize
+        this(new Repository());
+    }
+
+    ClassFile(Repository remote) {
+        // class map from ClassPool, have to be a ConcurrentHashMap for thread-safe consideration.
+        this.repository = remote;
+        this.methods = new ArrayList<>();
+        this.fields = new ArrayList<>();
+        this.interfaces = new ArrayList<>();
+    }
 
     public static ClassFile parse(ByteVector buffer, @Nullable Map<String, AttributeResolver> resolvers) {
         ClassFile code = new ClassFile();
@@ -67,22 +77,21 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
         majorVer = buffer.getUShort();
 
         // read constants
-        constPool = new ConstPool(this);
         ClassFileParser pool = getParser(buffer, resolvers);
-        ConstPool.parse(pool, buffer);
+        pool.parse(buffer);
 
         // read class access flags
         accessFlags = AccessFlag.resolveClass(buffer.getShort());
 
         // read this class and super class object
-        name = ((ClassConst) pool.get(buffer.getUShort())).getTypeName();
-        superType = ((ClassConst) pool.get(buffer.getUShort())).getTypeInfo();
+        name = ((TypeInfo) pool.get(buffer.getUShort())).getTypeName();
+        superType = (TypeInfo) pool.get(buffer.getUShort());
 
         // read interfaces
         {
             int iCount = buffer.getUShort();
             for (int i = 0; i < iCount; i++) {
-                interfaces.add(((ClassConst) pool.get(buffer.getUShort())).getTypeInfo());
+                interfaces.add((TypeInfo) pool.get(buffer.getUShort()));
             }
         }
 
@@ -113,12 +122,18 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
             }
         }
 
-        // parse and link constants in pool
-        pool.parse(buffer);
+        // link methods in BootstrapMethods
+        pool.parseDynamics();
     }
+
+    //TODO: void setPool(ClassPool)
 
     public ClassFile classFile() {
         return this;
+    }
+
+    public Repository repository() {
+        return repository;
     }
 
     public int getMinorVer() {
@@ -148,6 +163,7 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
         accessFlags.addAll(flags);
     }
 
+    @Override
     public void setName(String binName) {
         name = binName;
     }
@@ -156,25 +172,41 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
         this.superType = superClass;
     }
 
-    public ConstPool constPool() {
-        return constPool;
-    }
-
     // Get ot create field
     public @NotNull DeclaredField visitField(String name, String type) {
         DeclaredField field = (DeclaredField) getField(name);
         if (field != null) return field;
 
         EnumSet<AccessFlag> flags = EnumSet.of(AccessFlag.PRIVATE);
-        field = new DeclaredField(this, flags, name, toType(type));
+        field = new DeclaredField(this, flags, name, repository.toType(type));
         fields.add(field);
         return field;
     }
 
-    public DeclaredMethod getMethod(String name, String... signatures) {
-        for (MethodInfo method : methods) {
-            if (method.getName().equals(name) && Arrays.equals(method.getSignatu, signatures))
-                return (DeclaredMethod) method;
+    public DeclaredField getField(String name) {
+        for (FieldInfo field : fields) {
+            if (field.getName().equals(name)) return (DeclaredField) field;
+        }
+        return null;
+    }
+
+    public DeclaredMethod getMethod(String name, String rtype, String... ptype) {
+        return getMethod(name, repository().toType(rtype), repository().toType(ptype));
+    }
+
+    public DeclaredMethod getMethod(String name, TypeInfo rtype, TypeInfo... ptype) {
+        for (MethodInfo mth : methods) {
+            if (mth.getName().equals(name) && Types.withSignature(mth, rtype, ptype)) {
+                return (DeclaredMethod) mth;
+            }
+        }
+        return null;
+    }
+
+    public DeclaredMethod getmethod(String name, String descriptor) {
+        for (MethodInfo mth : methods) {
+            if (mth.getName().equals(name) && mth.getDescriptor().equals(descriptor))
+                return (DeclaredMethod) mth;
         }
         return null;
     }
@@ -188,14 +220,12 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
     }
 
     // Get or create method
-    public @NotNull DeclaredMethod visitMethod(String name, String... signatures) {
-        DeclaredMethod method = getMethod(name, signatures);
+    public @NotNull DeclaredMethod visitMethod(String name, String rtype, String... ptype) {
+        DeclaredMethod method = getMethod(name, rtype, ptype);
         if (method != null) return method;
 
-        //TODO
-        String signature = ClassUtil.getSignature(signatures);
         EnumSet<AccessFlag> flags = EnumSet.of(AccessFlag.PUBLIC);
-        method = new DeclaredMethod(this, flags, name, toType(signature), toType(signatures));
+        method = new DeclaredMethod(this, flags, name, repository.toType(rtype), repository.toType(ptype));
         methods.add(method);
         return method;
     }
@@ -211,7 +241,7 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
         Type c = getInterface(clsName);
         if (c != null) return c;
 
-        c = toType(clsName);
+        c = repository.toType(clsName);
         interfaces.add((TypeInfo) c);
         return c;
     }
@@ -267,49 +297,65 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
 
     public void write(ByteVector buffer) {
         // collect all used constants
-        collect(constPool);
+        ConstPool pool = new ConstPool(this); // new ClassCollectorPool
+        collectFile(pool);
 
         buffer.putInt(MAGIC);
 
         buffer.putShort(minorVer);
         buffer.putShort(majorVer);
 
-        constPool.write(buffer);
+        pool.write(buffer);
 
         buffer.putShort(AccessFlag.serialize(accessFlags));
 
-        buffer.putShort(constPool.acquireClass(name).index());
-        buffer.putShort(constPool.acquireClass(superType).index());
+        buffer.putShort(pool.indexOf(this));
+        buffer.putShort(pool.indexOf(superType));
 
         buffer.putShort((short) interfaces.size());
-        interfaces.forEach(i -> buffer.putShort(constPool.acquireClass(i).index()));
+        interfaces.forEach(i -> buffer.putShort(pool.indexOf(i)));
 
         buffer.putShort((short) fields.size());
-        fields.forEach(f -> ((DeclaredField) f).write(buffer));
+        fields.forEach(f -> ((DeclaredField) f).write(pool, buffer));
 
         buffer.putShort((short) methods.size());
-        methods.forEach(m -> ((DeclaredMethod) m).write(buffer));
+        methods.forEach(m -> ((DeclaredMethod) m).write(pool, buffer));
 
-        AttributeContainer.super.writeAttributes(buffer);
-        constPool.setWriting(false);
+        AttributeContainer.super.writeAttributes(pool, buffer);
     }
 
-    private void collect(ConstPool constPool) {
-        boolean previous = constPool.isWriting();
-        constPool.setWriting(true);
-        constPool.collect();
-        constPool.acquireClass(name);
-        constPool.acquireClass(superType);
-        interfaces.forEach(constPool::acquireClass);
+    private void collectFile(ConstPool pool) {
+        pool.collect();
+        pool.acquireClass(this);
+        pool.acquireClass(superType);
+        interfaces.forEach(pool::acquireClass);
         for (FieldInfo f : fields) {
-            ((DeclaredField) f).collect();
+            ((DeclaredField) f).collect(pool);
         }
         for (MethodInfo mth : methods) {
-            ((DeclaredMethod) mth).collect();
+            ((DeclaredMethod) mth).collect(pool);
         }
-        AttributeContainer.super.collectConstants();
-        constPool.recacheMap();
-        constPool.setWriting(previous);
+        AttributeContainer.super.collectConstants(pool);
+        for (DeclaredAnnotation value : annotations.values()) {
+            value.collect(pool);
+            if (value instanceof Annotation) {
+                Annotations anno;
+                if (value.visible()) {
+                    anno = getOrAddAttribute("RuntimeVisibleAnnotations", () -> new Annotations(this, true));
+                } else {
+                    anno = getOrAddAttribute("RuntimeInvisibleAnnotations", () -> new Annotations(this, false));
+                }
+                anno.add((Annotation) value);
+            } else if (value instanceof TypeAnnotation) {
+                TypeAnnotations anno;
+                if (value.visible()) {
+                    anno = getOrAddAttribute("RuntimeVisibleTypeAnnotations", () -> new TypeAnnotations(this, true));
+                } else {
+                    anno = getOrAddAttribute("RuntimeInvisibleTypeAnnotations", () -> new TypeAnnotations(this, false));
+                }
+                anno.add((TypeAnnotation) value);
+            }
+        }
     }
 
     public ClassFile copy() {
@@ -317,10 +363,6 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
         c.majorVer = majorVer;
         c.minorVer = minorVer;
         c.accessFlags = EnumSet.copyOf(accessFlags);
-        c.constPool = new ConstPool(this);
-        for (Const constant : constPool) {
-            c.constPool.add(constant.copy());
-        }
         //TODO
 
         return c;
@@ -342,7 +384,11 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
     }
 
     public void removeAnnotation(String type) {
-        removeAnnotation(toType(type));
+        removeAnnotation(repository.toType(type));
+    }
+
+    public void clearAnnotations() {
+        annotations.clear();
     }
 
     public void addAnnotation(DeclaredAnnotation anno) {
@@ -354,10 +400,37 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
     }
 
     public DeclaredAnnotation getAnnotation(String type) {
-        return getAnnotation(toType(type));
+        return getAnnotation(repository.toType(type));
     }
 
     public Annotation addAnnotation(TypeInfo type, boolean visible) {
-        Annotation anno = new Annotation()
+        Annotation anno = new Annotation(this, type, visible);
+        annotations.put(type, anno);
+        return anno;
     }
+
+    @Override
+    public MethodInfo getEnclosingMethod() {
+        return null;
+    }
+
+    @Override
+    public Type getDeclaringClass() {
+        return null;
+    }
+
+    @Override
+    public Type[] getClasses() {
+        return new Type[0];
+    }
+
+    @Override
+    public TypeVariable[] getTypeParameters() {
+        return new TypeVariable[0];
+    }
+
+    //TypeAnnotation: enhancement required
+
+
+
 }

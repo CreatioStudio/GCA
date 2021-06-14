@@ -1,11 +1,8 @@
 package vip.creatio.gca.attr;
 
-import vip.creatio.gca.Attribute;
-import vip.creatio.gca.AttributeContainer;
-import vip.creatio.gca.ClassFile;
-import vip.creatio.gca.ClassFileParser;
+import vip.creatio.gca.*;
 
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.common.ByteVector;
 
 /**
  * There can be no more than one SourceFile attribute in the
@@ -56,14 +53,14 @@ public class SourceFile extends Attribute {
     }
 
     @Override
-    protected void collect() {
-        super.collect();
-        constPool().acquireUtf(sourceName);
+    protected void collect(ConstPool pool) {
+        super.collect(pool);
+        pool.acquireUtf(sourceName);
     }
 
     @Override
-    protected void writeData(ByteVector buffer) {
-        buffer.putShort(constPool().acquireUtf(sourceName).index());
+    protected void writeData(ConstPool pool, ByteVector buffer) {
+        buffer.putShort(pool.indexOf(sourceName));
     }
 
     @Override

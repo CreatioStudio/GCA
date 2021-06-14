@@ -2,7 +2,9 @@ package vip.creatio.gca.attr;
 
 import vip.creatio.gca.AttributeContainer;
 import vip.creatio.gca.ClassFileParser;
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.ConstPool;
+import vip.creatio.gca.util.common.ByteVector;
+import vip.creatio.gca.Code;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -152,7 +154,7 @@ public class LocalVariableTypeTable extends TableAttribute<LocalVariableTable.Va
     }
 
     @Override
-    protected void writeData(ByteVector buffer) {
+    protected void writeData(ConstPool pool, ByteVector buffer) {
         List<LocalVariableTable.Variable> list = new ArrayList<>();
         for (LocalVariableTable.Variable item : items) {
             if (item.getDescriptor() != null) list.add(item);
@@ -161,9 +163,9 @@ public class LocalVariableTypeTable extends TableAttribute<LocalVariableTable.Va
         for (LocalVariableTable.Variable item : list) {
             int startPc = item.getStart().offset();
             buffer.putShort(startPc);
-            buffer.putShort(item.getEnd().offset() - startPc + item.getEnd().byteSize());
-            buffer.putShort(constPool().acquireUtf(item.getName()).index());
-            buffer.putShort(constPool().acquireUtf(item.getDescriptor()).index());
+            buffer.putShort(pool.indexOf(item.getLength()) - startPc + pool.indexOf(item.getLength()));
+            buffer.putShort(pool.indexOf(item.getName()));
+            buffer.putShort(pool.indexOf(item.getDescriptor()));
             buffer.putShort(item.getIndex());
         }
     }

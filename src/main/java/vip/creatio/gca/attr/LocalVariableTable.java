@@ -1,14 +1,10 @@
 package vip.creatio.gca.attr;
 
 import org.jetbrains.annotations.Nullable;
-import vip.creatio.gca.AttributeContainer;
-import vip.creatio.gca.ClassFileParser;
+import vip.creatio.gca.*;
 
-import vip.creatio.gca.Descriptor;
-import vip.creatio.gca.GenericSignature;
 import vip.creatio.gca.code.OpCode;
-import vip.creatio.gca.util.ByteVector;
-import vip.creatio.gca.util.ClassUtil;
+import vip.creatio.gca.util.common.ByteVector;
 
 /**
  * The LocalVariableTable attribute is an optional variable-length attribute in the
@@ -130,8 +126,8 @@ public class LocalVariableTable extends TableAttribute<LocalVariableTable.Variab
         return inst;
     }
 
-    public void add(OpCode start, OpCode end, String name, String descriptor, int index) {
-        items.add(new Variable(start, end, name, descriptor, index));
+    public void add(OpCode start, int length, String name, String descriptor, int index) {
+        items.add(new Variable(start, length, name, descriptor, index));
     }
 
     public Variable get(String name) {
@@ -152,25 +148,25 @@ public class LocalVariableTable extends TableAttribute<LocalVariableTable.Variab
     }
 
     @Override
-    protected void collect() {
-        super.collect();
+    protected void collect(ConstPool pool) {
+        super.collect(pool);
         for (Variable item : items) {
-            item.collect();
+            item.collect(pool);
         }
     }
 
     @Override
-    protected void writeData(ByteVector buffer) {
+    protected void writeData(ConstPool pool, ByteVector buffer) {
         buffer.putShort((short) items.size());
         for (Variable i : items) {
-            i.write(buffer);
+            i.write(pool, buffer);
         }
     }
 
-    public final class Variable implements Descriptor, GenericSignature {
+    public final class Variable {
 
         private OpCode start;
-        private OpCode end;
+        private int length;
         private String name;
         private String descriptor;
         private int index;
@@ -180,9 +176,9 @@ public class LocalVariableTable extends TableAttribute<LocalVariableTable.Variab
         private @Nullable String signature; // From LocalVariableTypeTable, might be null
         private @Nullable String[] signatures;
 
-        Variable(OpCode start, OpCode end, String name, String descriptor, int index) {
+        Variable(OpCode start, int length, String name, String descriptor, int index) {
             this.start = start;
-            this.end = end;
+            this.length = length;
             this.name = name;
             this.descriptor = descriptor;
             this.index = index;
@@ -191,7 +187,7 @@ public class LocalVariableTable extends TableAttribute<LocalVariableTable.Variab
         Variable(Code c, ClassFileParser pool, ByteVector buffer) {
             int startpc = buffer.getUShort();
             start = c.fromOffset(startpc);
-            end = c.fromOffsetNearest(startpc + buffer.getUShort());
+            length = buffer.getUShort();
             name = pool.getString(buffer.getUShort());
             descriptor = pool.getString(buffer.getUShort());
             index = buffer.getUShort();
@@ -205,12 +201,12 @@ public class LocalVariableTable extends TableAttribute<LocalVariableTable.Variab
             this.start = start;
         }
 
-        public OpCode getEnd() {
-            return end;
+        public int getLength() {
+            return length;
         }
 
-        public void setEnd(OpCode end) {
-            this.end = end;
+        public void setEnd(int length) {
+            this.length = length;
         }
 
         public String getName() {
@@ -229,30 +225,6 @@ public class LocalVariableTable extends TableAttribute<LocalVariableTable.Variab
             this.descriptor = descriptor;
         }
 
-        public @Nullable String getGenericSignature() {
-            return signature;
-        }
-
-        public void setGenericSignature(@Nullable String signature) {
-            this.signature = signature;
-            recache();
-        }
-
-        @Override
-        public @Nullable String[] getGenericSignatures() {
-            return signatures;
-        }
-
-        @Override
-        public @Nullable String[] getDescriptors() {
-            return descriptors;
-        }
-
-        @Override
-        public int getParameterCount() {
-            return Descriptor.super.getParameterCount();
-        }
-
         public int getIndex() {
             return index;
         }
@@ -261,20 +233,20 @@ public class LocalVariableTable extends TableAttribute<LocalVariableTable.Variab
             this.index = index;
         }
 
-        private void write(ByteVector buffer) {
+        private void write(ConstPool pool, ByteVector buffer) {
             int startPc = start.offset();
             buffer.putShort(startPc);
-            buffer.putShort(end.offset() - startPc + end.byteSize());
-            buffer.putShort(constPool().acquireUtf(name).index());
-            buffer.putShort(constPool().acquireUtf(descriptor).index());
+            buffer.putShort(length);
+            buffer.putShort(pool.indexOf(name));
+            buffer.putShort(pool.indexOf(descriptor));
             buffer.putShort(index);
         }
 
-        private void collect() {
-            constPool().acquireUtf(name);
-            constPool().acquireUtf(descriptor);
+        private void collect(ConstPool pool) {
+            pool.acquireUtf(name);
+            pool.acquireUtf(descriptor);
             if (signature != null) {
-                constPool().acquireUtf(signature);
+                pool.acquireUtf(signature);
                 container.getOrAddAttribute("LocalVariableTypeTable",
                         () -> new LocalVariableTypeTable((Code) container));
             }
@@ -282,16 +254,9 @@ public class LocalVariableTable extends TableAttribute<LocalVariableTable.Variab
 
         @Override
         public String toString() {
-            return "{start_pc=" + start + ",length=" + end + ",name=" + name + ",descriptor="
+            return "{start_pc=" + start + ",length=" + length + ",name=" + name + ",descriptor="
                     + descriptor + (signature == null ? "" : ",signature=" + signature) +
                     ",index=" + index + '}';
-        }
-
-        @Override
-        public void recache() {
-            if (signature != null)
-                this.signatures = ClassUtil.fromSignature(signature);
-            this.descriptors = ClassUtil.fromSignature(descriptor);
         }
     }
 }

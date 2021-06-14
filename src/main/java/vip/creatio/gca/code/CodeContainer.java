@@ -2,35 +2,31 @@ package vip.creatio.gca.code;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import vip.creatio.gca.ClassFile;
-import vip.creatio.gca.ClassFileParser;
-import vip.creatio.gca.ConstPool;
-import vip.creatio.gca.DeclaredMethod;
-import vip.creatio.gca.InvokeDynamicConst;
-import vip.creatio.gca.RefConst;
+import vip.creatio.gca.util.common.BiMap;
+import vip.creatio.gca.util.common.HashBiMap;
+import vip.creatio.gca.*;
+import vip.creatio.gca.type.FieldInfo;
+import vip.creatio.gca.type.MethodInfo;
 import vip.creatio.gca.type.Types;
-import vip.creatio.gca.util.BiHashMap;
 
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.common.ByteVector;
 import java.util.*;
 import java.util.function.Consumer;
 
 public class CodeContainer implements Iterable<OpCode> {
 
     private final DeclaredMethod mth;
-    private final ConstPool pool;
     private final ArrayList<OpCode> list = new ArrayList<>();
     private final Map<String, Label> labels = new HashMap<>();
 
     // caches
-    BiHashMap<Integer, OpCode> offsetMap;
+    BiMap<Integer, OpCode> offsetMap = HashBiMap.create();
     private int modCount = 0, lastModCount = -1;
     private int maxStack, maxLocals;
 
 
     public CodeContainer(DeclaredMethod mth) {
         this.mth = mth;
-        this.pool = mth.classFile().constPool();
     }
 
     public void parse(ClassFileParser pool, ByteVector buffer) {
@@ -39,7 +35,6 @@ public class CodeContainer implements Iterable<OpCode> {
         this.maxLocals = buffer.getUShort();
         this.lastModCount = modCount;
 
-        offsetMap = new BiHashMap<>();
         int len = buffer.getInt();
         int startingOffset = buffer.position();
         int remaining = len;
@@ -55,8 +50,8 @@ public class CodeContainer implements Iterable<OpCode> {
         }
     }
 
-    public void parseFinished() {
-        offsetMap = null;
+    public BiMap<Integer, OpCode> getOffsetMap() {
+        return offsetMap;
     }
 
     public int indexOf(OpCode code) {
@@ -158,45 +153,39 @@ public class CodeContainer implements Iterable<OpCode> {
         return null;
     }
 
-    public @Nullable OpCode fromOffsetNearest(int offset) {
-        if (offsetMap != null) {
-            OpCode nearest = null;
-            int delta = Integer.MAX_VALUE;
-            for (Map.Entry<Integer, OpCode> e : offsetMap.entrySet()) {
-                int d = offset - e.getKey();
-                if (d < 0) continue;
-                if (d < delta) {
-                    delta = d;
-                    nearest = e.getValue();
-                }
-            }
-            return nearest;
-        } else {
-            OpCode nearest = null;
-            int delta = Integer.MAX_VALUE;
-            int sum = 0;
-            for (OpCode op : list) {
-                int d = offset - sum;
-                if (d < 0) return nearest;
-                if (d < delta) {
-                    delta = d;
-                    nearest = op;
-                }
-                sum += op.byteSize();
-            }
-            return nearest;
-        }
-    }
+    //TODO region selector
+//    public @Nullable OpCode fromOffsetNearest(ClassFileParser parser, int offset) {
+//        if (offsetMap != null) {
+//            OpCode nearest = null;
+//            int delta = Integer.MAX_VALUE;
+//            for (Map.Entry<Integer, OpCode> e : offsetMap.entrySet()) {
+//                int d = offset - e.getKey();
+//                if (d < 0) continue;
+//                if (d < delta) {
+//                    delta = d;
+//                    nearest = e.getValue();
+//                }
+//            }
+//            return nearest;
+//        } else {
+//            OpCode nearest = null;
+//            int delta = Integer.MAX_VALUE;
+//            int sum = 0;
+//            for (OpCode op : list) {
+//                int d = offset - sum;
+//                if (d < 0) return nearest;
+//                if (d < delta) {
+//                    delta = d;
+//                    nearest = op;
+//                }
+//                sum += op.byteSize();
+//            }
+//            return nearest;
+//        }
+//    }
 
     public int offsetOf(OpCode code) {
-        if (offsetMap != null) return offsetMap.reverse().get(code);
-
-        int sum = 0;
-        for (OpCode op : list) {
-            if (op.equals(code)) return sum;
-            else sum += op.byteSize();
-        }
-        return -1;
+        return offsetMap.inverse().get(code);
     }
 
     public Label addLabel(OpCode anchor) {
@@ -248,7 +237,7 @@ public class CodeContainer implements Iterable<OpCode> {
 
     private void reCacheStackAndLocals() {
         int maxLocals = 0;
-        for (String type : mth.getParameterTypes()) {
+        for (TypeInfo type : mth.getParameterTypes()) {
             maxLocals += Types.operandSize(type);
         }
         if (!mth.flaggedStatic()) maxLocals++;
@@ -312,8 +301,8 @@ public class CodeContainer implements Iterable<OpCode> {
                     case GETFIELD: {
                         size--; // objectref
                         ConstOpCode code = (ConstOpCode) op;
-                        RefConst field = (RefConst) code.getConstant();
-                        size += Types.operandSize(field.getValueType());
+                        FieldInfo field = (FieldInfo) code.getConstant();
+                        size += Types.operandSize(field.getType());
                         break;
                     }
                     case PUTSTATIC:
@@ -321,8 +310,8 @@ public class CodeContainer implements Iterable<OpCode> {
                     case PUTFIELD: {
                         size--; // objectref
                         ConstOpCode code = (ConstOpCode) op;
-                        RefConst field = (RefConst) code.getConstant();
-                        size -= Types.operandSize(field.getValueType());
+                        FieldInfo field = (FieldInfo) code.getConstant();
+                        size -= Types.operandSize(field.getType());
                         break;
                     }
 
@@ -333,21 +322,22 @@ public class CodeContainer implements Iterable<OpCode> {
                     case INVOKEINTERFACE: {
                         size--; // objectref
                         InvocationOpCode code = (InvocationOpCode) op;
-                        RefConst mth = code.getRef();
-                        for (String type : mth.getParameterTypes()) {
+                        MethodInfo mth = code.getRef();
+                        for (TypeInfo type : mth.getParameterTypes()) {
                             size -= Types.operandSize(type);
                         }
-                        size += Types.operandSize(mth.getValueType());  // return type
+                        size += Types.operandSize(mth.getReturnType());  // return type
                         break;
                     }
                     case INVOKEDYNAMIC: {
-                        InvokeDynamicOpCode code = (InvokeDynamicOpCode) op;
-                        InvokeDynamicConst id = code.getRef();
-                        for (String type : id.getParameterTypes()) {
-                            size -= Types.operandSize(type);
-                        }
-                        size += Types.operandSize(id.getValueType());  // return type
-                        break;
+                        //TODO
+//                        InvokeDynamicOpCode code = (InvokeDynamicOpCode) op;
+//                        InvokeDynamicConst id = code.getRef();
+//                        for (String type : id.getParameterTypes()) {
+//                            size -= Types.operandSize(type);
+//                        }
+//                        size += Types.operandSize(id.getValueType());  // return type
+//                        break;
                     }
                     case MULTIANEWARRAY: {
                         NewArrayOpCode code = (NewArrayOpCode) op;
@@ -366,38 +356,40 @@ public class CodeContainer implements Iterable<OpCode> {
         this.lastModCount = modCount;
     }
 
-
-    ConstPool constPool() {
-        return pool;
+    private int getSize(ConstPool pool, OpCode c) {
+        if (c instanceof LoadConstOpCode) {
+            return ((LoadConstOpCode) c).byteSize(pool);
+        }
+        return c.byteSize();
     }
 
     ClassFile classFile() {
         return mth.classFile();
     }
 
-    public void write(ByteVector buffer) {
+    public void write(ConstPool pool, ByteVector buffer) {
         // make new cache offset map
         int sum = 0;
-        offsetMap = new BiHashMap<>();
+        offsetMap.clear();
         for (OpCode op : list) {
             offsetMap.put(sum, op);
-            sum += op.byteSize();
+            sum += getSize(pool, op);
         }
 
         for (OpCode op : list) {
             try {
-                op.serialize(buffer);
+                op.write(pool, buffer);
             } catch (BytecodeException e) {
                 throw e.detailedOpCode().setLocation("Failed to parse opcode " + op.type());
             } catch (Exception e) {
-                throw new BytecodeException(this, offsetMap.reverse().get(op), e, "Failed to parse opcode " + op.type());
+                throw new BytecodeException(this, offsetMap.inverse().get(op), e, "Failed to parse opcode " + op.type());
             }
         }
     }
 
-    public void collect() {
+    public void collect(ConstPool pool) {
         for (OpCode op : list) {
-            op.collect();
+            op.collect(pool);
         }
     }
 

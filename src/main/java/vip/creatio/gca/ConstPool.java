@@ -1,290 +1,192 @@
 package vip.creatio.gca;
 
 import org.jetbrains.annotations.NotNull;
-import vip.creatio.gca.type.Type;
-import vip.creatio.gca.util.ByteVector;
-import vip.creatio.gca.util.ClassUtil;
+import vip.creatio.gca.type.*;
+import vip.creatio.gca.util.common.BiMap;
+import vip.creatio.gca.util.common.ByteVector;
+import vip.creatio.gca.util.common.HashBiMap;
 
-import java.lang.invoke.MethodType;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.math.BigInteger;
 import java.util.*;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public final class ConstPool implements Iterable<Const> {
 
     protected final ClassFile classFile;
 
-    private final HashSet<Const> constants = new HashSet<>();
-    private int size;
+    /*
+     * Object:
+     *  int, float, double, long - value
+     *  UTF - byteArray
+     *  String - String
+     *  Class - TypeInfo
+     *  Ref - MemberInfo
+     *  MethodHandle - MethodHandle
+     *  MethodType - MethodType
+     *  InvokeDynamic - InvokeDynamic
+     *
+     */
+    private final HashBiMap<Const, Integer> constants = HashBiMap.create();      // index
+    private final HashMap<Object, Const.Value> values = new HashMap<>();
+    private final HashMap<String, UTFConst> strings = new HashMap<>();
 
-    private final HashMap<Object, Const.Value> valueCache = new HashMap<>();
-    private final ArrayList<Const> constCache = new ArrayList<>();
-
-    boolean writing = false;
+    private int size = 1;
 
     ConstPool(ClassFile classFile) {
         this.classFile = classFile;
     }
 
-    /**
-     * Parsing state: elements cannot be deleted
-     */
-    boolean isWriting() {
-        return writing;
-    }
-
-    void setWriting(boolean flag) {
-        writing = flag;
-    }
-
-    public void remove(Const c) {
-        if (isWriting()) throw new IllegalStateException("constant cannot be removed in parsing period");
-        constants.remove(c);
-        size--;
-    }
-
-    public void remove(String str) {
-        if (isWriting()) throw new IllegalStateException("constant cannot be removed in parsing period");
-        constants.removeIf(u -> u instanceof UTFConst && ((UTFConst) u).string().equals(str));
-        recalcSize();
-    }
-
-    private void recalcSize() {
-        size = 0;
-        for (Const c : this) {
-            size += c instanceof Const.DualSlot ? 2 : 1;
-        }
-    }
-
     public boolean contains(Const c) {
-        return constants.contains(c);
+        return constants.containsKey(c);
     }
 
-    protected final void write(ByteVector buffer) {
+    final void write(ByteVector buffer) {
         // size: count + 1
-        buffer.putShort((short) (this.size() + 1));
-        for (Const c : constants) {
-            c.write(buffer);
+        buffer.putShort(size);
+
+        BiMap<Integer, Const> rev = constants.inverse();
+        for (int i = 1; i < size; i++) {
+            Const c = rev.get(i);
+            if (c != null) {
+                write(c, buffer);
+            }
         }
     }
 
-    void recacheMap() {
-        //TODO
-    }
-
+    // index of a constant
     public int indexOf(Const c) {
-        int i = 1;
-        for (Const constant : this) {
-            if (constant.equals(c)) return i;
-            else i += constant instanceof Const.DualSlot ? 2 : 1;
-        }
-        return -1;
+        return constants.getOrDefault(c, -1);
+    }
+
+    // index of an Integer const
+    public int indexOf(int v) {
+        return indexOf(values.get(v));
+    }
+
+    // index of a Double const
+    public int indexOf(double v) {
+        return indexOf(values.get(v));
+    }
+
+    // index of a Float const
+    public int indexOf(float v) {
+        return indexOf(values.get(v));
+    }
+
+    // index of a Long const
+    public int indexOf(long v) {
+        return indexOf(values.get(v));
+    }
+
+    // index of an UTF const
+    public int indexOf(String str) {
+        return indexOf(strings.get(str));
+    }
+
+    public int indexOfValue(Object v) {
+        return indexOf(values.get(v));
+    }
+
+    // index of a NameAndType const
+    public int indexOf(String name, String type) {
+        return indexOf(new NameAndTypeConst(name, type));
     }
 
     public Const get(int index) {
         if (index == 0) return null;
 
         index &= 0xFFFF;
-        int i = 1;
-        for (Const constant : this) {
-            if (i == index) return constant;
-            else i += constant instanceof Const.DualSlot ? 2 : 1;
+        for (Map.Entry<Const, Integer> entry : constants.entrySet()) {
+            if (entry.getValue().equals(index)) return entry.getKey();
         }
         return null;
     }
 
 
-    public <T extends Const> T acquire(T c) {
-        if (c == null || c.pool != this) return null;
-        for (Const constant : constants) {
-            if (constant.equals(c)) return (T) constant;
-        }
+    public void acquire(Const c) {
+        if (c == null || constants.containsKey(c)) return;
         add(c);
-        return c;
     }
 
-    public final <T extends Const> List<T> acquire(Collection<T> c) {
-        return c.stream().map(this::acquire).collect(Collectors.toList());
+    public final void acquire(Collection<? extends Const> c) {
+        c.forEach(this::acquire);
     }
 
-    @SafeVarargs
-    public final <T extends Const> T[] acquire(T... c) {
-        T[] copy = Arrays.copyOf(c, c.length);
-        for (int i = 0; i < c.length; i++) {
-            copy[i] = acquire(c[i]);
+    public final void acquire(Const... c) {
+        for (Const constant : c) {
+            acquire(constant);
         }
-        return copy;
     }
 
-    public List<UTFConst> acquireUtf() {
-        List<UTFConst> l = new ArrayList<>();
-        for (Const constant : constants) {
-            if (constant instanceof UTFConst) l.add((UTFConst) constant);
+    public void acquireUtf(String data) {
+        if (!strings.containsKey(data)) {
+            add(new UTFConst(data));
         }
-        return l;
-    }
-
-    public UTFConst acquireUtf(String data) {
-        return acquire(new UTFConst(this, data.getBytes()));
-    }
-
-    public UTFConst acquireUtf(byte[] data) {
-        return acquireUtf(new String(data));
     }
 
 
 
-    public IntegerConst acquireInt(int data) {
-        return acquire(new IntegerConst(this, data));
+    public void acquireInt(int data) {
+        if (!values.containsKey(data)) {
+            add(new IntegerConst(data));
+        }
     }
 
-    public FloatConst acquireFloat(float data) {
-        return acquire(new FloatConst(this, data));
+    public void acquireFloat(float data) {
+        if (!values.containsKey(data)) {
+            add(new FloatConst(data));
+        }
     }
 
-    public LongConst acquireLong(long data) {
-        return acquire(new LongConst(this, data));
+    public void acquireLong(long data) {
+        if (!values.containsKey(data)) {
+            add(new LongConst(data));
+        }
     }
 
-    public DoubleConst acquireDouble(double data) {
-        return acquire(new DoubleConst(this, data));
+    public void acquireDouble(double data) {
+        if (!values.containsKey(data)) {
+            add(new DoubleConst(data));
+        }
     }
 
-    public Const.Value acquireValue(Object v) {
+    public void acquireValue(Object v) {
         if (v instanceof Number) {
             if (v instanceof Integer) {
-                return acquireInt((Integer) v);
+                acquireInt((Integer) v);
             } else if (v instanceof Float) {
-                return acquireFloat((Float) v);
+                acquireFloat((Float) v);
             } else if (v instanceof Double) {
-                return acquireDouble((Double) v);
+                acquireDouble((Double) v);
             } else if (v instanceof Long) {
-                return acquireLong((Long) v);
+                acquireLong((Long) v);
             }
         } else if (v instanceof String) {
-            return acquireString((String) v);
+            acquireString((String) v);
         }
         throw new RuntimeException("unsupported type: " + v.getClass());
     }
 
 
 
-    // class name formatted in some like java.lang.xxx$inner
-    public ClassConst acquireClass(String name) {
-        return acquire(new ClassConst(this, name));
-    }
-
-    public ClassConst acquireClass(Type name) {
-        return acquire(new ClassConst(this, name.getTypeName()));
-    }
-
-    public ClassConst acquireClass(Class<?> cls) {
-        return acquireClass(cls.getName());
-    }
-
-    public ClassConst acquireClass(ClassConst c) {
-        return acquireClass(c.getTypeName());
+    public void acquireClass(TypeInfo c) {
+        acquire(c);
     }
 
 
 
-    public StringConst acquireString(String s) {
-        return acquire(new StringConst(this, s));
+    public void acquireString(String s) {
+        if (!values.containsKey(s)) {
+            add(new StringConst(s));
+        }
     }
 
 
-
-    public RefConst acquireFieldRef(ClassConst clazz, String name, String type) {
-        return acquire(new RefConst(this, ConstType.FIELDREF, clazz, name, ClassUtil.getSignature(type)));
-    }
-
-    public RefConst acquireFieldRef(String clazzSig, String name, String type) {
-        return acquireFieldRef(acquireClass(clazzSig), name, type);
-    }
-
-    public RefConst acquireFieldRef(ClassConst clazz, String name, ClassConst typeClass) {
-        return acquireFieldRef(clazz, name, typeClass.getTypeName());
-    }
-
-    public RefConst acquireFieldRef(Class<?> clazz, String name, Class<?> typeClass) {
-        return acquireFieldRef(acquireClass(clazz), name, typeClass.getName());
-    }
-
-    public RefConst acquireFieldRef(Field f) {
-        return acquireFieldRef(acquireClass(f.getName()), f.getName(), ClassUtil.getSignature(f));
+    public void acquireNameAndType(String name, String descriptor) {
+        acquire(new NameAndTypeConst(name, descriptor));
     }
 
 
-
-    public RefConst acquireMethodRef(ClassConst clazz, String name, String descriptor) {
-        return acquire(new RefConst(this, ConstType.METHODREF, clazz, name, descriptor));
-    }
-
-    public RefConst acquireMethodRef(String clazz, String name, String signature) {
-        return acquireMethodRef(acquireClass(clazz), name, signature);
-    }
-
-    public RefConst acquireMethodRef(Class<?> clazz, String name, String signature) {
-        return acquireMethodRef(clazz.getName(), name, signature);
-    }
-
-    public RefConst acquireMethodRef(Method m) {
-        return acquireMethodRef(m.getDeclaringClass(), m.getName(), ClassUtil.getSignature(m));
-    }
-
-    public RefConst acquireMethodRef(Class<?> clazz, String name, MethodType type) {
-        return acquireMethodRef(clazz, name, type.toMethodDescriptorString());
-    }
-
-
-
-    public RefConst acquireInterfaceMethodRef(ClassConst clazz, String name, String descriptor) {
-        return acquire(new RefConst(this, ConstType.INTERFACE_METHODREF, clazz, name, descriptor));
-    }
-
-    public RefConst acquireInterfaceMethodRef(String clazz, String name, String signature) {
-        return acquireInterfaceMethodRef(acquireClass(clazz), name, signature);
-    }
-
-    public RefConst acquireInterfaceMethodRef(Class<?> clazz, String name, String signature) {
-        return acquireInterfaceMethodRef(clazz.getName(), name, signature);
-    }
-
-    public RefConst acquireInterfaceMethodRef(Method m) {
-        return acquireInterfaceMethodRef(m.getDeclaringClass(), m.getName(), ClassUtil.getSignature(m));
-    }
-
-    public RefConst acquireInterfaceMethodRef(Class<?> clazz, String name, MethodType type) {
-        return acquireInterfaceMethodRef(clazz, name, type.toMethodDescriptorString());
-    }
-
-
-    public NameAndTypeConst acquireNameAndType(String name, String descriptor) {
-        return acquire(new NameAndTypeConst(this, name, descriptor));
-    }
-
-
-    public MethodTypeConst acquireMethodType(String descriptor) {
-        return acquire(new MethodTypeConst(this, descriptor));
-    }
-
-    public MethodTypeConst acquireMethodType(String... signatures) {
-        return acquireMethodType(ClassUtil.getSignature(signatures));
-    }
-
-    public MethodTypeConst acquireMethodType(String rtype, String... ptype) {
-        return acquireMethodType(ClassUtil.getSignature(rtype, ptype));
-    }
-
-    public MethodTypeConst acquireMethodType(MethodType type) {
-        return acquireMethodType(type.toMethodDescriptorString());
-    }
-
-    public MethodTypeConst acquireMethodType(Method method) {
-        return acquireMethodType(ClassUtil.getSignature(method));
+    public void acquireMethodType(TypeInfo rtype, TypeInfo... ptype) {
+        acquire(new MethodTypeConst(rtype, ptype));
     }
 
 
@@ -294,148 +196,120 @@ public final class ConstPool implements Iterable<Const> {
 
 
     public void add(Const constant) {
-        constant.pool = this;
-        constants.add(constant);
-        if (isWriting()) {
-            //constMap.put(constants.size() - 1, constant);
-            constant.collect();
-        }
+        constants.put(constant, size);
         size += constant instanceof Const.DualSlot ? 2 : 1;
+        if (constant instanceof UTFConst) {
+            strings.put(((UTFConst) constant).string(), (UTFConst) constant);
+        } else if (constant instanceof Const.Value) {
+            values.put(((Const.Value) constant).value(), (Const.Value) constant);
+        } else {
+            collect(constant);
+        }
+
     }
 
-    public int size() {
-        return size;
-    }
-
-    static void parse(ClassFileParser pool, ByteVector buffer) throws ClassFormatError {
-        int i = 1;
-        try {
-            for (; i < pool.size(); i++) {
-                byte tag = buffer.getByte();
-                ConstType type = ConstType.fromTag(tag);
-                if (type == null) {
-                    throw new ClassFormatError("No constant with tag " + tag
-                            + " @" + i
-                            + " total " + pool.size()
-                            + " position " + BigInteger.valueOf(buffer.position()).toString(16));
-                }
-                switch (type) {
-                    case UTF8:
-                        pool.set(i, buffer.position(), new UTFConst(pool.getPool(), buffer));
-                        break;
-                    case INTEGER:
-                        pool.set(i, buffer.position(), new IntegerConst(pool.getPool(), buffer));
-                        break;
-                    case FLOAT:
-                        pool.set(i, buffer.position(), new FloatConst(pool.getPool(), buffer));
-                        break;
-                    case LONG:
-                        pool.set(i, buffer.position(), new LongConst(pool.getPool(), buffer));
-                        i++;        // long number continues
-                        break;
-                    case DOUBLE:
-                        pool.set(i, buffer.position(), new DoubleConst(pool.getPool(), buffer));
-                        i++;        // long number continues
-                        break;
-                    case CLASS:
-                        pool.set(i, buffer.position(), new ClassConst(pool.getPool()));
-                        buffer.position(buffer.position() + 2);
-                        break;
-                    case STRING:
-                        pool.set(i, buffer.position(), new StringConst(pool.getPool()));
-                        buffer.position(buffer.position() + 2);
-                        break;
-                    case FIELDREF:
-                        pool.set(i, buffer.position(), new RefConst(pool.getPool(), ConstType.FIELDREF));
-                        buffer.position(buffer.position() + 4);
-                        break;
-                    case METHODREF:
-                        pool.set(i, buffer.position(), new RefConst(pool.getPool(), ConstType.METHODREF));
-                        buffer.position(buffer.position() + 4);
-                        break;
-                    case INTERFACE_METHODREF:
-                        pool.set(i, buffer.position(), new RefConst(pool.getPool(), ConstType.INTERFACE_METHODREF));
-                        buffer.position(buffer.position() + 4);
-                        break;
-                    case NAME_AND_TYPE:
-                        pool.set(i, buffer.position(), new NameAndTypeConst(pool.getPool()));
-                        buffer.position(buffer.position() + 4);
-                        break;
-                    case METHOD_HANDLE:
-                        pool.set(i, buffer.position(), new MethodHandleConst(pool.getPool()));
-                        buffer.position(buffer.position() + 3);
-                        break;
-                    case METHOD_TYPE:
-                        pool.set(i, buffer.position(), new MethodTypeConst(pool.getPool()));
-                        buffer.position(buffer.position() + 2);
-                        break;
-                    case INVOKE_DYNAMIC:
-                        pool.set(i, buffer.position(), new InvokeDynamicConst(pool.getPool()));
-                        buffer.position(buffer.position() + 4);
-                        break;
-                    case MODULE:
-                        pool.set(i, buffer.position(), new ModuleConst(pool.getPool()));
-                        buffer.position(buffer.position() + 2);
-                        break;
-                    case PACKAGE:
-                        pool.set(i, buffer.position(), new PackageConst(pool.getPool()));
-                        buffer.position(buffer.position() + 2);
-                        break;
-                }
-            }
-        } catch (RuntimeException e) {
-            System.err.println("Exception occurred @" + i
-                    + " total " + pool.size()
-                    + " position 0x" + BigInteger.valueOf(buffer.position()).toString(16));
-            System.err.println("Parsed constants:");
-            pool.printConstants();
-            throw e;
+    void collect() {
+        for (Const c : constants.keySet().toArray(new Const[0])) {
+            collect(c);
         }
     }
 
-    public ClassFile classFile() {
-        return classFile;
+    private void collect(Const c) {
+        switch (c.constantType()) {
+            case CLASS:
+                ((TypeInfo) c).collect(this);
+                break;
+            case STRING:
+                ((StringConst) c).collect(this);
+                break;
+            case FIELDREF:
+            case METHODREF:
+            case INTERFACE_METHODREF:
+            {
+                MemberInfo info = (MemberInfo) c;
+                acquireClass(info.getDeclaringClass());
+                acquireNameAndType(info.getName(), info.getDescriptor());
+                break;
+            }
+            case NAME_AND_TYPE:
+                ((NameAndTypeConst) c).collect(this);
+                break;
+            case METHOD_HANDLE:
+                ((MethodHandleConst) c).collect(this);
+                break;
+            case METHOD_TYPE:
+                ((MethodTypeConst) c).collect(this);
+                break;
+            case DYNAMIC:
+                throw new UnsupportedOperationException("not implement yet");
+            case INVOKE_DYNAMIC:
+                ((InvokeDynamicConst) c).collect(this);
+                break;
+            case MODULE:
+            case PACKAGE:
+                ((AbstractTypeConst) c).collect(this);
+                break;
+        }
     }
 
-    protected void collect() {
-        for (Const c : new HashSet<>(constants)) {
-            c.collect();
+    private void write(Const c, ByteVector buf) {
+        ConstType t = c.constantType();
+        buf.putByte(t.tag);
+        switch (t) {
+            case UTF8:
+                ((UTFConst) c).write(buf);
+                break;
+            case INTEGER:
+                ((IntegerConst) c).write(buf);
+                break;
+            case FLOAT:
+                ((FloatConst) c).write(buf);
+                break;
+            case LONG:
+                ((LongConst) c).write(buf);
+                break;
+            case DOUBLE:
+                ((DoubleConst) c).write(buf);
+                break;
+            case CLASS:
+                ((TypeInfo) c).write(this, buf);
+                break;
+            case STRING:
+                ((StringConst) c).write(this, buf);
+                break;
+            case FIELDREF:
+            case METHODREF:
+            case INTERFACE_METHODREF:
+            {
+                MemberInfo mth = (MemberInfo) c;
+                buf.putShort(indexOf(mth.getDeclaringClass()));
+                buf.putShort(indexOf(mth.getName(), mth.getDescriptor()));
+                break;
+            }
+            case NAME_AND_TYPE:
+                ((NameAndTypeConst) c).write(this, buf);
+                break;
+            case METHOD_HANDLE:
+                ((MethodHandleConst) c).write(this, buf);
+                break;
+            case METHOD_TYPE:
+                ((MethodTypeConst) c).write(this, buf);
+                break;
+            case DYNAMIC:
+                throw new UnsupportedOperationException("not implement yet");
+            case INVOKE_DYNAMIC:
+                ((InvokeDynamicConst) c).write(this, buf);
+                break;
+            case MODULE:
+            case PACKAGE:
+                ((AbstractTypeConst) c).write(this, buf);
+                break;
         }
     }
 
     @NotNull
     @Override
     public Iterator<Const> iterator() {
-        return new AccessItr(constants.iterator());
-    }
-
-    protected class AccessItr implements Iterator<Const> {
-        private final Iterator<Const> itr;
-
-        public AccessItr(Iterator<Const> itr) {
-            this.itr = itr;
-        }
-
-        @Override
-        public boolean hasNext() {
-            return itr.hasNext();
-        }
-
-        @Override
-        public Const next() {
-            return itr.next();
-        }
-
-        @Override
-        public void remove() {
-            if (isWriting()) throw new IllegalStateException("constant cannot be removed in parsing period");
-            itr.remove();
-            size--;
-        }
-
-        @Override
-        public void forEachRemaining(Consumer<? super Const> action) {
-            itr.forEachRemaining(action);
-        }
+        return constants.keySet().iterator();
     }
 }

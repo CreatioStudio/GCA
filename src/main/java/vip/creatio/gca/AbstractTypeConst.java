@@ -1,42 +1,23 @@
 package vip.creatio.gca;
 
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.common.ByteVector;
 import vip.creatio.gca.util.ClassUtil;
 
-abstract class AbstractTypeConst extends Const {
+abstract class AbstractTypeConst implements Const {
     private String name;
     private String bcName;
 
-    AbstractTypeConst(ConstPool pool, ConstType type, String name) {
-        super(pool, type);
+    AbstractTypeConst(String name) {
         this.name = name;
         this.bcName = ClassUtil.toBytecodeName(name);
     }
 
-    AbstractTypeConst(ConstPool pool, ConstType type) {
-        super(pool, type);
+    void write(ConstPool pool, ByteVector buffer) {
+        buffer.putShort(pool.indexOf(bcName));
     }
 
-    @Override
-    int byteSize() {
-        return 3;
-    }
-
-    @Override
-    protected void write(ByteVector buffer) {
-        buffer.putByte(tag());
-        buffer.putShort(pool.acquireUtf(bcName).index());
-    }
-
-    @Override
-    void collect() {
+    void collect(ConstPool pool) {
         pool.acquireUtf(bcName);
-    }
-
-    @Override
-    void parse(ClassFileParser pool, ByteVector buffer) {
-        bcName = pool.getString(buffer.getShort());
-        name = ClassUtil.toBinaryName(bcName);
     }
 
     public void setName(String name) {
@@ -53,11 +34,6 @@ abstract class AbstractTypeConst extends Const {
     }
 
     @Override
-    public boolean isImmutable() {
-        return false;
-    }
-
-    @Override
     public int hashCode() {
         return name.hashCode() * 31;
     }
@@ -65,7 +41,7 @@ abstract class AbstractTypeConst extends Const {
     @Override
     public boolean equals(Object obj) {
         if (this.getClass().isAssignableFrom(obj.getClass())) {
-            return ((AbstractTypeConst) obj).pool == pool && obj.hashCode() == hashCode();
+            return obj.hashCode() == hashCode();
         }
         return false;
     }

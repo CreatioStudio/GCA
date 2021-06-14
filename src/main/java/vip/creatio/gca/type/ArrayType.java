@@ -1,5 +1,7 @@
 package vip.creatio.gca.type;
 
+import vip.creatio.gca.TypeInfo;
+
 import java.lang.reflect.MalformedParameterizedTypeException;
 
 public class ArrayType extends TypeInfo {
@@ -66,11 +68,6 @@ public class ArrayType extends TypeInfo {
 
         public void setComponentType(Type type) {
             super.type = type;
-        }
-
-        @Override
-        public boolean mutable() {
-            return true;
         }
     }
 }

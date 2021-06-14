@@ -1,47 +1,30 @@
 package vip.creatio.gca;
 
-import vip.creatio.gca.util.Immutable;
+import vip.creatio.gca.util.common.ByteVector;
 
-import vip.creatio.gca.util.ByteVector;
-
-@Immutable
 public class DoubleConst extends Const.Value implements Const.DualSlot {
 
     private final double data;
 
-    DoubleConst(ConstPool pool, double data) {
-        super(pool, ConstType.DOUBLE);
+    DoubleConst(double data) {
         this.data = data;
     }
 
-    DoubleConst(ConstPool pool, ByteVector buffer) {
-        super(pool, ConstType.DOUBLE);
+    DoubleConst(ByteVector buffer) {
         data = buffer.getDouble();
-    }
-
-    @Override
-    int byteSize() {
-        return 9;
-    }
-
-    @Override
-    public void write(ByteVector buffer) {
-        buffer.putByte(tag());
-        buffer.putDouble(data);
     }
 
     public double getDouble() {
         return data;
     }
 
-    @Override
-    public boolean isImmutable() {
-        return true;
+    void write(ByteVector buffer) {
+        buffer.putDouble(data);
     }
 
     @Override
-    public Const copy() {
-        return new DoubleConst(pool, data);
+    public ConstType constantType() {
+        return ConstType.DOUBLE;
     }
 
     @Override
@@ -67,7 +50,7 @@ public class DoubleConst extends Const.Value implements Const.DualSlot {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof DoubleConst) {
-            return ((DoubleConst) obj).pool == pool && ((DoubleConst) obj).data == data;
+            return ((DoubleConst) obj).data == data;
         }
         return false;
     }

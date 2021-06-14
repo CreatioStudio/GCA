@@ -1,6 +1,7 @@
 package vip.creatio.gca.code;
 
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.common.ByteVector;
+import vip.creatio.gca.ConstPool;
 
 // opcode that uses Label as coordinator, this always read short index
 public class LabelOpCode extends OpCode {
@@ -50,8 +51,8 @@ public class LabelOpCode extends OpCode {
     }
 
     @Override
-    public void serialize(ByteVector buffer) {
-        super.serialize(buffer);
+    public void write(ConstPool pool, ByteVector buffer) {
+        super.write(pool, buffer);
         if (type == OpCodeType.GOTO_W || type == OpCodeType.JSR_W) {
             buffer.putInt(label.offset() - offset());
         } else {

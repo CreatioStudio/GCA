@@ -2,9 +2,8 @@ package vip.creatio.gca.attr;
 
 import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.*;
-import vip.creatio.gca.ClassConst;
 
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.common.ByteVector;
 import java.util.Arrays;
 import java.util.EnumSet;
 
@@ -30,13 +29,13 @@ public class InnerClasses extends TableAttribute<InnerClasses.Class> {
 
         int num = buffer.getUShort();
         for (int i = 0; i < num; i++) {
-            inst.items.add(inst.new Class(pool, buffer) /* an ridiculous way to construct object... */ );
+            inst.items.add(new Class(pool, buffer) /* an ridiculous way to construct object... */ );
         }
         return inst;
     }
 
     // innerName: the original simple name of class
-    public void add(ClassConst clazz,
+    public void add(TypeInfo clazz,
                     @Nullable String innerName, /* set to null to make anonymous class */
                     AccessFlag... flags) {
         EnumSet<AccessFlag> es = EnumSet.noneOf(AccessFlag.class);
@@ -44,23 +43,22 @@ public class InnerClasses extends TableAttribute<InnerClasses.Class> {
         add(clazz, innerName, es);
     }
 
-    public void add(ClassConst clazz, String innerName, EnumSet<AccessFlag> flags) {
+    public void add(TypeInfo clazz, String innerName, EnumSet<AccessFlag> flags) {
         // anti duplication
         for (Class i : items) {
             if (i.inner.equals(clazz)) return;
         }
-        Class i = new Class(clazz, ((ClassFile) container).getThisClass(), innerName, flags);
+        Class i = new Class(clazz, (ClassFile) container, innerName, flags);
         items.add(i);
     }
 
     public void add(ClassFile classFile) {
-        ClassConst c = this.constPool().acquireClass(classFile.getThisClass());
-        String name = c.getTypeName();
+        String name = classFile.getTypeName();
         name = name.substring(name.lastIndexOf('/') + 1);
-        add(c, name, classFile.getAccessFlags());
+        add(classFile, name, classFile.getAccessFlags());
     }
 
-    public void remove(ClassConst clazz) {
+    public void remove(TypeInfo clazz) {
         items.removeIf(i -> i.inner.equals(clazz));
     }
 
@@ -79,32 +77,32 @@ public class InnerClasses extends TableAttribute<InnerClasses.Class> {
     }
 
     @Override
-    protected void collect() {
-        super.collect();
+    protected void collect(ConstPool pool) {
+        super.collect(pool);
         for (Class item : items) {
-            constPool().acquire(item.getInner());
-            constPool().acquire(item.getOuter());
-            constPool().acquireUtf(item.getInnerName());
+            pool.acquire(item.getInner());
+            pool.acquire(item.getOuter());
+            pool.acquireUtf(item.getInnerName());
         }
     }
 
     @Override
-    public void writeData(ByteVector buffer) {
+    public void writeData(ConstPool pool, ByteVector buffer) {
         buffer.putShort((short) items.size());
         for (Class i : items) {
-            i.write(buffer);
+            i.write(pool, buffer);
         }
     }
 
-    public final class Class {
+    public static final class Class {
 
-        private ClassConst inner;
-        private ClassConst outer;
+        private TypeInfo inner;
+        private TypeInfo outer;
         private String innerName;
         private EnumSet<AccessFlag> innerAccessFlags;
 
-        Class(ClassConst inner,
-              ClassConst outer,
+        Class(TypeInfo inner,
+              TypeInfo outer,
               String innerName,
               EnumSet<AccessFlag> innerAccessFlags) {
             this.inner = inner;
@@ -114,25 +112,25 @@ public class InnerClasses extends TableAttribute<InnerClasses.Class> {
         }
 
         Class(ClassFileParser pool, ByteVector buffer) {
-            this.inner = (ClassConst) pool.get(buffer.getShort());
-            this.outer = (ClassConst) pool.get(buffer.getShort());
+            this.inner = (TypeInfo) pool.get(buffer.getShort());
+            this.outer = (TypeInfo) pool.get(buffer.getShort());
             this.innerName = pool.getString(buffer.getShort());
             this.innerAccessFlags = AccessFlag.resolveInnerClass(buffer.getShort());
         }
 
-        public ClassConst getInner() {
+        public TypeInfo getInner() {
             return inner;
         }
 
-        public void setInner(ClassConst inner) {
+        public void setInner(TypeInfo inner) {
             this.inner = inner;
         }
 
-        public ClassConst getOuter() {
+        public TypeInfo getOuter() {
             return outer;
         }
 
-        public void setOuter(ClassConst outer) {
+        public void setOuter(TypeInfo outer) {
             this.outer = outer;
         }
 
@@ -153,10 +151,10 @@ public class InnerClasses extends TableAttribute<InnerClasses.Class> {
             this.innerAccessFlags.addAll(Arrays.asList(flags));
         }
 
-        private void write(ByteVector buffer) {
-            buffer.putShort(inner.index());
-            buffer.putShort(outer.index());
-            buffer.putShort(innerName == null ? 0 : constPool().acquireUtf(innerName).index());
+        private void write(ConstPool pool, ByteVector buffer) {
+            buffer.putShort(pool.indexOf(inner));
+            buffer.putShort(pool.indexOf(outer));
+            buffer.putShort(innerName == null ? 0 : pool.indexOf(innerName));
             buffer.putShort(AccessFlag.serialize(innerAccessFlags));
         }
 

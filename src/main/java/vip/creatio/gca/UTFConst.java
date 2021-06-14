@@ -1,48 +1,32 @@
 package vip.creatio.gca;
 
-import vip.creatio.gca.util.ByteVector;
-import vip.creatio.gca.util.Cacheable;
-import vip.creatio.gca.util.Immutable;
+import vip.creatio.gca.util.common.ByteVector;
 
-@Immutable
-public class UTFConst extends Const implements Cacheable {
+public class UTFConst implements Const {
 
-    private String cache;
     private final byte[] data;
 
-    UTFConst(ConstPool pool, byte[] data) {
-        super(pool, ConstType.UTF8);
+    UTFConst(byte[] data) {
         this.data = data;
-        recache();
     }
 
-    UTFConst(ConstPool pool, final ByteVector buffer) {
-        super(pool, ConstType.UTF8);
+    UTFConst(String s) {
+        this.data = s.getBytes();
+    }
+
+    UTFConst(final ByteVector buffer) {
         int size = buffer.getUShort();
         data = new byte[size];
         buffer. getBytes(data, 0, size);
-        recache();
     }
 
     @Override
-    public boolean isImmutable() {
-        return true;
+    public ConstType constantType() {
+        return ConstType.UTF8;
     }
 
-    @Override
-    public Const copy() {
-        return new UTFConst(pool, data);
-    }
-
-    @Override
-    int byteSize() {
-        return data.length + 3;
-    }
-
-    @Override
-    public void write(ByteVector buffer) {
-        buffer.putByte(tag());
-        buffer.putShort((short) length());
+    void write(ByteVector buffer) {
+        buffer.putShort(length());
         buffer.putBytes(data);
     }
 
@@ -51,19 +35,11 @@ public class UTFConst extends Const implements Cacheable {
     }
 
     public String string() {
-        if (cache == null)  {
-            cache = new String(data);
-        }
-        return cache;
+        return new String(data);
     }
 
     public byte[] data() {
         return data;
-    }
-
-    @Override
-    public void recache() {
-        this.cache = new String(data);
     }
 
     @Override
@@ -79,7 +55,7 @@ public class UTFConst extends Const implements Cacheable {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof UTFConst) {
-            return ((UTFConst) obj).pool == pool && string().equals(((UTFConst) obj).string());
+            return string().equals(((UTFConst) obj).string());
         }
         return false;
     }

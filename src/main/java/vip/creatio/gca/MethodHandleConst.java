@@ -1,6 +1,7 @@
 package vip.creatio.gca;
 
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.common.ByteVector;
+import vip.creatio.gca.type.MethodInfo;
 
 /**
  * MethodHandle refrence kind
@@ -14,53 +15,29 @@ import vip.creatio.gca.util.ByteVector;
  * 8	REF_newInvokeSpecial	new C; dup; invokespecial C.<init>:(A*)void
  * 9	REF_invokeInterface	invokeinterface C.m:(A*)T
  */
-public class MethodHandleConst extends Const {
+public class MethodHandleConst implements Const {
     private ReferenceKind kind;
-    private RefConst ref;
+    private MethodInfo ref;
 
-    MethodHandleConst(ConstPool pool, ReferenceKind kind, RefConst ref) {
-        super(pool, ConstType.METHOD_HANDLE);
+    MethodHandleConst(ReferenceKind kind, MethodInfo ref) {
         this.kind = kind;
         this.ref = ref;
-    }
-
-    MethodHandleConst(ConstPool pool) {
-        super(pool, ConstType.METHOD_HANDLE);
-    }
-
-    @Override
-    public boolean isImmutable() {
-        return false;
-    }
-
-    @Override
-    public Const copy() {
-        return new MethodHandleConst(pool, kind, ref);
-    }
-
-    @Override
-    int byteSize() {
-        return 4;
     }
 
     public String toString() {
         return "MethodHandle{reference_kind=" + getKind() + ",reference=" + getRef() + '}';
     }
 
-    @Override
-    public void write(ByteVector buffer) {
-        buffer.putByte(tag());
+    void write(ConstPool pool, ByteVector buffer) {
         buffer.putByte(kind.getId());
-        buffer.putShort(getRef().index());
+        buffer.putShort(pool.indexOf(ref));
     }
 
-    @Override
-    public void parse(ClassFileParser pool, ByteVector buffer) {
-        this.kind = ReferenceKind.fromId(buffer.getByte());
-        ref = (RefConst) pool.get(buffer.getShort());
+    void collect(ConstPool pool) {
+        pool.acquire(ref);
     }
 
-    public RefConst getRef() {
+    public MethodInfo getRef() {
         return ref;
     }
 
@@ -72,19 +49,24 @@ public class MethodHandleConst extends Const {
         this.kind = kind;
     }
 
-    public void setRef(RefConst ref) {
+    public void setRef(MethodInfo ref) {
         this.ref = ref;
     }
 
     @Override
+    public ConstType constantType() {
+        return ConstType.METHOD_HANDLE;
+    }
+
+    @Override
     public int hashCode() {
-        return type.hashCode() * ~kind.getId() * 31;
+        return ref.hashCode() * ~kind.getId() * 31;
     }
 
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof MethodHandleConst) {
-            return ((MethodHandleConst) obj).pool == pool && ((MethodHandleConst) obj).kind == kind
+            return ((MethodHandleConst) obj).kind == kind
                     && ((MethodHandleConst) obj).ref.equals(ref);
         }
         return false;

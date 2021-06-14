@@ -5,7 +5,7 @@ import vip.creatio.gca.attr.ConstantValue;
 
 import vip.creatio.gca.attr.Signature;
 import vip.creatio.gca.type.*;
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.common.ByteVector;
 import java.util.EnumSet;
 
 public class DeclaredField extends DeclaredObject implements DeclaredFieldInfo {
@@ -62,7 +62,7 @@ public class DeclaredField extends DeclaredObject implements DeclaredFieldInfo {
         Type[] types = sig.getCachedGenericType();
         if (types == null) {
             String unresolved = sig.getGenericType();
-            types = classFile().resolveGeneric(unresolved);
+            return classFile().repository().toGeneric(unresolved);
         }
         return types[0];
     }
@@ -72,24 +72,23 @@ public class DeclaredField extends DeclaredObject implements DeclaredFieldInfo {
             this.type = (TypeInfo) type;
             removeAttribute("Signature");
         } else {
-            this.type = classFile().toType(type);
+            this.type = classFile().repository().toType(type);
             Signature sig = getOrAddAttribute("Signature", () -> new Signature(this));
             sig.setCachedGenericType(new Type[]{type});
         }
     }
 
     public void setType(String type) {
-        Type t = classFile().resolveGeneric(type)[0];
-        setType(t);
+        setType(classFile().repository().toGeneric(type));
     }
 
     @Override
-    String getDescriptor() {
+    public String getDescriptor() {
         return type.getInternalName();
     }
 
     @Override
     void setDescriptor(String s) {
-        this.type = classFile().toType(s);
+        this.type = classFile().repository().toType(s);
     }
 }

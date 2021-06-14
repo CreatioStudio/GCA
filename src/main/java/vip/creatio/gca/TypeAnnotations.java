@@ -1,48 +1,38 @@
 package vip.creatio.gca;
 
 import vip.creatio.gca.attr.TableAttribute;
-import vip.creatio.gca.type.TypeInfo;
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.common.ByteVector;
 
-public class TypeAnnotations extends TableAttribute<TypeAnnotation> {
+class TypeAnnotations extends TableAttribute<TypeAnnotation> {
 
-    private boolean runtimeVisible;
+    private final boolean runtimeVisible;
 
-    public TypeAnnotations(AttributeContainer container) {
+    TypeAnnotations(AttributeContainer container, boolean visible) {
         super(container);
+        this.runtimeVisible = visible;
     }
 
-    public void add(TypeAnnotation anno) {
+    void add(TypeAnnotation anno) {
         remove(anno.annotationType());
         items.add(anno);
     }
 
-    public TypeAnnotation add(String className) {
-        return add(classFile().toType(className));
-    }
-
-    public TypeAnnotation add(TypeInfo type) {
-        TypeAnnotation anno = new TypeAnnotation(constPool(), type);
-        add(anno);
-        return anno;
-    }
-
-    public boolean remove(TypeInfo type) {
+    boolean remove(TypeInfo type) {
         return items.removeIf(annotation -> annotation.annotationType().equals(type));
     }
 
-    public boolean remove(String className) {
+    boolean remove(String className) {
         return items.removeIf(annotation -> annotation.annotationType().getTypeName().equals(className));
     }
 
-    public TypeAnnotation get(String typeName) {
+    TypeAnnotation get(String typeName) {
         for (TypeAnnotation item : items) {
             if (item.annotationType().getTypeName().equals(typeName)) return item;
         }
         return null;
     }
 
-    public TypeAnnotation get(TypeInfo type) {
+    TypeAnnotation get(TypeInfo type) {
         for (TypeAnnotation item : items) {
             if (item.annotationType().equals(type)) return item;
         }
@@ -55,33 +45,31 @@ public class TypeAnnotations extends TableAttribute<TypeAnnotation> {
     }
 
 
-
     /* internals */
 
     static TypeAnnotations
     parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer, boolean visible) {
-        TypeAnnotations inst = new TypeAnnotations(container);
-        inst.runtimeVisible = visible;
+        TypeAnnotations inst = new TypeAnnotations(container, visible);
         int len = buffer.getUShort();
         for (int i = 0; i < len; i++) {
-            inst.items.add(TypeAnnotation.parse(container, pool, buffer));
+            inst.items.add(TypeAnnotation.parse(container, pool, buffer, visible));
         }
         return inst;
     }
 
     @Override
-    protected void collect() {
-        super.collect();
+    protected void collect(ConstPool pool) {
+        super.collect(pool);
         for (TypeAnnotation item : items) {
-            item.collect();
+            item.collect(pool);
         }
     }
 
     @Override
-    protected void writeData(ByteVector buffer) {
+    protected void writeData(ConstPool pool, ByteVector buffer) {
         buffer.putShort(items.size());
         for (TypeAnnotation item : items) {
-            item.write(buffer);
+            item.write(pool, buffer);
         }
     }
 }

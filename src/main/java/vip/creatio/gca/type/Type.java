@@ -26,10 +26,6 @@ public interface Type {
         return ClassUtil.toSignature(getSignature());
     }
 
-    default boolean mutable() {
-        return false;
-    }
-
     default String getSimpleName() {
         String name = getCanonicalName();
         return name.substring(name.lastIndexOf('.') + 1);

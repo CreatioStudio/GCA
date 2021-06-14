@@ -2,7 +2,7 @@ package vip.creatio.gca;
 
 import vip.creatio.gca.attr.*;
 
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.common.ByteVector;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -51,24 +51,20 @@ public abstract class Attribute {
         return container.classFile();
     }
 
-    protected ConstPool constPool() {
-        return classFile().constPool();
-    }
+    protected abstract void writeData(ConstPool pool, ByteVector buffer);
 
-    protected abstract void writeData(ByteVector buffer);
-
-    protected final void write(ByteVector buffer) {
-        buffer.putShort(constPool().acquireUtf(name()).index());
+    protected final void write(ConstPool pool, ByteVector buffer) {
+        buffer.putShort(pool.indexOf(name()));
         int pos = buffer.position();
         buffer.skip(4);
-        writeData(buffer);
+        writeData(pool, buffer);
         int len = buffer.position() - pos - 4;
         buffer.putInt(pos, len);
     }
 
     // collect constants that required by this attribute
-    protected void collect() {
-        constPool().acquireUtf(name());
+    protected void collect(ConstPool pool) {
+        pool.acquireUtf(name());
     }
 
     protected void checkContainerType(AttributeContainer container) {}
@@ -113,7 +109,7 @@ public abstract class Attribute {
         }
 
         @Override
-        public void writeData(ByteVector buffer) {
+        public void writeData(ConstPool pool, ByteVector buffer) {
             buffer.putBytes(data);
         }
 

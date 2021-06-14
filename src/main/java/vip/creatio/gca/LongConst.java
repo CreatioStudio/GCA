@@ -1,48 +1,31 @@
 package vip.creatio.gca;
 
-import vip.creatio.gca.util.Immutable;
+import vip.creatio.gca.util.common.ByteVector;
 
-import vip.creatio.gca.util.ByteVector;
-
-@Immutable
 public class LongConst extends Const.Value implements Const.DualSlot {
 
     private final long data;
 
-    LongConst(ConstPool pool, long data) {
-        super(pool, ConstType.LONG);
+    public LongConst(long data) {
         this.data = data;
     }
 
-    LongConst(ConstPool pool, ByteVector buffer) {
-        super(pool, ConstType.LONG);
+    LongConst(ByteVector buffer) {
         data = buffer.getLong();
     }
 
-    @Override
-    public boolean isImmutable() {
-        return true;
-    }
-
-    @Override
-    public Const copy() {
-        return new LongConst(pool, data);
-    }
-
-    @Override
-    int byteSize() {
-        return 9;
-    }
-
-    @Override
-    public void write(ByteVector buffer) {
-        buffer.putByte(tag());
+    void write(ByteVector buffer) {
         buffer.putLong(data);
     }
 
     @Override
     public ValueType valueType() {
         return ValueType.LONG;
+    }
+
+    @Override
+    public ConstType constantType() {
+        return ConstType.LONG;
     }
 
     public long getLong() {
@@ -67,7 +50,7 @@ public class LongConst extends Const.Value implements Const.DualSlot {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof LongConst) {
-            return ((LongConst) obj).pool == pool && ((LongConst) obj).data == data;
+            return ((LongConst) obj).data == data;
         }
         return false;
     }

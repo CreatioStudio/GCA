@@ -1,9 +1,7 @@
 package vip.creatio.gca;
 
 import vip.creatio.gca.type.AnnotationInfo;
-import vip.creatio.gca.type.Type;
-import vip.creatio.gca.type.TypeInfo;
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.common.ByteVector;
 import vip.creatio.gca.util.PairMap;
 
 import java.util.Collection;
@@ -96,20 +94,27 @@ public abstract class DeclaredAnnotation implements AnnotationInfo {
         return values.remove(index);
     }
 
-    public abstract DeclaredAnnotation copy();
+    public abstract DeclaredAnnotation copy(AttributeContainer newContainer);
+
+    public DeclaredAnnotation copy() {
+        return copy(container);
+    }
 
 
     /* internals */
     protected final PairMap<String, ElementValue> values = new PairMap<>();
     protected final boolean visible;
+    protected final AttributeContainer container;
 
     protected TypeInfo type;
 
-    protected DeclaredAnnotation(boolean visible) {
+    protected DeclaredAnnotation(AttributeContainer container, boolean visible) {
+        this.container = container;
         this.visible = visible;
     }
 
-    protected DeclaredAnnotation(boolean visible, TypeInfo type) {
+    protected DeclaredAnnotation(AttributeContainer container, boolean visible, TypeInfo type) {
+        this.container = container;
         this.visible = visible;
         this.type = type;
     }

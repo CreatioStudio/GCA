@@ -1,17 +1,15 @@
 package vip.creatio.gca.code;
 
+import vip.creatio.gca.util.common.BiMap;
 import vip.creatio.gca.ClassFileParser;
 import vip.creatio.gca.ConstPool;
-import vip.creatio.gca.Serializer;
-import vip.creatio.gca.attr.Code;
-import vip.creatio.gca.util.BiHashMap;
 
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.common.ByteVector;
 import vip.creatio.gca.util.Util;
 
 import static vip.creatio.gca.code.OpCodeType.*;
 
-public abstract class OpCode implements Serializer {
+public abstract class OpCode {
 
     public static final int FLAG_JUMP =             0b0000_0000_0000_0001;
     public static final int FLAG_INVOKE =           0b0000_0000_0000_0010;
@@ -28,7 +26,6 @@ public abstract class OpCode implements Serializer {
 
     public abstract OpCodeType type();
 
-    @Override
     public int byteSize() {
         return type().byteSize();
     }
@@ -39,11 +36,6 @@ public abstract class OpCode implements Serializer {
 
     public final int index() {
         return codes.indexOf(this);
-    }
-
-    @Override
-    public void serialize(ByteVector buffer) {
-        buffer.putByte(type().getTag());
     }
 
     @Override
@@ -79,18 +71,18 @@ public abstract class OpCode implements Serializer {
         return codes;
     }
 
+    void write(ConstPool pool, ByteVector buffer) {
+        buffer.putByte(type().getTag());
+    }
+
     // called when all opcodes of a method is parsed
     void parse() {}
 
-    void collect() {}
-
-    final ConstPool constPool() {
-        return codes.constPool();
-    }
+    void collect(ConstPool pool) {}
 
     static OpCode parse(ClassFileParser pool,
                         CodeContainer codes,
-                        BiHashMap<Integer, OpCode> offsetMap,
+                        BiMap<Integer, OpCode> offsetMap,
                         int startingOffset,
                         ByteVector buffer) {
         int offset = buffer.position() - startingOffset;

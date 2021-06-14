@@ -5,12 +5,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import vip.creatio.gca.AttributeContainer;
-import vip.creatio.gca.ClassFile;
-import vip.creatio.gca.ClassFileParser;
-import vip.creatio.gca.Const;
-import vip.creatio.gca.MethodHandleConst;
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.*;
+import vip.creatio.gca.util.common.ByteVector;
 
 public class BootstrapMethods extends TableAttribute<BootstrapMethods.Method> {
 
@@ -40,18 +36,18 @@ public class BootstrapMethods extends TableAttribute<BootstrapMethods.Method> {
         this.items.add(new BootstrapMethods.Method(ref, args));
     }
 
-    protected void writeData(ByteVector buffer) {
+    protected void writeData(ConstPool pool, ByteVector buffer) {
         buffer.putShort((short)this.items.size());
         for (Method i : this.items) {
-            i.write(buffer);
+            i.write(pool, buffer);
         }
     }
 
-    protected void collect() {
-        super.collect();
+    protected void collect(ConstPool pool) {
+        super.collect(pool);
         for (Method item : this.items) {
-            this.constPool().acquire(item.getRef());
-            this.constPool().acquire(item.arguments);
+            pool.acquire(item.getRef());
+            pool.acquire(item.arguments);
         }
     }
 
@@ -69,22 +65,22 @@ public class BootstrapMethods extends TableAttribute<BootstrapMethods.Method> {
         private final List<Const> arguments = new ArrayList<>();
 
         Method(ClassFileParser pool, ByteVector buffer) {
-            this.ref = (MethodHandleConst)pool.get(buffer.getShort());
+            this.ref = (MethodHandleConst) pool.get(buffer.getUShort());
             int count = buffer.getUShort();
 
             for(int i = 0; i < count; ++i) {
-                this.arguments.add(pool.get(buffer.getShort()));
+                this.arguments.add(pool.get(buffer.getUShort()));
             }
 
         }
 
         Method(MethodHandleConst handle, Const... args) {
-            this.ref = handle;
-            this.arguments.addAll(Arrays.asList(args));
+            ref = handle;
+            arguments.addAll(Arrays.asList(args));
         }
 
         public MethodHandleConst getRef() {
-            return this.ref;
+            return ref;
         }
 
         public void setRef(MethodHandleConst ref) {
@@ -92,29 +88,28 @@ public class BootstrapMethods extends TableAttribute<BootstrapMethods.Method> {
         }
 
         public void addArgument(Const arg) {
-            this.arguments.add(arg);
+            arguments.add(arg);
         }
 
         public int index() {
             return items.indexOf(this);
         }
 
-        private void write(ByteVector buffer) {
-            buffer.putShort(this.ref.index());
-            buffer.putShort((short)this.arguments.size());
+        private void write(ConstPool pool, ByteVector buffer) {
+            buffer.putShort(pool.indexOf(ref));
+            buffer.putShort(arguments.size());
 
-            for (Const c : this.arguments) {
-                buffer.putShort(c.index());
+            for (Const c : arguments) {
+                buffer.putShort(pool.indexOf(c));
             }
         }
 
         public int hashCode() {
-            return this.ref.hashCode() + this.arguments.hashCode() * 31;
+            return ref.hashCode() + arguments.hashCode() * 31;
         }
 
         public String toString() {
-            String var10000 = this.ref.toString();
-            return "{handle=" + var10000 + ",arguments=" + this.arguments + "}";
+            return "{handle=" + ref.toString() + ",arguments=" + arguments + "}";
         }
     }
 }

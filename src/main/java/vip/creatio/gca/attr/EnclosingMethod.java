@@ -2,24 +2,23 @@ package vip.creatio.gca.attr;
 
 import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.*;
-import vip.creatio.gca.ClassConst;
 import vip.creatio.gca.NameAndTypeConst;
 
-import vip.creatio.gca.util.ByteVector;
-import vip.creatio.gca.util.ClassUtil;
+import vip.creatio.gca.util.common.ByteVector;
+import vip.creatio.gca.type.MethodInfo;
 
 /**
  * A class must have an EnclosingMethod attribute if and only if it
  * is a local class or an anonymous class. A class may have no more
  * than one EnclosingMethod attribute.
  */
-public class EnclosingMethod extends Attribute implements Descriptor {
+public class EnclosingMethod extends Attribute {
 
-    private ClassConst clazz;
+    private TypeInfo clazz;
     // If the current class is not immediately enclosed by a method
     // or constructor, then method must be null.
     @Nullable
-    private NameAndTypeConst method;
+    private MethodInfo method;
 
     private EnclosingMethod(AttributeContainer container) {
         super(container);
@@ -30,8 +29,8 @@ public class EnclosingMethod extends Attribute implements Descriptor {
     }
 
     public EnclosingMethod(ClassFile classFile,
-                           ClassConst clazz,
-                           @Nullable NameAndTypeConst method) {
+                           TypeInfo clazz,
+                           @Nullable MethodInfo method) {
         this((AttributeContainer) classFile);
         this.clazz = clazz;
         this.method = method;
@@ -41,53 +40,27 @@ public class EnclosingMethod extends Attribute implements Descriptor {
     throws ClassFormatError {
         EnclosingMethod inst = new EnclosingMethod(container);
 
-        inst.clazz = (ClassConst) pool.get(buffer.getShort());
-        inst.method = (NameAndTypeConst) pool.get(buffer.getShort());
+        inst.clazz = (TypeInfo) pool.get(buffer.getUShort());
+        NameAndTypeConst pair = (NameAndTypeConst) pool.get(buffer.getUShort());
+        Repository repo = ((ClassFile) container).repository();
+        inst.method = repo.toMethod(inst.clazz, pair.getName(), repo.resolveMethodDescriptor(pair.getDescriptor()));
         return inst;
     }
 
-    public ClassConst getClazz() {
+    public TypeInfo getClazz() {
         return clazz;
     }
 
-    public void setClazz(ClassConst clazz) {
+    public void setClazz(TypeInfo clazz) {
         this.clazz = clazz;
     }
 
-    public @Nullable String getMethodName() {
-        return method == null ? null : method.getName();
+    public @Nullable MethodInfo getMethod() {
+        return method;
     }
 
-    public @Nullable String getMethodDescriptor() {
-        return method == null ? null : method.getDescriptor();
-    }
-
-    @Override
-    public @Nullable String getDescriptor() {
-        return method == null ? null : method.getDescriptor();
-    }
-
-    @Override
-    public void setDescriptor(String str) {
-        if (method != null) method.setDescriptor(str);
-    }
-
-    @Override
-    public @Nullable String[] getDescriptors() {
-        return method == null ? null : method.getDescriptors();
-    }
-
-    @Override
-    public void recache() {
-        if (method != null) method.recache();
-    }
-
-    public void setMethod(@Nullable String name, String descriptor) {
-        this.method = new NameAndTypeConst(constPool(), name, descriptor);
-    }
-
-    public void setMethod(@Nullable String name, String... signatures) {
-        setMethod(name, ClassUtil.getSignature(signatures));
+    public void setMethod(@Nullable MethodInfo mth) {
+        this.method = mth;
     }
 
     @Override
@@ -101,14 +74,14 @@ public class EnclosingMethod extends Attribute implements Descriptor {
     }
 
     @Override
-    protected void writeData(ByteVector buffer) {
-        buffer.putShort(clazz.index());
-        buffer.putShort(method == null ? 0 : method.index());
+    protected void writeData(ConstPool pool, ByteVector buffer) {
+        buffer.putShort(pool.indexOf(clazz));
+        buffer.putShort(method == null ? 0 : pool.indexOf(method.getName(), method.getDescriptor()));
     }
 
     @Override
-    protected void collect() {
-        if (method != null) constPool().acquire(method);
+    protected void collect(ConstPool pool) {
+        if (method != null) pool.acquireNameAndType(method.getName(), method.getDescriptor());
     }
 
     @Override

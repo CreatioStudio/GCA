@@ -1,22 +1,17 @@
 package vip.creatio.gca;
 
-import vip.creatio.gca.util.Immutable;
+import vip.creatio.gca.util.common.ByteVector;
 
-import vip.creatio.gca.util.ByteVector;
-
-@Immutable
 public class FloatConst extends Const.Value {
 
     private final float data;
 
-    FloatConst(ConstPool pool, float data) {
-        super(pool, ConstType.FLOAT);
+    FloatConst(float data) {
         this.data = data;
     }
 
-    FloatConst(ConstPool pool, ByteVector buffer) {
-        super(pool, ConstType.FLOAT);
-        data = buffer.getFloat();
+    FloatConst(ByteVector buffer) {
+        this.data = buffer.getFloat();
     }
 
     public float getFloat() {
@@ -24,29 +19,17 @@ public class FloatConst extends Const.Value {
     }
 
     @Override
-    public boolean isImmutable() {
-        return true;
+    public ConstType constantType() {
+        return ConstType.FLOAT;
     }
 
-    @Override
-    public Const copy() {
-        return new FloatConst(pool, data);
+    void write(ByteVector buffer) {
+        buffer.putFloat(data);
     }
 
     @Override
     public Object value() {
         return getFloat();
-    }
-
-    @Override
-    int byteSize() {
-        return 5;
-    }
-
-    @Override
-    public void write(ByteVector buffer) {
-        buffer.putByte(tag());
-        buffer.putFloat(data);
     }
 
     @Override
@@ -67,7 +50,7 @@ public class FloatConst extends Const.Value {
     @Override
     public boolean equals(Object obj) {
         if (obj instanceof FloatConst) {
-            return ((FloatConst) obj).pool == pool && ((FloatConst) obj).data == data;
+            return ((FloatConst) obj).data == data;
         }
         return false;
     }

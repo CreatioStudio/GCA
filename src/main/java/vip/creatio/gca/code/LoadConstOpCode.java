@@ -4,7 +4,8 @@ import org.jetbrains.annotations.NotNull;
 import vip.creatio.gca.ClassFileParser;
 import vip.creatio.gca.Const;
 
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.common.ByteVector;
+import vip.creatio.gca.ConstPool;
 
 // ldc, ldc_w and ldc2_w
 public class LoadConstOpCode extends OpCode {
@@ -51,16 +52,16 @@ public class LoadConstOpCode extends OpCode {
     }
 
     @Override
-    void collect() {
-        constPool().acquire(constant);
+    void collect(ConstPool pool) {
+        pool.acquire(constant);
     }
 
-    @Override
-    public int byteSize() {
+    //TODO: ldc special bytesize that relies on constant index
+    public int byteSize(ConstPool pool) {
         if (constant instanceof Const.DualSlot) {
             return OpCodeType.LDC2_W.byteSize();
         } else {
-            int index = constant.index();
+            int index = pool.indexOf(constant);
             if (index > 255) {
                 return OpCodeType.LDC_W.byteSize();
             }
@@ -69,8 +70,8 @@ public class LoadConstOpCode extends OpCode {
     }
 
     @Override
-    public void serialize(ByteVector buffer) {
-        int index = constant.index();
+    public void write(ConstPool pool, ByteVector buffer) {
+        int index = pool.indexOf(constant);
         if (constant instanceof Const.DualSlot) {
             buffer.putByte(OpCodeType.LDC2_W.getTag());
             buffer.putShort((short) index);

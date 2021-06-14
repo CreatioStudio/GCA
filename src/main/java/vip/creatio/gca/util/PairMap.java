@@ -149,5 +149,4 @@ public class PairMap<K, V> extends AbstractMap<K, V> implements Iterable<Pair<K,
             return items.size();
         }
     }
-
 }

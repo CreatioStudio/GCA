@@ -1,14 +1,8 @@
 package vip.creatio.gca;
 
-import vip.creatio.gca.attr.Signature;
 import vip.creatio.gca.code.BytecodeException;
-import vip.creatio.gca.type.AnnotationInfo;
-import vip.creatio.gca.type.Type;
-import vip.creatio.gca.type.TypeInfo;
-import vip.creatio.gca.type.Types;
 
-import vip.creatio.gca.util.ByteVector;
-import vip.creatio.gca.util.Util;
+import vip.creatio.gca.util.common.ByteVector;
 
 import java.util.*;
 import java.util.function.Function;
@@ -57,92 +51,37 @@ implements AttributeContainer, AccessFlagContainer {
         return getAttribute("Deprecated") != null;
     }
 
-    // create a new reference const in constant pool
-    public RefConst getReference() {
-        if (constRef == null) addRefConst();
-        return constRef;
-    }
-
-    // get all annotations
     public DeclaredAnnotation[] getAnnotations() {
-        return Util.merge(DeclaredAnnotation[]::new,
-                getAnnotations(true),
-                getAnnotations(false),
-                getTypeAnnotations(true),
-                getTypeAnnotations(false));
+        return annotations.values().toArray(new DeclaredAnnotation[0]);
     }
 
-    public Annotation[] getAnnotations(boolean visible) {
-        Annotations anno;
-        if (visible) {
-            anno = getAttribute("RuntimeVisibleAnnotations");
-        } else {
-            anno = getAttribute("RuntimeInvisibleAnnotations");
-        }
-        return anno == null ? new Annotation[0] : anno.getTable().toArray(new Annotation[0]);
+    public void removeAnnotation(TypeInfo type) {
+        annotations.remove(type);
     }
 
-    public void setAnnotations(boolean visible, Annotation... annos) {
-        if (visible) {
-
-        }
+    public void removeAnnotation(String type) {
+        removeAnnotation(classFile.repository().toType(type));
     }
 
-    public TypeAnnotation[] getTypeAnnotations(boolean visible) {
-        TypeAnnotations anno;
-        if (visible) {
-            anno = getAttribute("RuntimeVisibleTypeAnnotations");
-        } else {
-            anno = getAttribute("RuntimeInvisibleTypeAnnotations");
-        }
-        return anno == null ? new TypeAnnotation[0] : anno.getTable().toArray(new TypeAnnotation[0]);
+    public void clearAnnotations() {
+        annotations.clear();
     }
 
-    public Annotation getAnnotation(String typeName) {
-        return getAnnotation0(anno -> anno.get(typeName));
+    public void addAnnotation(DeclaredAnnotation anno) {
+        annotations.put(anno.annotationType(), anno);
     }
 
-    public Annotation getAnnotation(TypeInfo type) {
-        return getAnnotation0(anno -> anno.get(type));
+    public DeclaredAnnotation getAnnotation(TypeInfo type) {
+        return annotations.get(type);
     }
 
-    private Annotation getAnnotation0(Function<Annotations, Annotation> func) {
-        Annotations annos = getAttribute("RuntimeVisibleAnnotations");
-        if (annos == null) {
-            annos = getAttribute("RuntimeInvisibleAnnotations");
-            if (annos == null) return null;
-            return func.apply(annos);
-        }
-        Annotation anno = func.apply(annos);
-        if (anno == null) {
-            annos = getAttribute("RuntimeInvisibleAnnotations");
-            if (annos == null) return null;
-            anno = func.apply(annos);
-        }
-        return anno;
+    public DeclaredAnnotation getAnnotation(String type) {
+        return getAnnotation(classFile.repository().toType(type));
     }
 
-    public TypeAnnotation getTypeAnnotation(String typeName) {
-        return getTypeAnnotation0(anno -> anno.get(typeName));
-    }
-
-    public TypeAnnotation getTypeAnnotation(TypeInfo type) {
-        return getTypeAnnotation0(anno -> anno.get(type));
-    }
-
-    private TypeAnnotation getTypeAnnotation0(Function<TypeAnnotations, TypeAnnotation> func) {
-        TypeAnnotations annos = getAttribute("RuntimeVisibleAnnotations");
-        if (annos == null) {
-            annos = getAttribute("RuntimeInvisibleAnnotations");
-            if (annos == null) return null;
-            return func.apply(annos);
-        }
-        TypeAnnotation anno = func.apply(annos);
-        if (anno == null) {
-            annos = getAttribute("RuntimeInvisibleAnnotations");
-            if (annos == null) return null;
-            anno = func.apply(annos);
-        }
+    public Annotation addAnnotation(TypeInfo type, boolean visible) {
+        Annotation anno = new Annotation(this, type, visible);
+        annotations.put(type, anno);
         return anno;
     }
 
@@ -156,14 +95,9 @@ implements AttributeContainer, AccessFlagContainer {
 
     String name;
     HashMap<String, Attribute> attributes = new HashMap<>();
-
-    RefConst constRef;
-
+    Map<TypeInfo, DeclaredAnnotation> annotations = new HashMap<>();
 
 
-    ConstPool constPool() {
-        return classFile.constPool;
-    }
 
     abstract EnumSet<AccessFlag> resolveFlags(short flags);
 
@@ -171,40 +105,24 @@ implements AttributeContainer, AccessFlagContainer {
 
     abstract void setDescriptor(String s);
 
-    void write(ByteVector buffer) {
+    void write(ConstPool pool, ByteVector buffer) {
         buffer.putShort(AccessFlag.serialize(accessFlags));
-        buffer.putShort(constPool().acquireUtf(this.name).index());
-        buffer.putShort(constPool().acquireUtf(getDescriptor()).index());
+        buffer.putShort(pool.indexOf(this.name));
+        buffer.putShort(pool.indexOf(getDescriptor()));
 
         try {
-            AttributeContainer.super.writeAttributes(buffer);
+            AttributeContainer.super.writeAttributes(pool, buffer);
         } catch (BytecodeException e) {
             e.setLocation(name + getDescriptor());
             throw e;
         }
     }
 
-    void collect() {
-        constPool().acquireUtf(this.name);
-        constPool().acquireUtf(getDescriptor());
-        collectConstants();
-    }
-
-    private void addRefConst() {
-        for (Const c : classFile.constPool()) {
-            if (c instanceof RefConst) {
-                if (((RefConst) c).getDeclaringClass().equals(classFile.thisClass)
-                        && ((RefConst) c).getName().equals(name)) {
-                    this.constRef = (RefConst) c;
-                    return;
-                }
-            }
-        }
-        if (this instanceof DeclaredField) {
-            this.constRef = constPool().acquireFieldRef(classFile.thisClass, name, descriptor);
-        } else {
-            this.constRef = constPool().acquireMethodRef(classFile.thisClass, name, descriptor);
-        }
+    void collect(ConstPool pool) {
+        pool.acquireUtf(this.name);
+        pool.acquireUtf(getDescriptor());
+        collectConstants(pool);
+        annotations.values().forEach(a -> a.collect(pool));
     }
 
 
