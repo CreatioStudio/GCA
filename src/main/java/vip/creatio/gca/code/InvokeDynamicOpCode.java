@@ -40,6 +40,11 @@ public class InvokeDynamicOpCode extends OpCode {
     }
 
     @Override
+    void collect(ConstPool pool) {
+        pool.acquire(ref);
+    }
+
+    @Override
     void write(ConstPool pool, ByteVector buffer) {
         super.write(pool, buffer);
         buffer.putShort(pool.indexOf(ref));

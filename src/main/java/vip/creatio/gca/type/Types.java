@@ -1,5 +1,6 @@
 package vip.creatio.gca.type;
 
+import org.jetbrains.annotations.NotNull;
 import vip.creatio.gca.TypeInfo;
 
 import java.util.*;
@@ -65,15 +66,15 @@ public final class Types {
     public static final TypeInfo EXCEPTION      = add(ClassObjectInfo.make(Exception.class));
     public static final TypeInfo ERROR          = add(ClassObjectInfo.make(Error.class));
 
-    public static final TypeInfo INT_ARRAY      = add(ArrayType.make(INT));
-    public static final TypeInfo SHORT_ARRAY    = add(ArrayType.make(SHORT));
-    public static final TypeInfo CHAR_ARRAY     = add(ArrayType.make(CHAR));
-    public static final TypeInfo BYTE_ARRAY     = add(ArrayType.make(BYTE));
-    public static final TypeInfo LONG_ARRAY     = add(ArrayType.make(LONG));
-    public static final TypeInfo FLOAT_ARRAY    = add(ArrayType.make(FLOAT));
-    public static final TypeInfo DOUBLE_ARRAY   = add(ArrayType.make(DOUBLE));
-    public static final TypeInfo BOOL_ARRAY     = add(ArrayType.make(BOOL));
-    public static final TypeInfo OBJECT_ARRAY   = add(ArrayType.make(OBJECT));
+    public static final TypeInfo INT_ARRAY      = add(GenericArrayType.make(INT));
+    public static final TypeInfo SHORT_ARRAY    = add(GenericArrayType.make(SHORT));
+    public static final TypeInfo CHAR_ARRAY     = add(GenericArrayType.make(CHAR));
+    public static final TypeInfo BYTE_ARRAY     = add(GenericArrayType.make(BYTE));
+    public static final TypeInfo LONG_ARRAY     = add(GenericArrayType.make(LONG));
+    public static final TypeInfo FLOAT_ARRAY    = add(GenericArrayType.make(FLOAT));
+    public static final TypeInfo DOUBLE_ARRAY   = add(GenericArrayType.make(DOUBLE));
+    public static final TypeInfo BOOL_ARRAY     = add(GenericArrayType.make(BOOL));
+    public static final TypeInfo OBJECT_ARRAY   = add(GenericArrayType.make(OBJECT));
 
     public static final TypeInfo ARRAYS         = add(ClassObjectInfo.make(Arrays.class));
     public static final TypeInfo ARRAY_LIST     = add(ClassObjectInfo.make(ArrayList.class));
@@ -114,7 +115,7 @@ public final class Types {
     public static final TypeInfo SECURITY_EXCEPTION                 = add(ClassObjectInfo.make(SecurityException.class));
 
     static TypeInfo add(TypeInfo type) {
-        BASIC_CLASS_MAP.put(type.getTypeName(), type);
+        BASIC_CLASS_MAP.put(type.getName(), type);
         return type;
     }
 
@@ -132,7 +133,29 @@ public final class Types {
             }
             return type;
         }
-        return null;
+        //TODO: Array type
+        switch (typeName) {
+            case "I":
+                return INT;
+            case "C":
+                return CHAR;
+            case "S":
+                return SHORT;
+            case "Z":
+                return BOOL;
+            case "F":
+                return FLOAT;
+            case "D":
+                return DOUBLE;
+            case "V":
+                return VOID;
+            case "J":
+                return LONG;
+            case "B":
+                return BYTE;
+            default:
+                return null;
+        }
     }
 
 
@@ -192,4 +215,98 @@ public final class Types {
     public static boolean withSignature(FieldInfo field, TypeInfo type) {
         return field.getType().equals(type);
     }
+
+
+    private static Type nextInternalSignature(TypeFactory factory, Type upper, byte[] raw, int[] indexPtr) {
+        switch ((char) raw[indexPtr[0]]) {
+            case 'I':
+                indexPtr[0]++;
+                return INT;
+            case 'B':
+                indexPtr[0]++;
+                return BYTE;
+            case 'C':
+                indexPtr[0]++;
+                return CHAR;
+            case 'Z':
+                indexPtr[0]++;
+                return BOOL;
+            case 'J':
+                indexPtr[0]++;
+                return LONG;
+            case 'F':
+                indexPtr[0]++;
+                return FLOAT;
+            case 'D':
+                indexPtr[0]++;
+                return DOUBLE;
+            case 'V':
+                indexPtr[0]++;
+                return VOID;
+            case 'S':
+                indexPtr[0]++;
+                return SHORT;
+            case 'L':           // class type
+            {
+                int start = indexPtr[0] + 1;
+                int index = start;
+                for (; index < raw.length; index++) {
+                    byte b = raw[index];
+                    // non-generic type
+                    if (b == (byte) ';') {
+                        String str = new String(raw, start, index - start).replace('/', '.');
+                        System.out.println("STR: " + str);
+
+                        indexPtr[0] = index + 1;
+                        return factory.toType(str);
+                    }
+                    // generic type
+                    else if (b == (byte) '<') {
+                        indexPtr[0] = index + 1;
+
+                        String str = new String(raw, start, start - index - 1).replace('/', '.');
+                        System.out.println("STR: " + str);
+                        TypeInfo rawType = factory.toType(str);
+
+                        ParameterizedType.Mutable mutable = ParameterizedType.makeMutable(rawType, (Collection<Type>) null, upper);
+
+                        List<Type> generics = new ArrayList<>();
+                        do {
+                            generics.add(nextInternalSignature(factory, mutable, raw, indexPtr));
+                        } while (indexPtr[0] != (byte) '>');
+
+                        mutable.setTypeArguments(generics);
+                        indexPtr[0] += 2; // (HERE)>; -> >;(HERE)
+                        return mutable;
+                    }
+                }
+                throw new RuntimeException("malformed reference signature: '" + new String(raw, start - 1, index - start - 1) + "'");
+            }
+            case 'T':       // type variable
+            {
+                //Type variable
+                int start = indexPtr[0] + 1;
+                int index = start;
+                for (; index < raw.length; index++) {
+                    if (raw[index] == (byte) ';') {
+                        String str = new String(raw, start, index - start);
+                        System.out.println("TYPEVAR: " + str);
+
+                        indexPtr[0] = index + 1;
+                        return null; //todo
+                    }
+                }
+            }
+            case '[':       // array type
+            {
+                indexPtr[0]++;
+                Type t
+            }
+
+        }
+    }
+
+    private static TypeVariable nextTypeVariable() {}
+
+
 }

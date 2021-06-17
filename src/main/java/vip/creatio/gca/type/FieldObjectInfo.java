@@ -67,4 +67,9 @@ public class FieldObjectInfo implements DeclaredFieldInfo {
         }
         return result;
     }
+
+    @Override
+    public int getAccessFlags() {
+        return field.getModifiers();
+    }
 }

@@ -1,11 +1,10 @@
-package vip.creatio.gca.util;
+package vip.creatio.gca.util.common;
 
-import java.nio.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class ByteVector {
+public class ByteVector extends Vector {
 
     private static final int DEFAULT_SEG_DIGIT = 10;
 
@@ -14,13 +13,6 @@ public class ByteVector {
     private final int segmentRem;
 
     final List<byte[]> segments = new ArrayList<>();
-
-    // Invariants: mark <= position <= limit <= capacity
-    private int mark = -1;
-    private int position = 0;
-    private int capacity;
-
-    private int maxPosition = 0;
 
     public ByteVector(int initSegmentCount, int segmentSizeDigit) {
         if (segmentSizeDigit < 3) throw new IllegalArgumentException("digit too small");
@@ -48,30 +40,6 @@ public class ByteVector {
         return vec;
     }
 
-    private IllegalArgumentException createPositionException(int newPosition) {
-        String msg;
-
-        if (newPosition > capacity) {
-            msg = "newPosition > limit: (" + newPosition + " > " + capacity + ")";
-        } else { // assume negative
-            assert newPosition < 0 : "newPosition expected to be negative";
-            msg = "newPosition < 0: (" + newPosition + " < 0)";
-        }
-
-        return new IllegalArgumentException(msg);
-    }
-
-    private int checkIndex(int i) {
-        if ((i < 0) || (i >= capacity))
-            throw new IndexOutOfBoundsException();
-        return i;
-    }
-
-    private static void checkBounds(int off, int len, int size) {
-        if ((off | len | (off + len) | (size - (off + len))) < 0)
-            throw new IndexOutOfBoundsException();
-    }
-
     private void expandOneSegment() {
         segments.add(new byte[segmentSize]);
         capacity += segmentSize;
@@ -83,20 +51,7 @@ public class ByteVector {
         }
     }
 
-    public ByteVector mark() {
-        mark = position;
-        return this;
-    }
-
-    public ByteVector reset() {
-        int m = mark;
-        if (m < 0)
-            throw new InvalidMarkException();
-        position = m;
-        if (position > maxPosition) maxPosition = position;
-        return this;
-    }
-
+    @Override
     public ByteVector clear() {
         position = 0;
         maxPosition = 0;
@@ -109,33 +64,6 @@ public class ByteVector {
         int newIndex = position + offset;
         ensureSize(newIndex);
         position = newIndex;
-        return this;
-    }
-
-    public int size() {
-        return maxPosition;
-    }
-
-    public final int capacity() {
-        return capacity;
-    }
-
-    public int position() {
-        return position;
-    }
-
-    public ByteVector position(int newPosition) {
-        checkIndex(newPosition);
-        if (newPosition < 0)
-            throw createPositionException(newPosition);
-        position = newPosition;
-        if (mark > position) mark = -1;
-        return this;
-    }
-
-    public ByteVector flip() {
-        position = 0;
-        mark = -1;
         return this;
     }
 
@@ -227,7 +155,7 @@ public class ByteVector {
     }
 
     public int getUShort(int index) {
-        return getShort() & 0xFFFF;
+        return getShort(index) & 0xFFFF;
     }
 
     public int getUShort() {
@@ -457,7 +385,7 @@ public class ByteVector {
             }
         }
         return ((long) ((seg[pos] << 24) | ((seg[pos + 1] & 0xFF) << 16) + ((seg[pos + 2] & 0xFF) << 8) | (seg[pos + 3] & 0xFF)) << 32) |
-               ((seg[pos + 4] & 0xFF) << 24) | ((seg[pos + 5] & 0xFF) << 16) | ((seg[pos + 6] & 0xFF) << 8) | (seg[pos + 7] & 0xFF);
+               ((long) (seg[pos + 4] & 0xFF) << 24) | ((seg[pos + 5] & 0xFF) << 16) | ((seg[pos + 6] & 0xFF) << 8) | (seg[pos + 7] & 0xFF);
     }
 
     public long getLong() {
@@ -548,14 +476,13 @@ public class ByteVector {
         return putString(position, s);
     }
 
-
     public String toString() {
         return getClass().getName() +
-                "[pos=" +
+                "{pos=" +
                 position() +
-                " lim=" +
+                " cap=" +
                 capacity() +
-                "]";
+                "}";
     }
 
     public int hashCode() {

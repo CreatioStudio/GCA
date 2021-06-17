@@ -1,7 +1,6 @@
-package vip.creatio.gca.attr;
+package vip.creatio.gca;
 
-import vip.creatio.gca.*;
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.util.common.ByteVector;
 
 public class AnnotationDefault extends Attribute {
 
@@ -21,10 +20,10 @@ public class AnnotationDefault extends Attribute {
         this.value = value;
     }
 
-    public static AnnotationDefault parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer) {
+    static AnnotationDefault parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer) {
         AnnotationDefault inst = new AnnotationDefault(container);
 
-        inst.value = new ElementValue(container.classFile(), pool, buffer);
+        inst.value = ElementValue.parse(container.classFile(), pool, buffer, true);
         return inst;
     }
 
@@ -44,14 +43,14 @@ public class AnnotationDefault extends Attribute {
     }
 
     @Override
-    public void writeData(ByteVector buffer) {
-        value.write(buffer);
+    public void writeData(ConstPool pool, ByteVector buffer) {
+        value.write(pool, buffer);
     }
 
     @Override
-    protected void collect() {
-        super.collect();
-        constPool().acquireValue(value);
+    protected void collect(ConstPool pool) {
+        super.collect(pool);
+        pool.acquireValue(value);
     }
 
     public ElementValue getValue() {

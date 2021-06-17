@@ -150,17 +150,12 @@ public class ClassFileParser implements Iterable<Const> {
                         set(i, pos, new UTFConst(buffer));
                         break;
                     case INTEGER:
-                        set(i, pos, new IntegerConst(buffer));
-                        break;
                     case FLOAT:
-                        set(i, pos, new FloatConst(buffer));
+                        set(i, pos, new ValueConst(this, type, buffer));
                         break;
                     case LONG:
-                        set(i, pos, new LongConst(buffer));
-                        i++;        // long number continues
-                        break;
                     case DOUBLE:
-                        set(i, pos, new DoubleConst(buffer));
+                        set(i, pos, new ValueConst(this, type, buffer));
                         i++;        // long number continues
                         break;
                     default:
@@ -201,7 +196,7 @@ public class ClassFileParser implements Iterable<Const> {
         private ParsedConst(int pos, Const constant) {
             this.pos = pos;
             this.constant = constant;
-            if (constant instanceof Const.Value) parsed = true;
+            if (constant instanceof ValueConst) parsed = true;
         }
 
         private void parse(ByteVector buf) {
@@ -224,7 +219,7 @@ public class ClassFileParser implements Iterable<Const> {
                 }
                 case STRING: {
                     String content = getString(buf.getUShort(pos + 1));
-                    constant = new StringConst(content);
+                    constant = new ValueConst(content);
                     break;
                 }
                 case FIELDREF:

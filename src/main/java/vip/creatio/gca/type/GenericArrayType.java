@@ -4,19 +4,19 @@ import vip.creatio.gca.TypeInfo;
 
 import java.lang.reflect.MalformedParameterizedTypeException;
 
-public class ArrayType extends TypeInfo {
+public class GenericArrayType extends TypeInfo {
 
     private Type type;
 
-    private ArrayType(Type t) {
+    private GenericArrayType(Type t) {
         this.type = t;
     }
 
-    public static ArrayType make(Type t) {
-        return new ArrayType(t);
+    public static GenericArrayType make(Type t) {
+        return new GenericArrayType(t);
     }
 
-    public static ArrayType makeMutable(Type t) {
+    public static GenericArrayType makeMutable(Type t) {
         return new Mutable(t);
     }
 
@@ -37,12 +37,12 @@ public class ArrayType extends TypeInfo {
      *     underlying array type's component type refers to a
      *     parameterized type that cannot be instantiated for any reason
      */
-    Type getComponentType() {
+    public Type getComponentType() {
         return type;
     }
 
     @Override
-    public String getTypeName() {
+    public String getName() {
         return getInternalName();
     }
 
@@ -61,7 +61,7 @@ public class ArrayType extends TypeInfo {
         return '[' + type.getInternalName();
     }
 
-    public static class Mutable extends ArrayType {
+    public static class Mutable extends GenericArrayType {
         private Mutable(Type t) {
             super(t);
         }

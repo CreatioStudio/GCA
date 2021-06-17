@@ -7,6 +7,9 @@ import vip.creatio.gca.util.common.ByteVector;
 import java.util.Arrays;
 import java.util.EnumSet;
 
+import static vip.creatio.gca.util.AccessFlags.*;
+import static vip.creatio.gca.util.AccessFlags.MODULE;
+
 /**
  * If the constant pool of a class or interface C contains a CONSTANT_Class_info
  * entry which represents a class or interface that is not a member of a package,
@@ -34,16 +37,7 @@ public class InnerClasses extends TableAttribute<InnerClasses.Class> {
         return inst;
     }
 
-    // innerName: the original simple name of class
-    public void add(TypeInfo clazz,
-                    @Nullable String innerName, /* set to null to make anonymous class */
-                    AccessFlag... flags) {
-        EnumSet<AccessFlag> es = EnumSet.noneOf(AccessFlag.class);
-        es.addAll(Arrays.asList(flags));
-        add(clazz, innerName, es);
-    }
-
-    public void add(TypeInfo clazz, String innerName, EnumSet<AccessFlag> flags) {
+    public void add(TypeInfo clazz, String innerName, int flags) {
         // anti duplication
         for (Class i : items) {
             if (i.inner.equals(clazz)) return;
@@ -53,7 +47,7 @@ public class InnerClasses extends TableAttribute<InnerClasses.Class> {
     }
 
     public void add(ClassFile classFile) {
-        String name = classFile.getTypeName();
+        String name = classFile.getName();
         name = name.substring(name.lastIndexOf('/') + 1);
         add(classFile, name, classFile.getAccessFlags());
     }
@@ -99,12 +93,12 @@ public class InnerClasses extends TableAttribute<InnerClasses.Class> {
         private TypeInfo inner;
         private TypeInfo outer;
         private String innerName;
-        private EnumSet<AccessFlag> innerAccessFlags;
+        private int innerAccessFlags;
 
         Class(TypeInfo inner,
               TypeInfo outer,
               String innerName,
-              EnumSet<AccessFlag> innerAccessFlags) {
+              int innerAccessFlags) {
             this.inner = inner;
             this.outer = outer;
             this.innerName = innerName;
@@ -112,10 +106,10 @@ public class InnerClasses extends TableAttribute<InnerClasses.Class> {
         }
 
         Class(ClassFileParser pool, ByteVector buffer) {
-            this.inner = (TypeInfo) pool.get(buffer.getShort());
-            this.outer = (TypeInfo) pool.get(buffer.getShort());
-            this.innerName = pool.getString(buffer.getShort());
-            this.innerAccessFlags = AccessFlag.resolveInnerClass(buffer.getShort());
+            this.inner = (TypeInfo) pool.get(buffer.getUShort());
+            this.outer = (TypeInfo) pool.get(buffer.getUShort());
+            this.innerName = pool.getString(buffer.getUShort());
+            this.innerAccessFlags = buffer.getUShort();
         }
 
         public TypeInfo getInner() {
@@ -142,20 +136,69 @@ public class InnerClasses extends TableAttribute<InnerClasses.Class> {
             this.innerName = innerName;
         }
 
-        public EnumSet<AccessFlag> getInnerAccessFlags() {
+        public int getInnerAccessFlags() {
             return innerAccessFlags;
         }
 
-        public void setInnerAccessFlags(AccessFlag... flags) {
-            this.innerAccessFlags = EnumSet.noneOf(AccessFlag.class);
-            this.innerAccessFlags.addAll(Arrays.asList(flags));
+        public void setInnerAccessFlags(int flags) {
+            this.innerAccessFlags = flags;
+        }
+
+        /* access flags */
+
+        public boolean hasAllAccessFlags(int flag) {
+            return (innerAccessFlags & flag) == flag;
+        }
+
+        public boolean hasAnyAccessFlags(int flag) {
+            return (innerAccessFlags & flag) != 0;
+        }
+
+        public boolean isPublic() {
+            return (innerAccessFlags & PUBLIC) != 0;
+        }
+
+        public boolean isPrivate() {
+            return (innerAccessFlags & PRIVATE) != 0;
+        }
+
+        public boolean isProtected() {
+            return (innerAccessFlags & PROTECTED) != 0;
+        }
+
+        public boolean isStatic() {
+            return (innerAccessFlags & STATIC) != 0;
+        }
+
+        public boolean isFinal() {
+            return (innerAccessFlags & FINAL) != 0;
+        }
+
+        public boolean isInterface() {
+            return (innerAccessFlags & INTERFACE) != 0;
+        }
+
+        public boolean isAbstract() {
+            return (innerAccessFlags & ABSTRACT) != 0;
+        }
+
+        public boolean isSynthetic() {
+            return (innerAccessFlags & SYNTHETIC) != 0;
+        }
+
+        public boolean isAnnotation() {
+            return (innerAccessFlags & ANNOTATION) != 0;
+        }
+
+        public boolean isEnum() {
+            return (innerAccessFlags & ENUM) != 0;
         }
 
         private void write(ConstPool pool, ByteVector buffer) {
             buffer.putShort(pool.indexOf(inner));
             buffer.putShort(pool.indexOf(outer));
             buffer.putShort(innerName == null ? 0 : pool.indexOf(innerName));
-            buffer.putShort(AccessFlag.serialize(innerAccessFlags));
+            buffer.putShort(innerAccessFlags);
         }
 
         @Override

@@ -9,6 +9,7 @@ import vip.creatio.gca.util.Pair;
 import java.util.ArrayList;
 import java.util.List;
 
+//TODO: unify annotation
 public class TypeAnnotation extends DeclaredAnnotation {
 
     private TargetType target;

@@ -17,17 +17,12 @@ public class DeclaredField extends DeclaredObject implements DeclaredFieldInfo {
     }
 
     DeclaredField(ClassFile bc,
-                  EnumSet<AccessFlag> flags,
+                  int flags,
                   String name,
                   TypeInfo type,
                   Attribute... attributes) {
         super(bc, flags, name, attributes);
         this.type = type;
-    }
-
-    @Override
-    EnumSet<AccessFlag> resolveFlags(short flags) {
-        return AccessFlag.resolveField(flags);
     }
 
     public @Nullable Object constantValue() {
@@ -84,6 +79,7 @@ public class DeclaredField extends DeclaredObject implements DeclaredFieldInfo {
 
     @Override
     public String getDescriptor() {
+        System.out.println("TYPE: " + type.getClass().getName() + " -> " + type);
         return type.getInternalName();
     }
 

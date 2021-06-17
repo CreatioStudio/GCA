@@ -33,7 +33,7 @@ public class BytecodeException extends RuntimeException {
         sb.append("(offset 0x");
         sb.append(Util.toHex(offset));
         sb.append(")");
-        sb.append("\nLocation: ").append(container.classFile().getTypeName());
+        sb.append("\nLocation: ").append(container.classFile().getName());
         if (locName != null) {
             sb.append(".").append(locName);
         }

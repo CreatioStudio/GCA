@@ -22,12 +22,12 @@ class Annotations extends TableAttribute<Annotation> {
     }
 
     boolean remove(String className) {
-        return items.removeIf(annotation -> annotation.annotationType().getTypeName().equals(className));
+        return items.removeIf(annotation -> annotation.annotationType().getName().equals(className));
     }
 
     Annotation get(String typeName) {
         for (Annotation item : items) {
-            if (item.annotationType().getTypeName().equals(typeName)) return item;
+            if (item.annotationType().getName().equals(typeName)) return item;
         }
         return null;
     }

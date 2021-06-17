@@ -2,6 +2,7 @@ package vip.creatio.gca;
 
 import vip.creatio.gca.code.BytecodeException;
 
+import vip.creatio.gca.type.MemberInfo;
 import vip.creatio.gca.util.common.ByteVector;
 
 import java.util.*;
@@ -9,7 +10,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 abstract class DeclaredObject
-implements AttributeContainer, AccessFlagContainer {
+implements AttributeContainer, MemberInfo {
 
     public String getName() {
         return name;
@@ -28,23 +29,16 @@ implements AttributeContainer, AccessFlagContainer {
         return classFile;
     }
 
-    public EnumSet<AccessFlag> getAccessFlags() {
+    public int getAccessFlags() {
         return accessFlags;
     }
 
-    @Override
-    public void setAccessFlags(Collection<AccessFlag> flags) {
-        if (accessFlags == null) accessFlags = EnumSet.noneOf(AccessFlag.class);
-        else accessFlags.clear();
-        accessFlags.addAll(flags);
+    public void setAccessFlags(int flags) {
+        this.accessFlags = flags;
     }
 
     public Map<String, Attribute> getAttributes() {
         return attributes;
-    }
-
-    public boolean isSynthetic() {
-        return getAttribute("Synthetic") != null;
     }
 
     public boolean isDeprecated() {
@@ -91,7 +85,7 @@ implements AttributeContainer, AccessFlagContainer {
     // Internals
 
     final ClassFile classFile;
-    EnumSet<AccessFlag> accessFlags;
+    int accessFlags;
 
     String name;
     HashMap<String, Attribute> attributes = new HashMap<>();
@@ -99,14 +93,10 @@ implements AttributeContainer, AccessFlagContainer {
 
 
 
-    abstract EnumSet<AccessFlag> resolveFlags(short flags);
-
-    abstract String getDescriptor();
-
     abstract void setDescriptor(String s);
 
     void write(ConstPool pool, ByteVector buffer) {
-        buffer.putShort(AccessFlag.serialize(accessFlags));
+        buffer.putShort(accessFlags);
         buffer.putShort(pool.indexOf(this.name));
         buffer.putShort(pool.indexOf(getDescriptor()));
 
@@ -120,6 +110,7 @@ implements AttributeContainer, AccessFlagContainer {
 
     void collect(ConstPool pool) {
         pool.acquireUtf(this.name);
+        System.out.println("Descriptor: " + getDescriptor());
         pool.acquireUtf(getDescriptor());
         collectConstants(pool);
         annotations.values().forEach(a -> a.collect(pool));
@@ -130,10 +121,10 @@ implements AttributeContainer, AccessFlagContainer {
 
     DeclaredObject(ClassFile bc, ClassFileParser pool, ByteVector buffer) {
         this.classFile = bc;
-        this.accessFlags = resolveFlags(buffer.getShort());
+        this.accessFlags = buffer.getUShort();
         int s = buffer.getUShort();
         this.name = pool.getString(s);
-        setDescriptor(pool.getString(buffer.getShort()));
+        setDescriptor(pool.getString(buffer.getUShort()));
         int attrCount = buffer.getUShort();
 
         for (int i = 0; i < attrCount; i++) {
@@ -154,7 +145,7 @@ implements AttributeContainer, AccessFlagContainer {
     }
 
     DeclaredObject(ClassFile bc,
-                   EnumSet<AccessFlag> flags,
+                   int flags,
                    String name,
                    Attribute... attributes) {
         this.classFile = bc;

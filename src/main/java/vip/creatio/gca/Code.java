@@ -1,12 +1,15 @@
-package vip.creatio.gca.attr;
+package vip.creatio.gca;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import vip.creatio.gca.*;
+import vip.creatio.gca.attr.LineNumberTable;
+import vip.creatio.gca.attr.LocalVariableTable;
+import vip.creatio.gca.attr.StackMapTable;
 import vip.creatio.gca.code.*;
 
-import vip.creatio.gca.util.ByteVector;
-import vip.creatio.gca.util.ClassUtil;
+import vip.creatio.gca.type.FieldInfo;
+import vip.creatio.gca.type.MethodInfo;
+import vip.creatio.gca.util.common.ByteVector;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -56,7 +59,6 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
             }
         }
 
-        c.codes.parseFinished();
         return c;
     }
 
@@ -82,21 +84,8 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
         return codes.iterator();
     }
 
-    public int offsetOf(OpCode code) {
-        int sum = 0;
-        for (OpCode op : codes) {
-            if (op == code) return sum;
-            else sum += op.byteSize();
-        }
-        return sum;
-    }
-
     public @Nullable OpCode fromOffset(int offset) {
         return codes.fromOffset(offset);
-    }
-
-    public @Nullable OpCode fromOffsetNearest(int offset) {
-        return codes.fromOffsetNearest(offset);
     }
 
     public int indexOf(OpCode code) {
@@ -152,6 +141,10 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
         return null;//TODO
     }
 
+    CodeContainer getCodeContainer() {
+        return codes;
+    }
+
     public OpCode emitNop() {
         OpCode c = new UnaryOpCode(codes, OpCodeType.NOP);
         codes.add(c);
@@ -159,7 +152,7 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
     }
 
     // give a null to emit ACONST_NULL
-    public OpCode emitConst(@Nullable Const.Value value) {
+    public OpCode emitConst(@Nullable ValueConst value) {
         OpCode c;
         if (value == null) {
             c = new UnaryOpCode(codes, OpCodeType.ACONST_NULL);
@@ -210,7 +203,7 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
                 } else if (v <= 0xFFFF && v >= -0xFFFF) {
                     c = new NumberOpCode(codes, OpCodeType.SIPUSH, v);
                 } else {
-                    c = new LoadConstOpCode(codes, constPool().acquireInt(v));
+                    c = new LoadConstOpCode(codes, new ValueConst(v));
                 }
         }
         codes.add(c);
@@ -228,7 +221,7 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
         } else if (v == 1L) {
             c = new UnaryOpCode(codes, OpCodeType.LCONST_1);
         } else {
-            c = new LoadConstOpCode(codes, constPool().acquireLong(v));
+            c = new LoadConstOpCode(codes, new ValueConst(v));
         }
         codes.add(c);
         return c;
@@ -243,7 +236,7 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
         } else if (v == 2F) {
             c = new UnaryOpCode(codes, OpCodeType.FCONST_2);
         } else {
-            c = new LoadConstOpCode(codes, constPool().acquireFloat(v));
+            c = new LoadConstOpCode(codes, new ValueConst(v));
         }
         codes.add(c);
         return c;
@@ -256,14 +249,14 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
         } else if (v == 1F) {
             c = new UnaryOpCode(codes, OpCodeType.DCONST_1);
         } else {
-            c = new LoadConstOpCode(codes, constPool().acquireDouble(v));
+            c = new LoadConstOpCode(codes, new ValueConst(v));
         }
         codes.add(c);
         return c;
     }
 
     public OpCode emitConst(String s) {
-        OpCode c = new LoadConstOpCode(codes, constPool().acquireString(s));
+        OpCode c = new LoadConstOpCode(codes, new ValueConst(s));
         codes.add(c);
         return c;
     }
@@ -998,13 +991,13 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
         return c;
     }
 
-    public ConstOpCode emitCheckcast(ClassConst clazz) {
+    public ConstOpCode emitCheckcast(TypeInfo clazz) {
         ConstOpCode c = new ConstOpCode(codes, OpCodeType.CHECKCAST, clazz);
         codes.add(c);
         return c;
     }
 
-    public ConstOpCode emitInstanceOf(ClassConst clazz) {
+    public ConstOpCode emitInstanceOf(TypeInfo clazz) {
         ConstOpCode c = new ConstOpCode(codes, OpCodeType.INSTANCEOF, clazz);
         codes.add(c);
         return c;
@@ -1131,102 +1124,107 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
         return c;
     }
 
-    public ConstOpCode emitGetStatic(RefConst field) {
-        if (field.type() != ConstType.FIELDREF) throw new UnsupportedOperationException("need a field");
+    public ConstOpCode emitGetStatic(FieldInfo field) {
         ConstOpCode c = new ConstOpCode(codes, OpCodeType.GETSTATIC, field);
         codes.add(c);
         return c;
     }
 
     public ConstOpCode emitGetStatic(String clazz, String name, String descriptor) {
-        RefConst field = constPool().acquireFieldRef(clazz, name, descriptor);
+        Repository repo = classFile().repository();
+        FieldInfo field = repo.toField(repo.getType(clazz), name, repo.toType(descriptor));
         return emitGetStatic(field);
     }
 
-    public ConstOpCode emitPutStatic(RefConst field) {
-        if (field.type() != ConstType.FIELDREF) throw new UnsupportedOperationException("need a field");
+    public ConstOpCode emitPutStatic(FieldInfo field) {
         ConstOpCode c = new ConstOpCode(codes, OpCodeType.PUTFIELD, field);
         codes.add(c);
         return c;
     }
 
     public ConstOpCode emitPutStatic(String clazz, String name, String descriptor) {
-        RefConst field = constPool().acquireFieldRef(clazz, name, descriptor);
+        Repository repo = classFile().repository();
+        FieldInfo field = repo.toField(repo.toType(clazz), name, repo.toType(descriptor));
         return emitPutStatic(field);
     }
 
-    public ConstOpCode emitGetField(RefConst field) {
-        if (field.type() != ConstType.FIELDREF) throw new UnsupportedOperationException("need a field");
+    public ConstOpCode emitGetField(FieldInfo field) {
         ConstOpCode c = new ConstOpCode(codes, OpCodeType.GETFIELD, field);
         codes.add(c);
         return c;
     }
 
     public ConstOpCode emitGetField(String clazz, String name, String descriptor) {
-        RefConst field = constPool().acquireFieldRef(clazz, name, descriptor);
+        Repository repo = classFile().repository();
+        FieldInfo field = repo.toField(repo.toType(clazz), name, repo.toType(descriptor));
         return emitGetField(field);
     }
 
-    public ConstOpCode emitPutField(RefConst field) {
-        if (field.type() != ConstType.FIELDREF) throw new UnsupportedOperationException("need a field");
+    public ConstOpCode emitPutField(FieldInfo field) {
         ConstOpCode c = new ConstOpCode(codes, OpCodeType.PUTFIELD, field);
         codes.add(c);
         return c;
     }
 
     public ConstOpCode emitPutField(String clazz, String name, String descriptor) {
-        RefConst field = constPool().acquireFieldRef(clazz, name, descriptor);
+        Repository repo = classFile().repository();
+        FieldInfo field = repo.toField(repo.toType(clazz), name, repo.toType(descriptor));
         return emitPutField(field);
     }
 
-    public InvocationOpCode emitInvokeVirtual(RefConst mth) {
-        if (mth.type() != ConstType.METHODREF) throw new UnsupportedOperationException("need a method");
+    public InvocationOpCode emitInvokeVirtual(MethodInfo mth) {
+        if (mth.constantType() == ConstType.INTERFACE_METHODREF)
+            throw new UnsupportedOperationException("need a non-interface method");
         InvocationOpCode c = new InvocationOpCode(codes, OpCodeType.INVOKEVIRTUAL, mth);
         codes.add(c);
         return c;
     }
 
     public InvocationOpCode emitInvokeVirtual(String clazz, String name, String... descriptors) {
-        RefConst mth = constPool().acquireMethodRef(clazz, name, ClassUtil.getSignature(descriptors));
+        Repository repo = classFile().repository();
+        MethodInfo mth = repo.toMethod(repo.toType(clazz), name, repo.toType(descriptors));
         return emitInvokeVirtual(mth);
     }
 
-    public InvocationOpCode emitInvokeSpecial(RefConst mth) {
-        if (mth.type() != ConstType.METHODREF
-         && mth.type() != ConstType.INTERFACE_METHODREF)
-            throw new UnsupportedOperationException("need a method or interface method");
+    public InvocationOpCode emitInvokeSpecial(MethodInfo mth) {
+        if (mth.constantType() == ConstType.INTERFACE_METHODREF)
+            throw new UnsupportedOperationException("need a non-interface method");
         InvocationOpCode c = new InvocationOpCode(codes, OpCodeType.INVOKESPECIAL, mth);
         codes.add(c);
         return c;
     }
 
     public InvocationOpCode emitInvokeSpecial(String clazz, String name, String... descriptors) {
-        RefConst mth = constPool().acquireMethodRef(clazz, name, ClassUtil.getSignature(descriptors));
+        Repository repo = classFile().repository();
+        MethodInfo mth = repo.toMethod(repo.toType(clazz), name, repo.toType(descriptors));
         return emitInvokeSpecial(mth);
     }
 
-    public InvocationOpCode emitInvokeStatic(RefConst mth) {
-        if (mth.type() != ConstType.METHODREF) throw new UnsupportedOperationException("need a method");
+    public InvocationOpCode emitInvokeStatic(MethodInfo mth) {
+        if (mth.constantType() == ConstType.INTERFACE_METHODREF)
+            throw new UnsupportedOperationException("need a non-interface method");
         InvocationOpCode c = new InvocationOpCode(codes, OpCodeType.INVOKESTATIC, mth);
         codes.add(c);
         return c;
     }
 
     public InvocationOpCode emitInvokeStatic(String clazz, String name, String... descriptors) {
-        RefConst mth = constPool().acquireMethodRef(clazz, name, ClassUtil.getSignature(descriptors));
+        Repository repo = classFile().repository();
+        MethodInfo mth = repo.toMethod(repo.toType(clazz), name, repo.toType(descriptors));
         return emitInvokeStatic(mth);
     }
 
-    public InvocationOpCode emitInvokeInterface(RefConst mth) {
-        if (mth.type() != ConstType.INTERFACE_METHODREF)
-            throw new UnsupportedOperationException("need a interface method");
+    public InvocationOpCode emitInvokeInterface(MethodInfo mth) {
+        if (mth.constantType() != ConstType.INTERFACE_METHODREF)
+            throw new UnsupportedOperationException("need an interface method");
         InvocationOpCode c = new InvocationOpCode(codes, OpCodeType.INVOKEINTERFACE, mth);
         codes.add(c);
         return c;
     }
 
     public InvocationOpCode emitInvokeInterface(String clazz, String name, String... descriptors) {
-        RefConst mth = constPool().acquireInterfaceMethodRef(clazz, name, ClassUtil.getSignature(descriptors));
+        Repository repo = classFile().repository();
+        MethodInfo mth = repo.toInterfaceMethod(repo.toType(clazz), name, repo.toType(descriptors));
         return emitInvokeInterface(mth);
     }
 
@@ -1236,14 +1234,14 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
         return c;
     }
 
-    public ConstOpCode emitNew(ClassConst cls) {
+    public ConstOpCode emitNew(TypeInfo cls) {
         ConstOpCode c = new ConstOpCode(codes, OpCodeType.NEW, cls);
         codes.add(c);
         return c;
     }
 
     public ConstOpCode emitNew(String cls) {
-        ClassConst clazz = constPool().acquireClass(cls);
+        TypeInfo clazz = classFile().repository().toType(cls);
         return emitNew(clazz);
     }
 
@@ -1254,25 +1252,25 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
         return c;
     }
 
-    public NewArrayOpCode emitNewArray(ClassConst type, int dimension) {
+    public NewArrayOpCode emitNewArray(TypeInfo type, int dimension) {
         NewArrayOpCode c = new NewArrayOpCode(codes, type, dimension);
         codes.add(c);
         return c;
     }
 
-    public NewArrayOpCode emitNewArray(ClassConst type) {
+    public NewArrayOpCode emitNewArray(TypeInfo type) {
         NewArrayOpCode c = new NewArrayOpCode(codes, type);
         codes.add(c);
         return c;
     }
 
     public NewArrayOpCode emitNewArray(String cls) {
-        ClassConst clazz = constPool().acquireClass(cls);
+        TypeInfo clazz = classFile().repository().toType(cls);
         return emitNewArray(clazz);
     }
 
     public NewArrayOpCode emitNewArray(String cls, int dimension) {
-        ClassConst clazz = constPool().acquireClass(cls);
+        TypeInfo clazz = classFile().repository().toType(cls);
         return emitNewArray(clazz, dimension);
     }
 
@@ -1305,26 +1303,29 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
     }
 
     @Override
-    protected void collect() {
-        super.collect();
-        codes.collect();
-        collectConstants();
+    protected void collect(ConstPool pool) {
+        super.collect(pool);
+        codes.collect(pool);
+        collectConstants(pool);
+        for (ExceptionTable table : tables) {
+            pool.acquireClass(table.getCatchType());
+        }
     }
 
     @Override
-    public void writeData(ByteVector buffer) {
+    public void writeData(ConstPool pool, ByteVector buffer) {
         buffer.putShort(maxStack());
         buffer.putShort(maxLocals());
         int pos = buffer.position();
         buffer.skip(4);
-        codes.write(buffer);
+        codes.write(pool, buffer);
         int len = buffer.position() - pos - 4;
         buffer.putInt(pos, len);
         buffer.putShort((short) tables.size());
         for (ExceptionTable tab : tables) {
-            tab.write(buffer);
+            tab.write(pool, buffer);
         }
-        AttributeContainer.super.writeAttributes(buffer);
+        AttributeContainer.super.writeAttributes(pool, buffer);
     }
 
     public LocalVariableTable variableTable() {
@@ -1361,9 +1362,9 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
         private int endPc;
         private int handlerPc;
         // null means catch anything(keyword finally)
-        private ClassConst catchType = null;
+        private TypeInfo catchType = null;
 
-        ExceptionTable(int start, int end, int handler, ClassConst type) {
+        ExceptionTable(int start, int end, int handler, TypeInfo type) {
             this.startPc = start;
             this.endPc = end;
             this.handlerPc = handler;
@@ -1371,10 +1372,10 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
         }
 
         ExceptionTable(ClassFileParser pool, ByteVector buffer) {
-            this.startPc = buffer.getShort() & 0xFFFF;
-            this.endPc = buffer.getShort() & 0xFFFF;
-            this.handlerPc = buffer.getShort() & 0xFFFF;
-            this.catchType = (ClassConst) pool.get(buffer.getShort() & 0xFFFF);
+            this.startPc = buffer.getUShort();
+            this.endPc = buffer.getUShort();
+            this.handlerPc = buffer.getUShort();
+            this.catchType = (TypeInfo) pool.get(buffer.getUShort());
         }
 
         public int getStartPc() {
@@ -1401,11 +1402,11 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
             this.handlerPc = handlerPc;
         }
 
-        public ClassConst getCatchType() {
+        public TypeInfo getCatchType() {
             return catchType;
         }
 
-        public void setCatchType(ClassConst catchType) {
+        public void setCatchType(TypeInfo catchType) {
             this.catchType = catchType;
         }
 
@@ -1413,11 +1414,11 @@ public class Code extends Attribute implements AttributeContainer, Iterable<OpCo
             return tables.indexOf(this);
         }
 
-        private void write(ByteVector buffer) {
+        private void write(ConstPool pool, ByteVector buffer) {
             buffer.putShort((short) startPc);
             buffer.putShort((short) endPc);
             buffer.putShort((short) handlerPc);
-            buffer.putShort(catchType == null ? 0 : catchType.index());
+            buffer.putShort(catchType == null ? 0 : pool.indexOf(catchType));
         }
 
         @Override

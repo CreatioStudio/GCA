@@ -9,8 +9,6 @@ public class ClassObjectInfo extends ClassInfo {
 
     // cachable
     private AnnotationInfo[] annotations;
-    private MethodInfo[] methods;
-    private FieldInfo[] fields;
 
     protected ClassObjectInfo(Class<?> clazz) {
         this.clazz = clazz;
@@ -38,7 +36,7 @@ public class ClassObjectInfo extends ClassInfo {
     }
 
     @Override
-    public String getTypeName() {
+    public String getName() {
         return clazz.getName();
     }
 
@@ -79,10 +77,5 @@ public class ClassObjectInfo extends ClassInfo {
     @Override
     public Type[] getClasses() {
         return new Type[0];
-    }
-
-    @Override
-    public TypeVariable[] getTypeParameters() {
-        return new TypeVariable[0];
     }
 }

@@ -1,7 +1,5 @@
 package vip.creatio.gca.type;
 
-import vip.creatio.gca.DeclaredAnnotation;
-
 import java.util.Objects;
 
 public interface AnnotatedInfo {
@@ -13,7 +11,7 @@ public interface AnnotatedInfo {
     default AnnotationInfo getAnnotation(Type annotationClass) {
         Objects.requireNonNull(annotationClass);
         for (AnnotationInfo annotation : getAnnotations()) {
-            if (annotationClass.getTypeName().equals(annotation.annotationType().getTypeName())) {
+            if (annotationClass.getName().equals(annotation.annotationType().getName())) {
                 return annotation;
             }
         }

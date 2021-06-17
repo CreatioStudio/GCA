@@ -24,7 +24,7 @@ public interface TypeFactory {
 
         // query local cached class
         for (TypeInfo t : getTypes()) {
-            if (t.getTypeName().equals(signature))
+            if (t.getName().equals(signature))
                 return t;
         }
 
@@ -32,6 +32,7 @@ public interface TypeFactory {
     }
 
     default TypeInfo toType(String signature) {
+        signature = ClassUtil.toBinaryName(signature);
         TypeInfo info = getType(signature);
         if (info == null) {
             info = new VirtualClassInfo(signature);
@@ -50,7 +51,7 @@ public interface TypeFactory {
         } else if (type instanceof ParameterizedType) {
             return ((ParameterizedType) type).getRawType();
         } else {
-            return toType(type.getTypeName());
+            return toType(type.getName());
         }
     }
 

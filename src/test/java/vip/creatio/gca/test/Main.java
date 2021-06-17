@@ -4,6 +4,8 @@ import org.junit.Test;
 import vip.creatio.gca.*;
 import vip.creatio.gca.Code;
 import vip.creatio.gca.code.Label;
+import vip.creatio.gca.type.Types;
+import vip.creatio.gca.util.AccessFlags;
 import vip.creatio.gca.util.Util;
 import vip.creatio.gca.util.common.ByteVector;
 
@@ -22,6 +24,7 @@ public class Main {
         InputStream stream = new FileInputStream(name);
         byte[] bytes = stream.readAllBytes();
         System.out.println("SourceSize: " + bytes.length);
+        System.out.println("NAME: " + Types.INT.getInternalName());
 
         ClassFile classFile = ClassFile.parse(bytes);
 
@@ -83,15 +86,16 @@ public class Main {
 
 //        emitSinFunc(classFile);
 
-//        for (DeclaredMethod method : classFile.getMethods()) {
-//            Code c = method.code();
-//            c.attributes().clear();
-//            method.attributes().removeIf(a -> !a.name().equals("Code"));
-//
-//            //c.removeAttribute("LineNumberTable");
-//            //c.removeAttribute("LocalVariableTable");
-//            //c.removeAttribute("StackMapTable");
-//        }
+        for (DeclaredMethod method : classFile.getMethods()) {
+            Code c = method.code();
+            method.removeAttribute("Signature");
+
+            c.removeAttribute("LineNumberTable");
+            c.removeAttribute("LocalVariableTable");
+            c.removeAttribute("StackMapTable");
+        }
+
+        classFile.removeAttribute("Signature");
 
 //        for (DeclaredField f : classFile.getFields()) {
 //            f.setName(random());
@@ -154,7 +158,7 @@ public class Main {
 
     private static void emitSinFunc(ClassFile f) {
         DeclaredMethod sin = f.visitMethod("sin", "double", "double");
-        sin.addAccessFlags(AccessFlag.STATIC);
+        sin.setAccessFlags(sin.getAccessFlags() | AccessFlags.STATIC);
         Code c = sin.code();
         c.emitLoad(DOUBLE, 0);
         c.emitConst(Math.PI);

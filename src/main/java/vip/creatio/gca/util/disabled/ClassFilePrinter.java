@@ -99,9 +99,9 @@ public final class ClassFilePrinter {
     private static String getConstant(ConstPool pool, Const c) {
         StringBuilder sb = new StringBuilder();
         sb.append("#").append(c.index());
-        sb.append(" ".repeat(6 - sb.length())).append(" = ").append(c.type());
+        sb.append(" ".repeat(6 - sb.length())).append(" = ").append(c.constantType());
         sb.append(" ".repeat(28 - sb.length()));
-        switch (c.type()) {
+        switch (c.constantType()) {
             case UTF8:
                 sb.append("'").append(((UTFConst) c).string()).append("'");
                 break;

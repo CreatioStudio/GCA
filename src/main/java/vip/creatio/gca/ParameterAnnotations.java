@@ -1,9 +1,7 @@
-package vip.creatio.gca.attr;
+package vip.creatio.gca;
 
-import vip.creatio.gca.Annotation;
-import vip.creatio.gca.AttributeContainer;
-import vip.creatio.gca.ClassFileParser;
-import vip.creatio.gca.util.ByteVector;
+import vip.creatio.gca.attr.TableAttribute;
+import vip.creatio.gca.util.common.ByteVector;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -13,11 +11,15 @@ public class ParameterAnnotations extends TableAttribute<List<Annotation>> {
 
     private boolean runtimeVisible;
 
-    public ParameterAnnotations(AttributeContainer container) {
+    private ParameterAnnotations(AttributeContainer container) {
         super(container);
     }
 
-    public static ParameterAnnotations parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer, boolean visible) {
+    public ParameterAnnotations(DeclaredMethod container) {
+        this((AttributeContainer) container);
+    }
+
+    static ParameterAnnotations parse(AttributeContainer container, ClassFileParser pool, ByteVector buffer, boolean visible) {
         ParameterAnnotations inst = new ParameterAnnotations(container);
         inst.runtimeVisible = visible;
         int len = buffer.getUByte();
@@ -25,7 +27,7 @@ public class ParameterAnnotations extends TableAttribute<List<Annotation>> {
             int num = buffer.getUShort();
             List<Annotation> anno = new ArrayList<>();
             for (int j = 0; j < num; j++) {
-                anno.add(Annotation.parse(container.classFile(), pool, buffer));
+                anno.add(Annotation.parse(container.classFile(), pool, buffer, visible));
             }
             inst.items.add(anno);
         }
@@ -45,27 +47,32 @@ public class ParameterAnnotations extends TableAttribute<List<Annotation>> {
     }
 
     @Override
+    protected void checkContainerType(AttributeContainer container) {
+        checkContainerType(container, DeclaredMethod.class);
+    }
+
+    @Override
     public String name() {
         return runtimeVisible ? "RuntimeVisibleParameterAnnotations" : "RuntimeInvisibleParameterAnnotations";
     }
 
     @Override
-    protected void collect() {
-        super.collect();
+    protected void collect(ConstPool pool) {
+        super.collect(pool);
         for (List<Annotation> item : items) {
             for (Annotation anno : item) {
-                anno.collect();
+                anno.collect(pool);
             }
         }
     }
 
     @Override
-    protected void writeData(ByteVector buffer) {
+    protected void writeData(ConstPool pool, ByteVector buffer) {
         buffer.putByte(items.size());
         for (List<Annotation> item : items) {
             buffer.putShort(item.size());
             for (Annotation anno : item) {
-                anno.write(buffer);
+                anno.write(pool, buffer);
             }
         }
     }

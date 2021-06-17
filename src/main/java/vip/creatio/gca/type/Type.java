@@ -5,25 +5,25 @@ import vip.creatio.gca.util.ClassUtil;
 public interface Type {
 
     //java.lang.String / [Ljava/lang/String; // java binary name which can be accepted by Class::forName
-    String getTypeName();
+    String getName();
 
     //java.lang.String / java.lang.String[][] / int[]
     default String getCanonicalName() {
-        return getTypeName();
+        return getName();
     }
 
     // might be a generic signature, abc.exm.Generic<abc.d.C> or [Labc/exm/Generic<Labc/d/C;>;
     default String getSignature() {
-        return getTypeName();
+        return getName();
     }
 
     // always a raw type name, Ljava/lang/String; / [Ljava/lang/String;
     default String getInternalName() {
-        return ClassUtil.toSignature(getTypeName());
+        return ClassUtil.toBytecodeName(ClassUtil.toSignature(getName()));
     }
 
     default String getInternalSignature() {
-        return ClassUtil.toSignature(getSignature());
+        return getInternalName();
     }
 
     default String getSimpleName() {

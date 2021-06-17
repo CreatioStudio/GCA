@@ -155,4 +155,9 @@ public class MethodObjectInfo implements DeclaredMethodInfo {
     public ConstType constantType() {
         return Modifier.isInterface(method.getModifiers()) ? ConstType.INTERFACE_METHODREF : ConstType.METHODREF;
     }
+
+    @Override
+    public int getAccessFlags() {
+        return method.getModifiers();
+    }
 }

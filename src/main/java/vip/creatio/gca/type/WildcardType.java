@@ -4,16 +4,16 @@ import java.lang.reflect.MalformedParameterizedTypeException;
 import java.util.*;
 
 public class WildcardType implements Type {
-    private List<Type> upperBounds;
-    private List<Type> lowerBounds;
+    private Type[] upperBounds;
+    private Type[] lowerBounds;
 
-    private WildcardType(Collection<Type> upper, Collection<Type> lower) {
-        this.upperBounds = new ArrayList<>(upper);
-        this.lowerBounds = new ArrayList<>(lower);
+    private WildcardType(Type[] upper, Type[] lower) {
+        this.upperBounds = upper;
+        this.lowerBounds = lower;
     }
 
     public static WildcardType make(Collection<Type> upper, Collection<Type> lower) {
-        return new WildcardType(upper, lower);
+        return new WildcardType(upper.toArray(new Type[0]), lower.toArray(new Type[0]));
     }
 
     /**
@@ -38,7 +38,7 @@ public class WildcardType implements Type {
      *     for any reason
      */
     public Type[] getUpperBounds() {
-        return upperBounds.toArray(new Type[0]);
+        return Arrays.copyOf(upperBounds, upperBounds.length);
     }
 
     /**
@@ -64,11 +64,11 @@ public class WildcardType implements Type {
      *     for any reason
      */
     public Type[] getLowerBounds() {
-        return lowerBounds.toArray(new Type[0]);
+        return Arrays.copyOf(lowerBounds, lowerBounds.length);
     }
 
     @Override
-    public String getTypeName() {
+    public String getName() {
         return "java.lang.Object";
     }
 

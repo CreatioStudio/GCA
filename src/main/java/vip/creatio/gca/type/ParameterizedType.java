@@ -6,9 +6,9 @@ import java.lang.reflect.MalformedParameterizedTypeException;
 import java.util.*;
 
 public class ParameterizedType implements Type {
-    private List<Type> typeArguments;
-    private TypeInfo rawType;
-    private Type       ownerType;
+    private List<Type>  typeArguments;
+    private TypeInfo    rawType;
+    private Type        ownerType;
 
     private ParameterizedType(TypeInfo rawType,
                               Collection<Type> typeArguments,
@@ -31,15 +31,15 @@ public class ParameterizedType implements Type {
                 ownerType);
     }
 
-    public static ParameterizedType makeMutable(TypeInfo rawType,
-                                         Collection<Type> typeArguments,
-                                         Type ownerType) {
+    public static ParameterizedType.Mutable makeMutable(TypeInfo rawType,
+                                                        Collection<Type> typeArguments,
+                                                        Type ownerType) {
         return new Mutable(rawType, typeArguments, ownerType);
     }
 
-    public static ParameterizedType makeMutable(TypeInfo rawType,
-                                         Type[] typeArguments,
-                                         Type ownerType) {
+    public static ParameterizedType.Mutable makeMutable(TypeInfo rawType,
+                                                        Type[] typeArguments,
+                                                        Type ownerType) {
         return new Mutable(rawType, Arrays.asList(typeArguments),
                 ownerType);
     }
@@ -99,8 +99,8 @@ public class ParameterizedType implements Type {
     }
 
     @Override
-    public String getTypeName() {
-        return rawType.getTypeName();
+    public String getName() {
+        return rawType.getName();
     }
 
     @Override

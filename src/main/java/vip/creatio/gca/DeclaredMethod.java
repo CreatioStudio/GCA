@@ -26,7 +26,7 @@ public class DeclaredMethod extends DeclaredObject implements DeclaredMethodInfo
     }
 
     DeclaredMethod(ClassFile bc,
-                   EnumSet<AccessFlag> flags,
+                   int flags,
                    String name,
                    TypeInfo rtype,
                    TypeInfo[] ptype,
@@ -36,13 +36,8 @@ public class DeclaredMethod extends DeclaredObject implements DeclaredMethodInfo
         this.parameterTypes = ptype;
     }
 
-    @Override
-    EnumSet<AccessFlag> resolveFlags(short flags) {
-        return AccessFlag.resolveMethod(flags);
-    }
-
     public boolean hasCode() {
-        return !flaggedAbstract();
+        return !isAbstract() || !isNative();
     }
 
     public @NotNull Code code() {

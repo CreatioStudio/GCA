@@ -2,7 +2,6 @@ package vip.creatio.gca.attr;
 
 import vip.creatio.gca.*;
 
-import vip.creatio.gca.type.Type;
 import vip.creatio.gca.util.common.ByteVector;
 
 import java.util.Collection;
@@ -77,7 +76,7 @@ public class Exceptions extends TableAttribute<TypeInfo> {
         Iterator<TypeInfo> iter = items.iterator();
         while (iter.hasNext()) {
             for (TypeInfo type : types) {
-                if (type.getTypeName().equals(iter.next().getTypeName()))
+                if (type.getName().equals(iter.next().getName()))
                     iter.remove();
             }
         }

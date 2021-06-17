@@ -12,20 +12,8 @@ public final class ConstPool implements Iterable<Const> {
 
     protected final ClassFile classFile;
 
-    /*
-     * Object:
-     *  int, float, double, long - value
-     *  UTF - byteArray
-     *  String - String
-     *  Class - TypeInfo
-     *  Ref - MemberInfo
-     *  MethodHandle - MethodHandle
-     *  MethodType - MethodType
-     *  InvokeDynamic - InvokeDynamic
-     *
-     */
     private final HashBiMap<Const, Integer> constants = HashBiMap.create();      // index
-    private final HashMap<Object, Const.Value> values = new HashMap<>();
+    private final HashMap<Object, ValueConst> values = new HashMap<>();
     private final HashMap<String, UTFConst> strings = new HashMap<>();
 
     private int size = 1;
@@ -126,25 +114,41 @@ public final class ConstPool implements Iterable<Const> {
 
     public void acquireInt(int data) {
         if (!values.containsKey(data)) {
-            add(new IntegerConst(data));
+            ValueConst v = new ValueConst(data);
+            add(v);
+            values.put(data, v);
         }
     }
 
     public void acquireFloat(float data) {
         if (!values.containsKey(data)) {
-            add(new FloatConst(data));
+            ValueConst v = new ValueConst(data);
+            add(v);
+            values.put(data, v);
         }
     }
 
     public void acquireLong(long data) {
         if (!values.containsKey(data)) {
-            add(new LongConst(data));
+            ValueConst v = new ValueConst(data);
+            add(v);
+            values.put(data, v);
         }
     }
 
     public void acquireDouble(double data) {
         if (!values.containsKey(data)) {
-            add(new DoubleConst(data));
+            ValueConst v = new ValueConst(data);
+            add(v);
+            values.put(data, v);
+        }
+    }
+
+    public void acquireString(String s) {
+        if (!values.containsKey(s)) {
+            ValueConst v = new ValueConst(s);
+            add(v);
+            values.put(s, v);
         }
     }
 
@@ -172,14 +176,6 @@ public final class ConstPool implements Iterable<Const> {
     }
 
 
-
-    public void acquireString(String s) {
-        if (!values.containsKey(s)) {
-            add(new StringConst(s));
-        }
-    }
-
-
     public void acquireNameAndType(String name, String descriptor) {
         acquire(new NameAndTypeConst(name, descriptor));
     }
@@ -200,8 +196,11 @@ public final class ConstPool implements Iterable<Const> {
         size += constant instanceof Const.DualSlot ? 2 : 1;
         if (constant instanceof UTFConst) {
             strings.put(((UTFConst) constant).string(), (UTFConst) constant);
-        } else if (constant instanceof Const.Value) {
-            values.put(((Const.Value) constant).value(), (Const.Value) constant);
+        } else if (constant instanceof ValueConst) {
+            values.put(((ValueConst) constant).value(), (ValueConst) constant);
+            if (((ValueConst) constant).valueType() == ValueType.STRING) {
+                collect(constant);
+            }
         } else {
             collect(constant);
         }
@@ -220,7 +219,7 @@ public final class ConstPool implements Iterable<Const> {
                 ((TypeInfo) c).collect(this);
                 break;
             case STRING:
-                ((StringConst) c).collect(this);
+                ((ValueConst) c).collect(this);
                 break;
             case FIELDREF:
             case METHODREF:
@@ -260,22 +259,14 @@ public final class ConstPool implements Iterable<Const> {
                 ((UTFConst) c).write(buf);
                 break;
             case INTEGER:
-                ((IntegerConst) c).write(buf);
-                break;
             case FLOAT:
-                ((FloatConst) c).write(buf);
-                break;
             case LONG:
-                ((LongConst) c).write(buf);
-                break;
             case DOUBLE:
-                ((DoubleConst) c).write(buf);
+            case STRING:
+                ((ValueConst) c).write(this, buf);
                 break;
             case CLASS:
                 ((TypeInfo) c).write(this, buf);
-                break;
-            case STRING:
-                ((StringConst) c).write(this, buf);
                 break;
             case FIELDREF:
             case METHODREF:

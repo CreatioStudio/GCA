@@ -6,6 +6,8 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+//TODO: will be transfer to util class Types
+@Deprecated
 public class ClassUtil {
 
     public static String toBytecodeName(String binaryName) {
@@ -217,6 +219,7 @@ public class ClassUtil {
 
     public static String toSignature(String binaryName) {
         if (binaryName.startsWith("[")) return binaryName;
+        if (binaryName.startsWith("L")) return binaryName;
         char c = toBasicChar(binaryName);
         if (c == 'L') return c + binaryName + ';';
         else return "" + c;

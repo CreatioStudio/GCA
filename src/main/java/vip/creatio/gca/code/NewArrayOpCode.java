@@ -163,7 +163,7 @@ public class NewArrayOpCode extends OpCode {
     @Override
     public String toString() {
         return super.toString() + ' '
-                + (isPrimitive ? primitiveType.getTypeName() : refType.toString())
+                + (isPrimitive ? primitiveType.getName() : refType.toString())
                 + (dimension == 1 ? "" : ", " + dimension);
     }
 }

@@ -8,19 +8,19 @@ import vip.creatio.gca.type.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
+
+import vip.creatio.gca.util.AccessFlags;
 import vip.creatio.gca.util.common.ByteVector;
 
 import java.util.*;
 
 @SuppressWarnings("unused")
-public class ClassFile extends ClassInfo implements AttributeContainer, AccessFlagContainer, TypeInfo.Mutable {
+public class ClassFile extends ClassInfo implements AttributeContainer, TypeInfo.Mutable {
 
     public static final int MAGIC = 0xCAFE_BABE;
 
     private int minorVer;
     private int majorVer;
-
-    private EnumSet<AccessFlag> accessFlags;
 
     private Map<String, Attribute> attributes = new HashMap<>();
 
@@ -81,10 +81,10 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
         pool.parse(buffer);
 
         // read class access flags
-        accessFlags = AccessFlag.resolveClass(buffer.getShort());
+        accessFlags = buffer.getUShort();
 
         // read this class and super class object
-        name = ((TypeInfo) pool.get(buffer.getUShort())).getTypeName();
+        name = ((TypeInfo) pool.get(buffer.getUShort())).getName();
         superType = (TypeInfo) pool.get(buffer.getUShort());
 
         // read interfaces
@@ -124,6 +124,16 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
 
         // link methods in BootstrapMethods
         pool.parseDynamics();
+
+        // parse signature
+        {
+            Signature sig = getAttribute("Signature");
+            if (sig != null) parseSignature(sig);
+        }
+    }
+
+    private void parseSignature(Signature sig) {
+        String s = sig.getGenericType();
     }
 
     //TODO: void setPool(ClassPool)
@@ -153,14 +163,8 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
         this.majorVer = majorVer;
     }
 
-    public EnumSet<AccessFlag> getAccessFlags() {
-        return accessFlags;
-    }
-
-    @Override
-    public void setAccessFlags(Collection<AccessFlag> flags) {
-        accessFlags = EnumSet.noneOf(AccessFlag.class);
-        accessFlags.addAll(flags);
+    public void setAccessFlags(int flags) {
+        this.accessFlags = flags;
     }
 
     @Override
@@ -174,13 +178,17 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
 
     // Get ot create field
     public @NotNull DeclaredField visitField(String name, String type) {
-        DeclaredField field = (DeclaredField) getField(name);
+        DeclaredField field = getField(name);
         if (field != null) return field;
 
-        EnumSet<AccessFlag> flags = EnumSet.of(AccessFlag.PRIVATE);
-        field = new DeclaredField(this, flags, name, repository.toType(type));
+        field = new DeclaredField(this, AccessFlags.PRIVATE, name, repository.toType(type));
         fields.add(field);
         return field;
+    }
+
+    @Override
+    public TypeInfo getSuperclass() {
+        return super.getSuperclass();
     }
 
     public DeclaredField getField(String name) {
@@ -224,15 +232,24 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
         DeclaredMethod method = getMethod(name, rtype, ptype);
         if (method != null) return method;
 
-        EnumSet<AccessFlag> flags = EnumSet.of(AccessFlag.PUBLIC);
-        method = new DeclaredMethod(this, flags, name, repository.toType(rtype), repository.toType(ptype));
+        method = new DeclaredMethod(this, AccessFlags.PUBLIC, name, repository.toType(rtype), repository.toType(ptype));
         methods.add(method);
         return method;
     }
 
+    @Override
+    public DeclaredField[] getFields() {
+        return fields.toArray(new DeclaredField[0]);
+    }
+
+    @Override
+    public DeclaredMethod[] getMethods() {
+        return methods.toArray(new DeclaredMethod[0]);
+    }
+
     public Type getInterface(String clsName) {
         for (Type c : interfaces) {
-            if (c.getTypeName().equals(clsName)) return c;
+            if (c.getName().equals(clsName)) return c;
         }
         return null;
     }
@@ -271,10 +288,6 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
                 () -> new EnclosingMethod(this));
     }
 
-    public boolean isSynthetic() {
-        return hasAttribute("Synthetic");
-    }
-
     public @Nullable String getSignature() {
         Signature sig = getAttribute("Signature");
         return sig == null ? null : sig.getGenericType() == null ? null : sig.getGenericType();
@@ -307,7 +320,7 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
 
         pool.write(buffer);
 
-        buffer.putShort(AccessFlag.serialize(accessFlags));
+        buffer.putShort(accessFlags);
 
         buffer.putShort(pool.indexOf(this));
         buffer.putShort(pool.indexOf(superType));
@@ -362,7 +375,7 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
         ClassFile c = new ClassFile();
         c.majorVer = majorVer;
         c.minorVer = minorVer;
-        c.accessFlags = EnumSet.copyOf(accessFlags);
+        c.accessFlags = accessFlags;
         //TODO
 
         return c;
@@ -424,12 +437,8 @@ public class ClassFile extends ClassInfo implements AttributeContainer, AccessFl
         return new Type[0];
     }
 
-    @Override
-    public TypeVariable[] getTypeParameters() {
-        return new TypeVariable[0];
-    }
-
     //TypeAnnotation: enhancement required
+
 
 
 
