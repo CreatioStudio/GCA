@@ -1,19 +1,24 @@
 package vip.creatio.gca.type;
 
 import java.lang.reflect.MalformedParameterizedTypeException;
-import java.util.*;
 
 public class WildcardType implements Type {
-    private Type[] upperBounds;
-    private Type[] lowerBounds;
+    public static final WildcardType ANY = new WildcardType(Types.OBJECT, true);
 
-    private WildcardType(Type[] upper, Type[] lower) {
-        this.upperBounds = upper;
-        this.lowerBounds = lower;
+    private Type bound;
+    private final boolean upper;
+
+    private WildcardType(Type b, boolean isUpper) {
+        this.bound = b;
+        this.upper = isUpper;
     }
 
-    public static WildcardType make(Collection<Type> upper, Collection<Type> lower) {
-        return new WildcardType(upper.toArray(new Type[0]), lower.toArray(new Type[0]));
+    public static WildcardType makeUpper(Type upper) {
+        return new WildcardType(upper, true);
+    }
+
+    public static WildcardType makeLower(Type lower) {
+        return new WildcardType(lower, false);
     }
 
     /**
@@ -37,8 +42,8 @@ public class WildcardType implements Type {
      *     bounds refer to a parameterized type that cannot be instantiated
      *     for any reason
      */
-    public Type[] getUpperBounds() {
-        return Arrays.copyOf(upperBounds, upperBounds.length);
+    public Type getUpperBound() {
+        return upper ? bound : Types.OBJECT;
     }
 
     /**
@@ -63,47 +68,45 @@ public class WildcardType implements Type {
      *     bounds refer to a parameterized type that cannot be instantiated
      *     for any reason
      */
-    public Type[] getLowerBounds() {
-        return Arrays.copyOf(lowerBounds, lowerBounds.length);
+    public Type getLowerBound() {
+        return upper ? Types.OBJECT : bound;
+    }
+
+    public Type getBound() {
+        return bound;
     }
 
     @Override
-    public String getName() {
-        return "java.lang.Object";
+    public String getTypeName() {
+        return getBound().getTypeName();
     }
 
     @Override
-    public String getSignature() {
-        return toString();
-    }
-
-    @Override
-    public String getInternalSignature() {
-        return Type.super.getInternalSignature();
+    public String getInternalName() {
+        if (upper) {
+            if (!bound.equals(Types.OBJECT)) {
+                return "+" + bound.getInternalName();
+            } else
+                return "*";
+        } else {
+            return "-" + bound.getInternalName();
+        }
     }
 
     @Override
     public String toString() {
-        Type[] lowerBounds = getLowerBounds();
-        Type[] bounds = lowerBounds;
         StringBuilder sb = new StringBuilder();
 
-        if (lowerBounds.length > 0)
-            sb.append("? super ");
-        else {
-            Type[] upperBounds = getUpperBounds();
-            if (upperBounds.length > 0 && !upperBounds[0].getCanonicalName().equals("java.lang.Object") ) {
-                bounds = upperBounds;
+        if (upper) {
+            if (!bound.equals(Types.OBJECT)) {
                 sb.append("? extends ");
             } else
                 return "?";
+        } else {
+            sb.append("? super ");
         }
 
-        StringJoiner sj = new StringJoiner(" & ");
-        for(Type bound: bounds) {
-            sj.add(bound.getCanonicalName());
-        }
-        sb.append(sj);
+        sb.append(bound.toString());
 
         return sb.toString();
     }
@@ -112,20 +115,13 @@ public class WildcardType implements Type {
     public boolean equals(Object o) {
         if (o instanceof WildcardType) {
             WildcardType that = (WildcardType) o;
-            return
-                    Arrays.equals(this.getLowerBounds(),
-                            that.getLowerBounds()) &&
-                            Arrays.equals(this.getUpperBounds(),
-                                    that.getUpperBounds());
+            return that.upper == this.upper && that.bound.equals(this.bound);
         } else
             return false;
     }
 
     @Override
     public int hashCode() {
-        Type[] lowerBounds = getLowerBounds();
-        Type[] upperBounds = getUpperBounds();
-
-        return Arrays.hashCode(lowerBounds) ^ Arrays.hashCode(upperBounds);
+        return bound.hashCode() ^ (upper ? 0x12343210 : 0x43210123);
     }
 }

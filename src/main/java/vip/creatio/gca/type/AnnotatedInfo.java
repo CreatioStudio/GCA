@@ -11,7 +11,7 @@ public interface AnnotatedInfo {
     default AnnotationInfo getAnnotation(Type annotationClass) {
         Objects.requireNonNull(annotationClass);
         for (AnnotationInfo annotation : getAnnotations()) {
-            if (annotationClass.getName().equals(annotation.annotationType().getName())) {
+            if (annotationClass.getTypeName().equals(annotation.annotationType().getTypeName())) {
                 return annotation;
             }
         }

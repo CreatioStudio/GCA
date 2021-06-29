@@ -18,4 +18,11 @@ public interface GenericDeclaration extends AnnotatedInfo {
      *     <cite>The Java&trade; Virtual Machine Specification</cite>
      */
     TypeVariable[] getTypeParameters();
+
+    default TypeVariable getTypeParameter(String name) {
+        for (TypeVariable t : getTypeParameters()) {
+            if (t.getTypeName().equals(name)) return t;
+        }
+        return null;
+    }
 }

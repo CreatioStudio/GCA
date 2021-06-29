@@ -24,7 +24,7 @@ public interface TypeFactory {
 
         // query local cached class
         for (TypeInfo t : getTypes()) {
-            if (t.getName().equals(signature))
+            if (t.getTypeName().equals(signature))
                 return t;
         }
 
@@ -50,8 +50,10 @@ public interface TypeFactory {
             return (TypeInfo) type;
         } else if (type instanceof ParameterizedType) {
             return ((ParameterizedType) type).getRawType();
+        } else if (type instanceof WildcardType) {
+            return toType(((WildcardType) type).getBound());
         } else {
-            return toType(type.getName());
+            return toType(type.getTypeName());
         }
     }
 

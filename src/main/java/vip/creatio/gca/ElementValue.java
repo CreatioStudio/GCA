@@ -227,9 +227,9 @@ public class ElementValue {
             pool.acquireValue(union.get());
         } else {
             if (type == ValueType.CLASS) {
-                pool.acquireUtf(union.get(TypeInfo.class).getName());
+                pool.acquireUtf(union.get(TypeInfo.class).getTypeName());
             } else if (type == ValueType.ENUM) {
-                pool.acquireUtf(union.get(TypeInfo.class).getName());
+                pool.acquireUtf(union.get(TypeInfo.class).getTypeName());
                 pool.acquireUtf(enumName);
             } else if (type == ValueType.ANNOTATION) {
                 union.get(DeclaredAnnotation.class).collect(pool);
@@ -248,9 +248,9 @@ public class ElementValue {
             buffer.putShort(pool.indexOfValue(union.get()));
         } else {
             if (type == ValueType.CLASS) {
-                buffer.putShort(pool.indexOf(union.get(TypeInfo.class).getName()));
+                buffer.putShort(pool.indexOf(union.get(TypeInfo.class).getTypeName()));
             } else if (type == ValueType.ENUM) {
-                buffer.putShort(pool.indexOf(union.get(TypeInfo.class).getName()));
+                buffer.putShort(pool.indexOf(union.get(TypeInfo.class).getTypeName()));
                 buffer.putShort(pool.indexOf(enumName));
             } else if (type == ValueType.ANNOTATION) {
                 union.get(DeclaredAnnotation.class).write(pool, buffer);

@@ -13,7 +13,7 @@ public class ParameterizedType implements Type {
     private ParameterizedType(TypeInfo rawType,
                               Collection<Type> typeArguments,
                               Type ownerType) {
-        this.typeArguments = new ArrayList<>(typeArguments);
+        this.typeArguments = typeArguments == null ? Collections.EMPTY_LIST : new ArrayList<>(typeArguments);
         this.rawType             = rawType;
         this.ownerType = ownerType;
     }
@@ -99,8 +99,8 @@ public class ParameterizedType implements Type {
     }
 
     @Override
-    public String getName() {
-        return rawType.getName();
+    public String getTypeName() {
+        return rawType.getTypeName();
     }
 
     @Override

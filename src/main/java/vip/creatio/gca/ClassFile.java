@@ -84,7 +84,7 @@ public class ClassFile extends ClassInfo implements AttributeContainer, TypeInfo
         accessFlags = buffer.getUShort();
 
         // read this class and super class object
-        name = ((TypeInfo) pool.get(buffer.getUShort())).getName();
+        name = ((TypeInfo) pool.get(buffer.getUShort())).getTypeName();
         superType = (TypeInfo) pool.get(buffer.getUShort());
 
         // read interfaces
@@ -249,7 +249,7 @@ public class ClassFile extends ClassInfo implements AttributeContainer, TypeInfo
 
     public Type getInterface(String clsName) {
         for (Type c : interfaces) {
-            if (c.getName().equals(clsName)) return c;
+            if (c.getTypeName().equals(clsName)) return c;
         }
         return null;
     }

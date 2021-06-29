@@ -240,7 +240,7 @@ public class CodeContainer implements Iterable<OpCode> {
         for (TypeInfo type : mth.getParameterTypes()) {
             maxLocals += Types.operandSize(type);
         }
-        if (!mth.flaggedStatic()) maxLocals++;
+        if (!mth.isStatic()) maxLocals++;
         int maxStack = 0;
         int stack = 0;
         for (OpCode op : list) {

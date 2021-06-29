@@ -1,6 +1,7 @@
 package vip.creatio.gca;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.attr.*;
 
 import vip.creatio.gca.type.*;
@@ -12,14 +13,13 @@ import java.util.*;
 
 public class DeclaredMethod extends DeclaredObject implements DeclaredMethodInfo {
 
-    private TypeInfo returnType;
-    private TypeInfo[] parameterTypes;
+    private @NotNull Type returnType;
+    private @NotNull Type[] parameterTypes;
 
-    private Map<TypeInfo, Annotation>[] parameterAnnotations;
+    private @Nullable Map<TypeInfo, Annotation>[] parameterAnnotations;
 
-    private List<TypeInfo> exceptions;
-
-    private String cachedDescriptor;
+    private @Nullable Type[] exceptions;
+    private @Nullable TypeVariable[] typevars;
     
     DeclaredMethod(ClassFile bc, ClassFileParser pool, ByteVector buffer) {
         super(bc, pool, buffer);
@@ -28,8 +28,8 @@ public class DeclaredMethod extends DeclaredObject implements DeclaredMethodInfo
     DeclaredMethod(ClassFile bc,
                    int flags,
                    String name,
-                   TypeInfo rtype,
-                   TypeInfo[] ptype,
+                   Type rtype,
+                   Type[] ptype,
                    Attribute... attributes) {
         super(bc, flags, name, attributes);
         this.returnType = rtype;
@@ -62,10 +62,7 @@ public class DeclaredMethod extends DeclaredObject implements DeclaredMethodInfo
 
     @Override
     public String getDescriptor() {
-        if (cachedDescriptor == null) {
-            cachedDescriptor = Types.toMethodSignature(Util.concat(TypeInfo[]::new, returnType, parameterTypes));
-        }
-        return cachedDescriptor;
+        return Types.toMethodSignature(Util.concat(TypeInfo[]::new, getReturnType(), getParameterTypes()));
     }
 
     @Override
@@ -84,55 +81,62 @@ public class DeclaredMethod extends DeclaredObject implements DeclaredMethodInfo
     }
 
     @Override
-    public TypeInfo getDeclaringClass() {
-        return classFile;
+    public ClassFile getDeclaringClass() {
+        return classFile();
     }
 
     @Override
     public TypeInfo getReturnType() {
-        return returnType;
+        return classFile().repository().toType(returnType);
     }
 
-    public void setReturnType(TypeInfo type) {
+    public void setReturnType(@NotNull Type type) {
         this.returnType = type;
     }
 
     @Override
     public TypeInfo[] getParameterTypes() {
-        return parameterTypes;
+        Repository repo = classFile().repository();
+        return Util.map(repo::toType, TypeInfo[]::new, parameterTypes);
     }
 
-    public void setParameterTypes(TypeInfo... types) {
+    public void setParameterTypes(@NotNull Type... types) {
         this.parameterTypes = types;
-
     }
 
-    public void setParameterTypes(Collection<TypeInfo> types) {
-        setParameterTypes(types.toArray(new TypeInfo[0]));
+    public void setParameterTypes(Collection<Type> types) {
+        setParameterTypes(types.toArray(new Type[0]));
+    }
+
+    public void setTypeParameters(TypeVariable... typevars) {
+        this.typevars = typevars;
+    }
+
+    public void setTypeParameters(Collection<TypeVariable> typevars) {
+        setTypeParameters(typevars.toArray(new TypeVariable[0]));
     }
 
     @Override
     public TypeInfo[] getExceptionTypes() {
-        Exceptions exc = getOrAddAttribute("Exceptions",
-                () -> new Exceptions(this));
-        return exc.getTable().stream().map(classFile().repository()::toType).toArray(TypeInfo[]::new);
+        Repository repo = classFile().repository();
+        return Util.map(repo::toType, TypeInfo[]::new, exceptions);
     }
 
-    public void setExceptionTypes(TypeInfo... types) {
+    public void setExceptionTypes(Type... types) {
         Exceptions exc = getOrAddAttribute("Exceptions",
                 () -> new Exceptions(this));
         exc.clear();
         exc.addAll(Arrays.asList(types));
     }
 
-    public void addExceptionTypes(TypeInfo... types) {
+    public void addExceptionTypes(Type... types) {
         Exceptions exc = getOrAddAttribute("Exceptions",
                 () -> new Exceptions(this));
         exc.addAll(Arrays.asList(types));
     }
 
     // give a zero-length array to clear all existing exceptions
-    public void removeExceptionTypes(TypeInfo... types) {
+    public void removeExceptionTypes(Type... types) {
         Exceptions exc = getOrAddAttribute("Exceptions",
                 () -> new Exceptions(this));
         if (types.length == 0) {
@@ -178,9 +182,9 @@ public class DeclaredMethod extends DeclaredObject implements DeclaredMethodInfo
     }
 
     @Override
-    public TypeVariable[] getTypeParameters() {
+    public @NotNull TypeVariable[] getTypeParameters() {
         //TODO
-        return new TypeVariable[0];
+        return typevars == null ? new TypeVariable[0] : typevars;
     }
 
     @Override
@@ -250,7 +254,7 @@ public class DeclaredMethod extends DeclaredObject implements DeclaredMethodInfo
 
     @Override
     public ConstType constantType() {
-        return classFile.flaggedInterface() ? ConstType.INTERFACE_METHODREF : ConstType.METHODREF;
+        return classFile.isInterface() ? ConstType.INTERFACE_METHODREF : ConstType.METHODREF;
     }
 
     @Override

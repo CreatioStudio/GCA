@@ -1,13 +1,14 @@
 package vip.creatio.gca;
 
+import vip.creatio.gca.type.Types;
 import vip.creatio.gca.util.common.ByteVector;
 import vip.creatio.gca.type.ClassInfo;
 import vip.creatio.gca.type.Type;
-import vip.creatio.gca.util.ClassUtil;
 
 // representing a class info which may not exist.
 public abstract class TypeInfo implements Type, Const {
 
+    //TODO: split into pkg name and class name
     protected String name;
 
     public TypeInfo(String name) {
@@ -21,7 +22,7 @@ public abstract class TypeInfo implements Type, Const {
     }
 
     @Override
-    public String getName() {
+    public String getTypeName() {
         return name;
     }
 
@@ -37,19 +38,25 @@ public abstract class TypeInfo implements Type, Const {
     }
 
     final void write(ConstPool pool, ByteVector vector) {
-        vector.putShort(pool.indexOf(ClassUtil.toBytecodeName(name)));
+        vector.putShort(pool.indexOf(Types.toBytecodeName(name)));
     }
 
     final void collect(ConstPool pool) {
-        pool.acquireUtf(ClassUtil.toBytecodeName(name));
+        pool.acquireUtf(Types.toBytecodeName(name));
     }
 
     @Override
     public boolean equals(Object obj) {
+        if (obj == this) return true;
         if (obj instanceof TypeInfo) {
-            return ((TypeInfo) obj).name.equals(name);
+            return ((TypeInfo) obj).getTypeName().equals(getTypeName());
         }
         return false;
+    }
+
+    @Override
+    public String toString() {
+        return getTypeName();
     }
 
     public interface Mutable {

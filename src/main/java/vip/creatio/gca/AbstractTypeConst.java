@@ -1,7 +1,7 @@
 package vip.creatio.gca;
 
+import vip.creatio.gca.type.Types;
 import vip.creatio.gca.util.common.ByteVector;
-import vip.creatio.gca.util.ClassUtil;
 
 abstract class AbstractTypeConst implements Const {
     private String name;
@@ -9,7 +9,7 @@ abstract class AbstractTypeConst implements Const {
 
     AbstractTypeConst(String name) {
         this.name = name;
-        this.bcName = ClassUtil.toBytecodeName(name);
+        this.bcName = Types.toBytecodeName(name);
     }
 
     void write(ConstPool pool, ByteVector buffer) {
@@ -22,7 +22,7 @@ abstract class AbstractTypeConst implements Const {
 
     public void setName(String name) {
         this.name = name;
-        this.bcName = ClassUtil.toBytecodeName(name);
+        this.bcName = Types.toBytecodeName(name);
     }
 
     public String getName() {

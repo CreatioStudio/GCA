@@ -4,11 +4,8 @@ import org.jetbrains.annotations.Nullable;
 import vip.creatio.gca.*;
 
 import vip.creatio.gca.util.common.ByteVector;
-import java.util.Arrays;
-import java.util.EnumSet;
 
 import static vip.creatio.gca.util.AccessFlags.*;
-import static vip.creatio.gca.util.AccessFlags.MODULE;
 
 /**
  * If the constant pool of a class or interface C contains a CONSTANT_Class_info
@@ -47,7 +44,7 @@ public class InnerClasses extends TableAttribute<InnerClasses.Class> {
     }
 
     public void add(ClassFile classFile) {
-        String name = classFile.getName();
+        String name = classFile.getTypeName();
         name = name.substring(name.lastIndexOf('/') + 1);
         add(classFile, name, classFile.getAccessFlags());
     }

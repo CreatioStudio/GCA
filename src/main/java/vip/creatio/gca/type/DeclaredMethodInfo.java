@@ -4,7 +4,7 @@ import vip.creatio.gca.TypeInfo;
 
 import static vip.creatio.gca.util.AccessFlags.*;
 
-public interface DeclaredMethodInfo extends MethodInfo, AnnotatedInfo {
+public interface DeclaredMethodInfo extends MethodInfo, GenericDeclaration {
 
     TypeInfo[] getExceptionTypes();
 

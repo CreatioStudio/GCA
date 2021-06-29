@@ -1,13 +1,18 @@
 package vip.creatio.gca.type;
 
-import org.jetbrains.annotations.NotNull;
+import vip.creatio.gca.ClassFile;
+import vip.creatio.gca.DeclaredMethod;
 import vip.creatio.gca.TypeInfo;
 
 import java.util.*;
 
 // util class
 public final class Types {
-    
+
+    public static String toBytecodeName(String binaryName) {
+        return binaryName.replace('.', '/');
+    }
+
     public static class Primitive extends ClassObjectInfo {
         
         private final String sigName;
@@ -66,15 +71,15 @@ public final class Types {
     public static final TypeInfo EXCEPTION      = add(ClassObjectInfo.make(Exception.class));
     public static final TypeInfo ERROR          = add(ClassObjectInfo.make(Error.class));
 
-    public static final TypeInfo INT_ARRAY      = add(GenericArrayType.make(INT));
-    public static final TypeInfo SHORT_ARRAY    = add(GenericArrayType.make(SHORT));
-    public static final TypeInfo CHAR_ARRAY     = add(GenericArrayType.make(CHAR));
-    public static final TypeInfo BYTE_ARRAY     = add(GenericArrayType.make(BYTE));
-    public static final TypeInfo LONG_ARRAY     = add(GenericArrayType.make(LONG));
-    public static final TypeInfo FLOAT_ARRAY    = add(GenericArrayType.make(FLOAT));
-    public static final TypeInfo DOUBLE_ARRAY   = add(GenericArrayType.make(DOUBLE));
-    public static final TypeInfo BOOL_ARRAY     = add(GenericArrayType.make(BOOL));
-    public static final TypeInfo OBJECT_ARRAY   = add(GenericArrayType.make(OBJECT));
+    public static final TypeInfo INT_ARRAY      = add(ArrayType.make(INT));
+    public static final TypeInfo SHORT_ARRAY    = add(ArrayType.make(SHORT));
+    public static final TypeInfo CHAR_ARRAY     = add(ArrayType.make(CHAR));
+    public static final TypeInfo BYTE_ARRAY     = add(ArrayType.make(BYTE));
+    public static final TypeInfo LONG_ARRAY     = add(ArrayType.make(LONG));
+    public static final TypeInfo FLOAT_ARRAY    = add(ArrayType.make(FLOAT));
+    public static final TypeInfo DOUBLE_ARRAY   = add(ArrayType.make(DOUBLE));
+    public static final TypeInfo BOOL_ARRAY     = add(ArrayType.make(BOOL));
+    public static final TypeInfo OBJECT_ARRAY   = add(ArrayType.make(OBJECT));
 
     public static final TypeInfo ARRAYS         = add(ClassObjectInfo.make(Arrays.class));
     public static final TypeInfo ARRAY_LIST     = add(ClassObjectInfo.make(ArrayList.class));
@@ -115,7 +120,7 @@ public final class Types {
     public static final TypeInfo SECURITY_EXCEPTION                 = add(ClassObjectInfo.make(SecurityException.class));
 
     static TypeInfo add(TypeInfo type) {
-        BASIC_CLASS_MAP.put(type.getName(), type);
+        BASIC_CLASS_MAP.put(type.getTypeName(), type);
         return type;
     }
 
@@ -172,25 +177,67 @@ public final class Types {
         return 1;
     }
 
-    public static String toMethodSignature(Type[] signatures) {
+    public static String toMethodSignature(TypeInfo[] signatures) {
         StringBuilder sb = new StringBuilder();
         sb.append("(");
         for (int i = 1; i < signatures.length; i++) {
-            sb.append(signatures[i].getInternalSignature());
+            sb.append(signatures[i].getInternalName());
         }
         sb.append(")");
-        sb.append(signatures[0].getInternalSignature());
+        sb.append(signatures[0].getInternalName());
         return sb.toString();
     }
 
-    public static String toMethodSignature(Type rtype, Type... ptype) {
+    public static String toMethodSignature(TypeInfo rtype, TypeInfo... ptype) {
         StringBuilder sb = new StringBuilder();
         sb.append("(");
-        for (Type type : ptype) {
-            sb.append(type.getInternalSignature());
+        for (TypeInfo type : ptype) {
+            sb.append(type.getInternalName());
         }
         sb.append(")");
-        sb.append(rtype.getInternalSignature());
+        sb.append(rtype.getInternalName());
+        return sb.toString();
+    }
+
+    public static String toMethodGenericSignature(TypeFactory factory, DeclaredMethod mth) {
+        StringBuilder sb = new StringBuilder();
+        // add type variables decl if needed
+        {
+            TypeVariable[] vars = mth.getTypeParameters();
+            if (vars.length != 0) {
+                sb.append('<');
+                for (TypeVariable var : vars) {
+                    sb.append(var.getName());
+                    for (Type bound : var.getBounds()) {
+                        ClassInfo raw = factory.toType(bound).getImpl();
+                        if (raw != null && raw.isInterface()) {
+                            sb.append("::");
+                        } else
+                            sb.append(':');
+                        sb.append(bound.getInternalName());
+                    }
+                }
+                sb.append('>');
+            }
+        }
+        // add parameter types
+        sb.append('(');
+        for (Type type : mth.getGenericParameterTypes()) {
+            sb.append(type.getInternalName());
+        }
+        sb.append(')');
+        // add return type
+        sb.append(mth.getGenericReturnType().getInternalName());
+        // add generic exception if needed
+        {
+            Type[] etype = mth.getGenericExceptionTypes();
+            if (!Arrays.equals(etype, mth.getExceptionTypes())) {
+                for (Type type : etype) {
+                    sb.append('^');
+                    sb.append(type.getInternalName());
+                }
+            }
+        }
         return sb.toString();
     }
 
@@ -216,9 +263,87 @@ public final class Types {
         return field.getType().equals(type);
     }
 
+    public static void resolveMethodSignature(TypeFactory factory, DeclaredMethod mth, String str) {
+        byte[] raw = str.getBytes();
+        int[] ptr = new int[1];
+        // method type parameter decl
+        ClassFile decl = mth.getDeclaringClass();
+        {
+            List<TypeVariable> varList = resolveTypeVarDecl(factory, decl, raw, ptr);
+            if (!varList.isEmpty()) mth.setTypeParameters(varList);
+        }
 
-    private static Type nextInternalSignature(TypeFactory factory, Type upper, byte[] raw, int[] indexPtr) {
-        switch ((char) raw[indexPtr[0]]) {
+        List<Type> paraType = new ArrayList<>();
+        // parameter declaration
+        if (raw[ptr[0]] == '(') {
+            ptr[0]++;
+            while (raw[ptr[0]] != ')') {
+                paraType.add(nextInternalSignature(factory, decl, null,raw, ptr));
+            }
+            ++ptr[0];
+        } else {
+            throw new RuntimeException("Illegal method signature: " + str);
+        }
+        mth.setParameterTypes(paraType);
+
+        ++ptr[0];// skip ')'
+
+        Type returnType = nextInternalSignature(factory, decl, null, raw, ptr);
+
+        // parse exceptions
+        if (ptr[0] < raw.length) {
+            List<Type> exce = new ArrayList<>();
+            do {
+                if (raw[ptr[0]] == '^') {
+                    ptr[0]++;
+                    exce.add(nextInternalSignature(factory, decl, null, raw, ptr));
+                } else {
+                    throw new RuntimeException("Illegal exception signature: '" + (char) raw[ptr[0]] + "'");
+                }
+            } while (ptr[0] < raw.length);
+            mth.setExceptionTypes(exce.toArray(new Type[0]));
+        }
+    }
+
+    private static List<TypeVariable>
+    resolveTypeVarDecl(TypeFactory factory, GenericDeclaration decl, byte[] raw, int[] ptr) {
+        if (raw[0] == '<') {
+            List<TypeVariable> list = new ArrayList<>();
+            ptr[0] = 1;
+
+            while (raw[ptr[0]] != '>') {
+                int index = ptr[0];
+                while (raw[index++] != ':');
+                String name = new String(raw, ptr[0], index - ptr[0]);
+                ptr[0] = index + 1;
+                if (raw[ptr[0]] == ':') ++ptr[0];   // interface double mark
+                Type t = nextInternalSignature(factory, decl, null, raw, ptr);
+
+                TypeVariable var;
+                if (raw[ptr[0]] == ':') {
+                    if (raw[ptr[0] + 1] == ':') ++ptr[0];   // interface double mark
+                    List<Type> range = new ArrayList<>();
+                    range.add(t);
+                    do {
+                        ++ptr[0];
+                        range.add(nextInternalSignature(factory, decl, null, raw, ptr));
+                    } while (raw[ptr[0]] == ':');
+                    var = TypeVariable.make(decl, name, range);
+                } else {
+                    var = TypeVariable.make(decl, name, t);
+                }
+                list.add(var);
+            };
+
+            ++ptr[0];
+            return list;
+        }
+        return Collections.emptyList();
+    }
+
+    private static Type
+    nextInternalSignature(TypeFactory factory, GenericDeclaration decl, Type upper, byte[] raw, int[] indexPtr) {
+        switch (raw[indexPtr[0]]) {
             case 'I':
                 indexPtr[0]++;
                 return INT;
@@ -246,34 +371,41 @@ public final class Types {
             case 'S':
                 indexPtr[0]++;
                 return SHORT;
-            case 'L':           // class type
+            case '*':       // wildcard
+                indexPtr[0]++;
+                return WildcardType.ANY;
+            case '-':       // super
+                indexPtr[0]++;
+                return WildcardType.makeLower(nextInternalSignature(factory, decl, upper, raw, indexPtr));
+            case '+':       // extends
+                indexPtr[0]++;
+                return WildcardType.makeUpper(nextInternalSignature(factory, decl, upper, raw, indexPtr));
+            case 'L':       // class type
             {
                 int start = indexPtr[0] + 1;
                 int index = start;
                 for (; index < raw.length; index++) {
                     byte b = raw[index];
                     // non-generic type
-                    if (b == (byte) ';') {
+                    if (b == ';') {
                         String str = new String(raw, start, index - start).replace('/', '.');
-                        System.out.println("STR: " + str);
 
                         indexPtr[0] = index + 1;
                         return factory.toType(str);
                     }
                     // generic type
-                    else if (b == (byte) '<') {
+                    else if (b == '<') {
                         indexPtr[0] = index + 1;
 
-                        String str = new String(raw, start, start - index - 1).replace('/', '.');
-                        System.out.println("STR: " + str);
+                        String str = new String(raw, start, index - start).replace('/', '.');
                         TypeInfo rawType = factory.toType(str);
 
                         ParameterizedType.Mutable mutable = ParameterizedType.makeMutable(rawType, (Collection<Type>) null, upper);
 
                         List<Type> generics = new ArrayList<>();
                         do {
-                            generics.add(nextInternalSignature(factory, mutable, raw, indexPtr));
-                        } while (indexPtr[0] != (byte) '>');
+                            generics.add(nextInternalSignature(factory, decl, mutable, raw, indexPtr));
+                        } while (raw[indexPtr[0]] != '>');
 
                         mutable.setTypeArguments(generics);
                         indexPtr[0] += 2; // (HERE)>; -> >;(HERE)
@@ -287,26 +419,27 @@ public final class Types {
                 //Type variable
                 int start = indexPtr[0] + 1;
                 int index = start;
-                for (; index < raw.length; index++) {
-                    if (raw[index] == (byte) ';') {
+                while (index < raw.length) {
+                    if (raw[index] == ';') {
                         String str = new String(raw, start, index - start);
-                        System.out.println("TYPEVAR: " + str);
 
                         indexPtr[0] = index + 1;
-                        return null; //todo
+
+                        TypeVariable var = decl.getTypeParameter(str);
+                        if (var == null) throw new IllegalArgumentException("undeclared type parameter: " + str);
+                        return var;
                     }
+                    index++;
                 }
             }
             case '[':       // array type
             {
                 indexPtr[0]++;
-                Type t
+                Type t = nextInternalSignature(factory, decl, upper, raw, indexPtr);
+                return ArrayType.make(t);
             }
-
+            default:
+                throw new IllegalArgumentException("Unknown token: '" + (char) raw[indexPtr[0]] + "'");
         }
     }
-
-    private static TypeVariable nextTypeVariable() {}
-
-
 }

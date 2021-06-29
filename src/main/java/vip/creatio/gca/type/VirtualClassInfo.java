@@ -24,9 +24,9 @@ public class VirtualClassInfo extends TypeInfo implements TypeInfo.Mutable {
     }
 
     @Override
-    public String getName() {
-        if (impl != null) return impl.getName();
-        return super.getName();
+    public String getTypeName() {
+        if (impl != null) return impl.getTypeName();
+        return super.getTypeName();
     }
 
     @Override

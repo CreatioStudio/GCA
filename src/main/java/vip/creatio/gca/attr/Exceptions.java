@@ -76,7 +76,7 @@ public class Exceptions extends TableAttribute<TypeInfo> {
         Iterator<TypeInfo> iter = items.iterator();
         while (iter.hasNext()) {
             for (TypeInfo type : types) {
-                if (type.getName().equals(iter.next().getName()))
+                if (type.getTypeName().equals(iter.next().getTypeName()))
                     iter.remove();
             }
         }

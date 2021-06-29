@@ -36,7 +36,7 @@ public class ClassObjectInfo extends ClassInfo {
     }
 
     @Override
-    public String getName() {
+    public String getTypeName() {
         return clazz.getName();
     }
 

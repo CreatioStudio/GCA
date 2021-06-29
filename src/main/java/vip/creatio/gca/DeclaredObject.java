@@ -84,12 +84,12 @@ implements AttributeContainer, MemberInfo {
 
     // Internals
 
-    final ClassFile classFile;
-    int accessFlags;
+    private final ClassFile classFile;
+    private int accessFlags;
 
-    String name;
-    HashMap<String, Attribute> attributes = new HashMap<>();
-    Map<TypeInfo, DeclaredAnnotation> annotations = new HashMap<>();
+    private String name;
+    protected HashMap<String, Attribute> attributes = new HashMap<>();
+    protected Map<TypeInfo, DeclaredAnnotation> annotations = new HashMap<>();
 
 
 

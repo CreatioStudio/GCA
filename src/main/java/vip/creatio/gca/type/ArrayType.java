@@ -4,19 +4,19 @@ import vip.creatio.gca.TypeInfo;
 
 import java.lang.reflect.MalformedParameterizedTypeException;
 
-public class GenericArrayType extends TypeInfo {
+public class ArrayType extends TypeInfo {
 
     private Type type;
 
-    private GenericArrayType(Type t) {
+    private ArrayType(Type t) {
         this.type = t;
     }
 
-    public static GenericArrayType make(Type t) {
-        return new GenericArrayType(t);
+    public static ArrayType make(Type t) {
+        return new ArrayType(t);
     }
 
-    public static GenericArrayType makeMutable(Type t) {
+    public static ArrayType makeMutable(Type t) {
         return new Mutable(t);
     }
 
@@ -42,18 +42,13 @@ public class GenericArrayType extends TypeInfo {
     }
 
     @Override
-    public String getName() {
+    public String getTypeName() {
         return getInternalName();
     }
 
     @Override
-    public String getSignature() {
-        return '[' + type.getSignature();
-    }
-
-    @Override
-    public String getCanonicalName() {
-        return type.getCanonicalName() + "[]";
+    public String toString() {
+        return type.getTypeName() + "[]";
     }
 
     @Override
@@ -61,7 +56,7 @@ public class GenericArrayType extends TypeInfo {
         return '[' + type.getInternalName();
     }
 
-    public static class Mutable extends GenericArrayType {
+    public static class Mutable extends ArrayType {
         private Mutable(Type t) {
             super(t);
         }

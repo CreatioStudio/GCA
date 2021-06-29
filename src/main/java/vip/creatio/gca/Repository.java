@@ -87,6 +87,6 @@ public class Repository implements TypeFactory {
 
     @Override
     public void addType(TypeInfo type) {
-        classMap.put(type.getName(), type);
+        classMap.put(type.getTypeName(), type);
     }
 }

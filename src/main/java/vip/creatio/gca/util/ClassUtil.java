@@ -10,14 +10,6 @@ import java.util.List;
 @Deprecated
 public class ClassUtil {
 
-    public static String toBytecodeName(String binaryName) {
-        return binaryName.replace('.', '/');
-    }
-
-    public static String toBytecodeName(Class<?> cls) {
-        return toBytecodeName(cls.getName());
-    }
-
     /**
      *
      * Node: the returned primitive types, such as int and byte,
